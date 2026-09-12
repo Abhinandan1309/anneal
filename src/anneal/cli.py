@@ -267,23 +267,132 @@ def cmd_sensitivity(args: argparse.Namespace) -> int:
         console.print("[yellow]no quantizable Conv/Gemm/MatMul nodes found[/yellow]")
         return 1
 
-    table = Table(
-        title=f"INT8 weight-quantization sensitivity — {path.name}", header_style="bold"
+    if not args.measured:
+        table = Table(
+            title=f"INT8 weight-quantization sensitivity (proxy) - {path.name}",
+            header_style="bold",
+        )
+        table.add_column("rank", justify="right", style="dim")
+        table.add_column("node", overflow="fold")
+        table.add_column("op")
+        table.add_column("rel. L2 error", justify="right")
+
+        for i, (name, err, op) in enumerate(ranked[: args.top], start=1):
+            table.add_row(str(i), name, op, f"{err:.5f}")
+
+        console.print(table)
+        console.print(
+            f"\n[dim]{len(ranked)} quantizable nodes. This is a cheap weight-space proxy "
+            f"for quantization damage, not a measurement. Pass --measured to quantize each "
+            f"layer alone and find out how well the proxy actually predicts it.[/dim]"
+        )
+        return 0
+
+    # ----- measured sweep -------------------------------------------------
+    import json
+
+    from anneal.core.dataset import load_evalset
+    from anneal.core.sensitivity import measured_sensitivity, proxy_agreement
+    from anneal.core.targets import TargetUnavailable, default_target, get_target
+    from anneal.core.transforms import TransformContext
+    from anneal.models import load_onnx
+
+    try:
+        target = get_target(args.target) if args.target else default_target()
+        target.ensure_available()
+    except (KeyError, TargetUnavailable) as exc:
+        console.print(f"[red]target error:[/red] {exc}")
+        return 2
+
+    console.print(f"Loading eval set [cyan]{args.eval}[/cyan] …")
+    evalset = load_evalset(
+        args.eval, cache_dir=Path(args.cache), batch_size=args.eval_batch, limit=args.eval_limit
     )
-    table.add_column("rank", justify="right", style="dim")
+    n_layers = min(len(ranked), args.top)
+    console.print(
+        f"  {len(evalset)} images · quantizing {n_layers} layer(s) one at a time "
+        f"({n_layers} eval passes)\n"
+    )
+
+    workdir = Path(args.out) if args.out else path.parent / "sensitivity"
+    ctx = TransformContext(workdir=workdir, evalset=evalset)
+
+    def progress(i: int, total: int, node: str) -> None:
+        console.print(f"[dim]  [{i}/{total}] {node}[/dim]")
+
+    results = measured_sensitivity(
+        load_onnx(path),
+        target,
+        evalset,
+        ctx,
+        per_channel=not args.per_tensor,
+        limit=args.top,
+        on_progress=progress,
+    )
+
+    by_measured = sorted(
+        results, key=lambda r: (r.changed_fraction if r.measured else -1), reverse=True
+    )
+
+    table = Table(
+        title=f"measured vs predicted quantization damage - {path.name}", header_style="bold"
+    )
     table.add_column("node", overflow="fold")
     table.add_column("op")
-    table.add_column("rel. L2 error", justify="right")
+    table.add_column("proxy err", justify="right")
+    table.add_column("proxy rank", justify="right")
+    table.add_column("preds changed", justify="right")
+    table.add_column("acc pp", justify="right")
 
-    for i, (name, err, op) in enumerate(ranked[: args.top], start=1):
-        table.add_row(str(i), name, op, f"{err:.5f}")
+    proxy_rank = {r.node: i for i, r in enumerate(sorted(results, key=lambda r: -r.proxy_error), 1)}
+    for r in by_measured:
+        if r.error:
+            table.add_row(r.node, r.op_type, f"{r.proxy_error:.5f}", "—", "[red]failed[/red]", "—")
+            continue
+        table.add_row(
+            r.node,
+            r.op_type,
+            f"{r.proxy_error:.5f}",
+            str(proxy_rank.get(r.node, "—")),
+            f"{(r.changed_fraction or 0) * 100:.1f}%",
+            "—" if r.accuracy_drop_pp is None else f"{-r.accuracy_drop_pp:+.2f}",
+        )
 
+    console.print()
     console.print(table)
-    console.print(
-        f"\n[dim]{len(ranked)} quantizable nodes. This is a cheap weight-space proxy for "
-        f"quantization damage, used to pick which layers to spare — not a measurement of "
-        f"end-to-end accuracy loss.[/dim]"
+
+    verdict = proxy_agreement(results)
+    rho = verdict["spearman"]
+    console.print()
+    if rho is None:
+        console.print(f"[yellow]Proxy vs measured: {verdict['verdict']}[/yellow]")
+    else:
+        colour = "green" if rho >= 0.7 else ("yellow" if rho >= 0.4 else "red")
+        console.print(
+            f"[bold]Proxy vs measured:[/bold] Spearman rho = "
+            f"[{colour}]{rho:+.3f}[/{colour}] over {verdict['n']} layers — {verdict['verdict']}"
+        )
+        console.print(
+            f"[dim]Top-5 overlap: {verdict['top5_overlap']}/5 layers appear in both "
+            f"rankings.[/dim]"
+        )
+
+    out_json = workdir / "sensitivity.json"
+    workdir.mkdir(parents=True, exist_ok=True)
+    out_json.write_text(
+        json.dumps(
+            {
+                "model": str(path),
+                "target": target.name,
+                "n_eval": len(evalset),
+                "layers": [r.to_dict() for r in results],
+                "proxy_agreement": verdict,
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
     )
+    console.print(f"[dim]written: {out_json}[/dim]")
     return 0
 
 
@@ -437,6 +546,199 @@ def cmd_validate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_profile(args: argparse.Namespace) -> int:
+    """Attribute a model's runtime to operator types and individual nodes."""
+    from rich.table import Table
+
+    from anneal.core.profile import diff_profiles, profile_model
+    from anneal.core.targets import TargetUnavailable, default_target, get_target
+    from anneal.models import load_onnx
+
+    console = _console()
+    path = Path(args.model)
+    if not path.is_file():
+        console.print(f"[red]no such file:[/red] {path}")
+        return 2
+
+    try:
+        target = get_target(args.target) if args.target else default_target()
+        target.ensure_available()
+    except (KeyError, TargetUnavailable) as exc:
+        console.print(f"[red]target error:[/red] {exc}")
+        return 2
+
+    console.print(f"Profiling [cyan]{path.name}[/cyan] on [cyan]{target.name}[/cyan] …")
+    profile = profile_model(
+        load_onnx(path), target, runs=args.runs, batch_size=args.batch_size
+    )
+
+    table = Table(title=f"time by operator type - {path.name}", header_style="bold")
+    table.add_column("op", overflow="fold")
+    table.add_column("share", justify="right")
+    table.add_column("total ms", justify="right")
+    table.add_column("nodes", justify="right")
+    table.add_column("mean us/call", justify="right")
+
+    for stat in profile.by_op[: args.top]:
+        bar = "#" * max(1, round(stat.share * 24)) if stat.share > 0.01 else ""
+        table.add_row(
+            stat.op_type,
+            f"{stat.share * 100:5.1f}% {bar}",
+            f"{stat.total_us / 1000:.1f}",
+            str(stat.count),
+            f"{stat.mean_us:.1f}",
+        )
+    console.print(table)
+
+    if args.nodes:
+        node_table = Table(title="slowest individual nodes", header_style="bold")
+        node_table.add_column("node", overflow="fold")
+        node_table.add_column("op")
+        node_table.add_column("share", justify="right")
+        node_table.add_column("total ms", justify="right")
+        for stat in profile.by_node[: args.top]:
+            node_table.add_row(
+                stat.name, stat.op_type, f"{stat.share * 100:.1f}%", f"{stat.total_us / 1000:.1f}"
+            )
+        console.print(node_table)
+
+    if args.against:
+        other_path = Path(args.against)
+        if not other_path.is_file():
+            console.print(f"[red]no such file:[/red] {other_path}")
+            return 2
+        console.print(f"\nProfiling [cyan]{other_path.name}[/cyan] for comparison …")
+        other = profile_model(
+            load_onnx(other_path), target, runs=args.runs, batch_size=args.batch_size
+        )
+
+        diff_table = Table(
+            title=f"{path.name}  ->  {other_path.name}  (per run)", header_style="bold"
+        )
+        diff_table.add_column("op", overflow="fold")
+        diff_table.add_column("before ms", justify="right")
+        diff_table.add_column("after ms", justify="right")
+        diff_table.add_column("delta ms", justify="right")
+
+        for delta in diff_profiles(profile, other):
+            if abs(delta.delta_us) < 50:  # ignore sub-0.05ms noise
+                continue
+            marker = ""
+            if delta.appeared:
+                marker = " [yellow](new)[/yellow]"
+            elif delta.vanished:
+                marker = " [dim](gone)[/dim]"
+            colour = "red" if delta.delta_us > 0 else "green"
+            diff_table.add_row(
+                delta.op_type + marker,
+                f"{delta.before_us / 1000:.2f}",
+                f"{delta.after_us / 1000:.2f}",
+                f"[{colour}]{delta.delta_us / 1000:+.2f}[/{colour}]",
+            )
+        console.print()
+        console.print(diff_table)
+
+    console.print(
+        "\n[dim]Profiling instrumentation inflates absolute times; use these shares for "
+        "attribution and `anneal run` for latency.[/dim]"
+    )
+    return 0
+
+
+def cmd_compare(args: argparse.Namespace) -> int:
+    """Re-measure a run's frontier on a different target.
+
+    This is the project's central claim, made falsifiable: if an optimisation recipe's
+    ranking were a property of the model, this table would be boring.
+    """
+    from rich.table import Table
+
+    from anneal.core.ledger import Ledger
+    from anneal.core.measure import Benchmarker, MeasurementError
+    from anneal.core.targets import TargetUnavailable, get_target
+    from anneal.report import compact_label
+
+    console = _console()
+    path = Path(args.ledger)
+    if not path.is_file():
+        console.print(f"[red]no such ledger:[/red] {path}")
+        return 2
+
+    ledger = Ledger.load(path)
+    base = ledger.baseline
+    if base is None:
+        console.print("[red]ledger has no successful baseline[/red]")
+        return 2
+
+    origin = ledger.target_fingerprint.get("target", "?")
+    try:
+        target = get_target(args.target)
+        target.ensure_available()
+    except (KeyError, TargetUnavailable) as exc:
+        console.print(f"[red]target error:[/red] {exc}")
+        return 2
+
+    shortlist = [base] + [t for t in ledger.pareto_front() if t.index != base.index]
+    missing = [t for t in shortlist if not t.artifact.path.is_file()]
+    if missing:
+        console.print(f"[red]{len(missing)} candidate .onnx file(s) are gone[/red]")
+        return 2
+
+    console.print(f"Re-measuring {len(shortlist)} models: [cyan]{origin}[/cyan] -> [cyan]{target.name}[/cyan]\n")
+    bench = Benchmarker(target, warmup=args.warmup, runs=args.runs)
+
+    rows: list[tuple[Any, float | None]] = []
+    for trial in shortlist:
+        try:
+            m = bench.measure(trial.artifact)
+            rows.append((trial, m.latency_ms_p50))
+        except MeasurementError as exc:
+            console.print(f"[red]#{trial.index} failed:[/red] {exc}")
+            rows.append((trial, None))
+
+    new_base = next((lat for t, lat in rows if t.index == base.index), None)
+
+    table = Table(title=f"{origin} vs {target.name}", header_style="bold")
+    table.add_column("#", justify="right", style="dim")
+    table.add_column("recipe")
+    table.add_column(f"{origin} p50", justify="right")
+    table.add_column(f"{origin} x", justify="right")
+    table.add_column(f"{target.name} p50", justify="right")
+    table.add_column(f"{target.name} x", justify="right")
+    table.add_column("verdict", justify="left")
+
+    for trial, latency in rows:
+        old_speedup = ledger.speedup_of(trial)
+        new_speedup = (new_base / latency) if (new_base and latency) else None
+
+        verdict = "—"
+        if old_speedup is not None and new_speedup is not None:
+            if (old_speedup > 1.02) != (new_speedup > 1.02):
+                verdict = "[bold red]flips[/bold red]"
+            elif abs(new_speedup - old_speedup) / max(old_speedup, 1e-9) > 0.15:
+                verdict = "[yellow]shifts[/yellow]"
+            else:
+                verdict = "[green]holds[/green]"
+
+        table.add_row(
+            str(trial.index),
+            compact_label(trial),
+            f"{trial.measurement.latency_ms_p50:.2f}" if trial.measurement else "—",
+            f"{old_speedup:.2f}x" if old_speedup else "—",
+            f"{latency:.2f}" if latency else "[red]failed[/red]",
+            f"{new_speedup:.2f}x" if new_speedup else "—",
+            verdict,
+        )
+
+    console.print(table)
+    console.print(
+        f"\n[dim]Accuracy is a property of the graph and does not change with target, so "
+        f"only latency is re-measured here. Recipes marked 'flips' reversed sign: they "
+        f"helped on {origin} and hurt on {target.name}, or the reverse.[/dim]"
+    )
+    return 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     from anneal.core.ledger import Ledger
     from anneal.report import console_table, write_report
@@ -517,7 +819,38 @@ def build_parser() -> argparse.ArgumentParser:
     sens.add_argument("model", help="path to an .onnx file")
     sens.add_argument("--top", type=int, default=20)
     sens.add_argument("--per-tensor", action="store_true", help="per-tensor instead of per-channel")
+    sens.add_argument(
+        "--measured",
+        action="store_true",
+        help="quantize each layer alone and measure the real damage, then score the proxy "
+        "against it (costs one eval pass per layer)",
+    )
+    sens.add_argument("--target", default=None)
+    sens.add_argument("--eval", default="imagenette")
+    sens.add_argument("--eval-limit", type=int, default=256)
+    sens.add_argument("--eval-batch", type=int, default=32)
+    sens.add_argument("--out", default=None, help="where to write candidates and results")
+    sens.add_argument("--cache", default=str(DEFAULT_CACHE))
     sens.set_defaults(func=cmd_sensitivity)
+
+    prof = sub.add_parser("profile", help="attribute runtime to operator types and nodes")
+    prof.add_argument("model", help="path to an .onnx file")
+    prof.add_argument("--against", default=None, help="second .onnx to diff against")
+    prof.add_argument("--target", default=None)
+    prof.add_argument("--runs", type=int, default=20)
+    prof.add_argument("--batch-size", type=int, default=1)
+    prof.add_argument("--top", type=int, default=12)
+    prof.add_argument("--nodes", action="store_true", help="also list the slowest nodes")
+    prof.set_defaults(func=cmd_profile)
+
+    cmp_ = sub.add_parser(
+        "compare", help="re-measure a run's frontier on a different target"
+    )
+    cmp_.add_argument("ledger", help="path to ledger.json")
+    cmp_.add_argument("--target", required=True, help="the target to re-measure on")
+    cmp_.add_argument("--warmup", type=int, default=10)
+    cmp_.add_argument("--runs", type=int, default=50)
+    cmp_.set_defaults(func=cmd_compare)
 
     val = sub.add_parser(
         "validate", help="re-score a run's frontier on a much larger eval set"
