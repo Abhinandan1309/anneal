@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Anneal working artifacts. Reports, ledgers and frontier plots under examples/ are
+# tracked on purpose — the .onnx candidates they describe are not.
+runs/
+scratch/
+.anneal_cache/
+*.onnx
+
+# Datasets
+data/

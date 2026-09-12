@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anneal"
+version = "0.1.0"
+description = "An agent that optimizes neural networks for the hardware they'll actually run on."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Abhinandan Adalegere Rajendra", email = "abhinandanar6@gmail.com" }]
+keywords = ["edge-ai", "quantization", "onnx", "agent", "llm", "inference", "pareto"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "numpy>=1.24",
+  "onnx>=1.15",
+  "onnxruntime>=1.17",
+  "pillow>=10.0",
+  "rich>=13.0",
+]
+
+[project.optional-dependencies]
+torch = ["torch>=2.0", "torchvision>=0.15"]
+llm = ["anthropic>=0.40"]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+anneal = "anneal.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Abhinandan1309/anneal"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
