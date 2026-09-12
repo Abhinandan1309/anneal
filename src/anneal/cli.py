@@ -739,6 +739,170 @@ def cmd_compare(args: argparse.Namespace) -> int:
     return 0
 
 
+RECIPE_TEMPLATE = '''"""Reproduce trial {index} from Anneal run {run_id}.
+
+    {label}
+
+Measured on {target} ({machine}), onnxruntime {ort}:
+
+{measurements}
+
+This script is self-contained: it rebuilds the model from the baseline rather than
+trusting a binary someone emailed you. Run it and you get the same graph, or you find
+out that something in your toolchain differs from the one that produced these numbers —
+which is the more useful outcome of the two.
+"""
+
+from pathlib import Path
+
+from anneal.core.artifact import ModelArtifact
+from anneal.core.transforms import TransformContext, apply_transform
+{dataset_import}
+BASELINE = Path({baseline!r})
+OUTPUT = Path({output!r})
+
+
+def build() -> Path:
+    artifact = ModelArtifact(path=BASELINE)
+    ctx = TransformContext(
+        workdir=OUTPUT.parent / "_work",{evalset_arg}
+    )
+
+{steps}
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT.write_bytes(artifact.path.read_bytes())
+    print(f"wrote {{OUTPUT}} ({{OUTPUT.stat().st_size / 1e6:.1f}} MB)")
+    return OUTPUT
+
+
+if __name__ == "__main__":
+    build()
+'''
+
+
+def cmd_export(args: argparse.Namespace) -> int:
+    """Emit a standalone script that rebuilds one trial's model from the baseline."""
+    from anneal.core.ledger import Ledger
+    from anneal.report import compact_label
+
+    console = _console()
+    path = Path(args.ledger)
+    if not path.is_file():
+        console.print(f"[red]no such ledger:[/red] {path}")
+        return 2
+
+    ledger = Ledger.load(path)
+    base = ledger.baseline
+    if base is None:
+        console.print("[red]ledger has no baseline to rebuild from[/red]")
+        return 2
+
+    if args.trial is not None:
+        trial = next((t for t in ledger.trials if t.index == args.trial), None)
+        if trial is None:
+            console.print(f"[red]no trial {args.trial} in this ledger[/red]")
+            return 2
+        if not trial.ok:
+            console.print(f"[red]trial {args.trial} failed; there is nothing to reproduce[/red]")
+            return 2
+    else:
+        trial = ledger.best_under_constraints(min_accuracy=_floor_from_ledger(ledger))
+        if trial is None:
+            console.print("[red]no trial satisfies this run's constraints[/red]")
+            return 2
+        console.print(f"[dim]no --trial given; exporting the recommended pick, #{trial.index}[/dim]")
+
+    if not trial.artifact.lineage:
+        console.print(
+            "[yellow]that trial is the unmodified baseline — there is no recipe to "
+            "export[/yellow]"
+        )
+        return 1
+
+    needs_calibration = any(
+        t.name in ("quantize_static_int8",) for t in trial.artifact.lineage
+    )
+
+    steps = []
+    for i, record in enumerate(trial.artifact.lineage, start=1):
+        steps.append(f"    # step {i}: {record.name}")
+        steps.append(
+            f"    artifact = apply_transform(\n"
+            f"        {record.name!r},\n"
+            f"        {record.params!r},\n"
+            f"        artifact,\n"
+            f"        ctx,\n"
+            f"    )"
+        )
+        steps.append("")
+
+    m = trial.measurement
+    measurements = "\n".join(
+        f"    {line}"
+        for line in [
+            f"p50 latency   {m.latency_ms_p50:.2f} ms   ({ledger.speedup_of(trial):.2f}x vs baseline)",
+            f"p99 latency   {m.latency_ms_p99:.2f} ms",
+            f"size          {m.size_mb:.2f} MB",
+            (
+                f"top-1         {m.accuracy * 100:.2f}%  on {m.n_eval} images"
+                if m.accuracy is not None
+                else "top-1         not scored"
+            ),
+            (
+                f"agreement     {m.top1_agreement:.3f} of predictions match the baseline"
+                if m.top1_agreement is not None
+                else "agreement     not measured"
+            ),
+        ]
+    )
+
+    fp = ledger.target_fingerprint
+    script = RECIPE_TEMPLATE.format(
+        index=trial.index,
+        run_id=ledger.run_id,
+        label=trial.artifact.label,
+        target=fp.get("target", "?"),
+        machine=fp.get("processor") or fp.get("machine", "?"),
+        ort=fp.get("onnxruntime", "?"),
+        measurements=measurements,
+        # POSIX separators so the generated script is not Windows-only.
+        baseline=base.artifact.path.as_posix(),
+        output=Path(args.model_out or f"anneal-trial{trial.index}.onnx").as_posix(),
+        dataset_import=(
+            "from anneal.core.dataset import load_evalset\n" if needs_calibration else ""
+        ),
+        evalset_arg=(
+            "\n        # static quantization calibrates on real data; use the same "
+            "distribution\n        # you will deploy against, not noise.\n"
+            '        evalset=load_evalset("imagenette", cache_dir=Path.home() / ".anneal_cache",\n'
+            "                             batch_size=32, limit=256),"
+            if needs_calibration
+            else ""
+        ),
+        steps="\n".join(steps),
+    )
+
+    out = Path(args.out) if args.out else path.parent / f"reproduce_trial{trial.index}.py"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(script, encoding="utf-8")
+
+    console.print(f"[bold green]exported[/bold green] {compact_label(trial)}")
+    console.print(f"[dim]{out}[/dim]")
+    return 0
+
+
+def _floor_from_ledger(ledger) -> float | None:
+    constraints = ledger.config.get("constraints") or {}
+    base = ledger.baseline
+    floors = []
+    if constraints.get("min_accuracy") is not None:
+        floors.append(float(constraints["min_accuracy"]))
+    drop = constraints.get("max_accuracy_drop_pp")
+    if drop is not None and base and base.measurement and base.measurement.accuracy is not None:
+        floors.append(base.measurement.accuracy - float(drop) / 100.0)
+    return max(floors) if floors else None
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     from anneal.core.ledger import Ledger
     from anneal.report import console_table, write_report
@@ -868,6 +1032,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     val.add_argument("--cache", default=str(DEFAULT_CACHE))
     val.set_defaults(func=cmd_validate)
+
+    exp = sub.add_parser(
+        "export", help="emit a standalone script that rebuilds one trial's model"
+    )
+    exp.add_argument("ledger", help="path to ledger.json")
+    exp.add_argument("--trial", type=int, default=None, help="default: the recommended pick")
+    exp.add_argument("--out", default=None, help="where to write the script")
+    exp.add_argument("--model-out", default=None, help="path the script will write the model to")
+    exp.set_defaults(func=cmd_export)
 
     rep = sub.add_parser("report", help="re-render a report from a ledger")
     rep.add_argument("ledger", help="path to ledger.json")
