@@ -457,9 +457,10 @@ def cmd_validate(args: argparse.Namespace) -> int:
         args.eval, cache_dir=Path(args.cache), batch_size=args.eval_batch, limit=args.eval_limit
     )
     n = len(evalset)
+    mode = "cached" if getattr(evalset, "caching", True) else "streamed (too large to cache)"
     console.print(
         f"  {n} images (search used {ledger.config.get('evalset_size', '?')}) · "
-        f"resolution ±{wilson_halfwidth_pp(base.measurement.accuracy, n):.2f}pp\n"
+        f"resolution ±{wilson_halfwidth_pp(base.measurement.accuracy, n):.2f}pp · {mode}\n"
     )
 
     # Latency is already known from the search; a couple of runs just warms the graph.

@@ -99,6 +99,11 @@ class ImagenetteEvalSet(EvalSet):
     name = "imagenette"
     synthetic = False
 
+    #: Above this, decoded tensors are streamed rather than held in RAM. A validation
+    #: pass over the full ImageNet-derived val set would otherwise want several GB, and
+    #: swapping makes every latency number in the run meaningless.
+    CACHE_BUDGET_BYTES = 768 * 1024 * 1024
+
     def __init__(
         self,
         root: Path,
@@ -109,11 +114,13 @@ class ImagenetteEvalSet(EvalSet):
         image_size: int = 224,
         resize: int = 256,
         seed: int = 0,
+        cache: bool | None = None,
     ) -> None:
         self.root = Path(root)
         self.batch_size = batch_size
         self.image_size = image_size
         self.resize = resize
+        self._cache_requested = cache
 
         items: list[tuple[Path, int]] = []
         split_dir = self.root / split
@@ -137,35 +144,51 @@ class ImagenetteEvalSet(EvalSet):
         self.items: Sequence[tuple[Path, int]] = items
         self._cache: list[tuple[np.ndarray, np.ndarray]] | None = None
 
+        per_image = 3 * image_size * image_size * 4
+        self.caching = (
+            cache
+            if cache is not None
+            else (len(items) * per_image) <= self.CACHE_BUDGET_BYTES
+        )
+        self.estimated_bytes = len(items) * per_image
+
     def __len__(self) -> int:
         return len(self.items)
 
-    def _materialise(self) -> list[tuple[np.ndarray, np.ndarray]]:
-        """Decode once, reuse for every trial.
+    def _decode_batch(self, chunk: Sequence[tuple[Path, int]]) -> tuple[np.ndarray, np.ndarray]:
+        x = np.stack(
+            [preprocess_image(p, self.image_size, self.resize) for p, _ in chunk]
+        ).astype(np.float32)
+        y = np.array([label for _, label in chunk], dtype=np.int64)
+        return x, y
 
-        Re-decoding JPEGs for each of ~20 candidates would dominate wall time and, worse,
-        introduce per-trial variation in the exact pixels fed to the model.
-        """
-        if self._cache is not None:
-            return self._cache
-
-        batches: list[tuple[np.ndarray, np.ndarray]] = []
+    def _iter_batches(self) -> Iterator[tuple[np.ndarray, np.ndarray]]:
+        """Decode on the fly, holding one batch at a time."""
         for start in range(0, len(self.items), self.batch_size):
-            chunk = self.items[start : start + self.batch_size]
-            x = np.stack(
-                [preprocess_image(p, self.image_size, self.resize) for p, _ in chunk]
-            ).astype(np.float32)
-            y = np.array([label for _, label in chunk], dtype=np.int64)
-            batches.append((x, y))
-        self._cache = batches
-        return batches
+            yield self._decode_batch(self.items[start : start + self.batch_size])
+
+    def _materialise(self) -> list[tuple[np.ndarray, np.ndarray]]:
+        """Decode once and keep it, so every trial sees byte-identical inputs.
+
+        Re-decoding per candidate costs wall time, but the decode is deterministic, so
+        streaming gives the same pixels — only slower. Caching is the default because a
+        search runs the eval set ~20 times; it is abandoned above ``CACHE_BUDGET_BYTES``
+        because swapping would corrupt the very latency numbers this tool exists to
+        measure.
+        """
+        if self._cache is None:
+            self._cache = list(self._iter_batches())
+        return self._cache
 
     def batches(self) -> Iterator[tuple[np.ndarray, np.ndarray]]:
-        yield from self._materialise()
+        if self.caching:
+            yield from self._materialise()
+        else:
+            yield from self._iter_batches()
 
     def calibration_batches(self, limit: int) -> Iterator[np.ndarray]:
         seen = 0
-        for x, _ in self._materialise():
+        for x, _ in self.batches():
             if seen >= limit:
                 return
             yield x
