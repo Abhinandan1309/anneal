@@ -20,12 +20,7 @@ from anneal.core.artifact import ModelArtifact
 from anneal.core.ledger import Ledger, Trial
 from anneal.core.measure import Benchmarker, EvalSet, MeasurementError
 from anneal.core.targets import Target
-from anneal.core.transforms import (
-    TransformContext,
-    TransformError,
-    apply_transform,
-    available_transforms,
-)
+from anneal.core.transforms import TransformContext, apply_transform, available_transforms
 
 #: Give up if the policy proposes this many already-tried recipes back to back.
 MAX_CONSECUTIVE_REJECTIONS = 4
@@ -213,9 +208,11 @@ class OptimizationRun:
 
         try:
             candidate = apply_transform(proposal.transform, proposal.params, base, self.ctx)
-        except (TransformError, Exception) as exc:  # transforms call into vendor code
-            if isinstance(exc, KeyboardInterrupt):
-                raise
+        except Exception as exc:
+            # Transforms call into vendor quantization code that raises a wide and
+            # undocumented range of exception types. A transform that blows up is a fact
+            # about this model and target, so it becomes a recorded trial rather than
+            # ending the run. KeyboardInterrupt is not an Exception and still propagates.
             self._record_failure(
                 index, base, proposal, f"{type(exc).__name__}: {exc}", time.perf_counter() - started
             )

@@ -116,6 +116,23 @@ def test_frontier_svg_plots_every_scored_trial(ledger: Ledger):
     assert len(circles) == len(ledger.scored())
 
 
+def test_frontier_svg_keeps_every_point_inside_the_canvas(ledger: Ledger):
+    # Axis padding is computed from the data, so a bad range calculation silently
+    # scatters points off the edge of the image rather than raising.
+    width, height = 760, 440
+    root = ElementTree.fromstring(frontier_svg(ledger, width=width, height=height))
+    for circle in root.findall(".//{http://www.w3.org/2000/svg}circle"):
+        cx, cy, r = (float(circle.get(k)) for k in ("cx", "cy", "r"))
+        assert 0 <= cx - r and cx + r <= width
+        assert 0 <= cy - r and cy + r <= height
+
+
+def test_frontier_svg_marks_the_baseline_distinctly(ledger: Ledger):
+    root = ElementTree.fromstring(frontier_svg(ledger))
+    fills = [c.get("fill") for c in root.findall(".//{http://www.w3.org/2000/svg}circle")]
+    assert fills.count("#ffffff") == 1, "exactly one hollow marker, for the baseline"
+
+
 def test_frontier_svg_degrades_gracefully_with_no_data():
     svg = frontier_svg(Ledger())
     assert "no scored trials" in svg

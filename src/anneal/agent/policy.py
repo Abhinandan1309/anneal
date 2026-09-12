@@ -395,22 +395,27 @@ class ClaudePolicy:
         *,
         api_key: str | None = None,
         max_tokens: int = 1024,
+        client: Any = None,
     ) -> None:
-        try:
-            import anthropic
-        except ImportError as exc:
-            raise ImportError(
-                "the Claude policy needs the optional llm extra: pip install 'anneal[llm]'"
-            ) from exc
+        #: ``client`` is injectable so the proposal-parsing logic can be tested without
+        #: network access — that parsing is where the bugs live, not in the HTTP call.
+        if client is None:
+            try:
+                import anthropic
+            except ImportError as exc:
+                raise ImportError(
+                    "the Claude policy needs the optional llm extra: pip install 'anneal[llm]'"
+                ) from exc
 
-        key = api_key or os.environ.get("ANTHROPIC_API_KEY")
-        if not key:
-            raise RuntimeError(
-                "ANTHROPIC_API_KEY is not set. Either export it, or run with "
-                "--policy heuristic, which needs no API access."
-            )
+            key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+            if not key:
+                raise RuntimeError(
+                    "ANTHROPIC_API_KEY is not set. Either export it, or run with "
+                    "--policy heuristic, which needs no API access."
+                )
+            client = anthropic.Anthropic(api_key=key)
 
-        self._client = anthropic.Anthropic(api_key=key)
+        self._client = client
         self._model = model
         self._max_tokens = max_tokens
         self._stop_reason = ""
