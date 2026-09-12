@@ -287,6 +287,156 @@ def cmd_sensitivity(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_validate(args: argparse.Namespace) -> int:
+    """Re-score the finalists on a much larger eval set.
+
+    The search deliberately uses a small eval set — it runs once per trial, so a big one
+    would dominate wall time. But a small eval set cannot resolve small accuracy
+    differences, and the frontier is exactly where those differences decide things. This
+    mirrors what an engineer actually does: search cheap, then confirm the shortlist
+    properly before anyone ships it.
+    """
+    from rich.table import Table
+
+    from anneal.core.dataset import load_evalset
+    from anneal.core.ledger import Ledger
+    from anneal.core.measure import Benchmarker, MeasurementError
+    from anneal.core.targets import get_target
+    from anneal.report import compact_label, wilson_halfwidth_pp
+
+    console = _console()
+    path = Path(args.ledger)
+    if not path.is_file():
+        console.print(f"[red]no such ledger:[/red] {path}")
+        return 2
+
+    ledger = Ledger.load(path)
+    base = ledger.baseline
+    if base is None or base.measurement is None:
+        console.print("[red]ledger has no successful baseline to compare against[/red]")
+        return 2
+
+    target = get_target(ledger.target_fingerprint.get("target", "cpu-1t"))
+    try:
+        target.ensure_available()
+    except Exception as exc:
+        console.print(f"[red]cannot validate on {target.name}:[/red] {exc}")
+        return 2
+
+    # Validate the frontier plus the baseline, minus anything too slow to be a candidate.
+    shortlist = {base.index: base}
+    for trial in ledger.pareto_front():
+        speedup = ledger.speedup_of(trial)
+        if args.skip_slower_than and speedup and speedup < 1 / args.skip_slower_than:
+            console.print(
+                f"[dim]skipping #{trial.index} ({compact_label(trial)}) — "
+                f"{1 / speedup:.1f}x slower than baseline, not a candidate[/dim]"
+            )
+            continue
+        shortlist[trial.index] = trial
+
+    missing = [t for t in shortlist.values() if not t.artifact.path.is_file()]
+    if missing:
+        console.print(
+            f"[red]{len(missing)} model file(s) from this ledger no longer exist[/red]; "
+            f"validation needs the candidate .onnx files the run produced"
+        )
+        return 2
+
+    console.print(f"Loading eval set [cyan]{args.eval}[/cyan] …")
+    evalset = load_evalset(
+        args.eval, cache_dir=Path(args.cache), batch_size=args.eval_batch, limit=args.eval_limit
+    )
+    n = len(evalset)
+    console.print(
+        f"  {n} images (search used {ledger.config.get('evalset_size', '?')}) · "
+        f"resolution ±{wilson_halfwidth_pp(base.measurement.accuracy, n):.2f}pp\n"
+    )
+
+    # Latency is already known from the search; a couple of runs just warms the graph.
+    bench = Benchmarker(target, warmup=2, runs=3, seed=ledger.config.get("seed", 0))
+
+    results: list[tuple[int, str, float | None, float | None, float | None]] = []
+    for index in sorted(shortlist):
+        trial = shortlist[index]
+        label = compact_label(trial)
+        console.print(f"[dim]scoring #{index} {label} …[/dim]")
+        try:
+            m = bench.measure(trial.artifact, evalset=evalset, record_baseline=(index == base.index))
+        except MeasurementError as exc:
+            console.print(f"  [red]failed:[/red] {exc}")
+            results.append((index, label, None, None, None))
+            continue
+        results.append((index, label, m.accuracy, m.top1_agreement, ledger.speedup_of(trial)))
+
+    search_acc = {t.index: t.measurement.accuracy for t in shortlist.values() if t.measurement}
+    validated_base = next((a for i, _, a, _, _ in results if i == base.index), None)
+
+    table = Table(title=f"validated on {n} images", header_style="bold")
+    table.add_column("#", justify="right", style="dim")
+    table.add_column("recipe")
+    table.add_column("speedup", justify="right")
+    table.add_column(f"top-1 (n={ledger.config.get('evalset_size', '?')})", justify="right")
+    table.add_column(f"top-1 (n={n})", justify="right")
+    table.add_column("acc pp", justify="right")
+    table.add_column("agree", justify="right")
+
+    for index, label, acc, agreement, speedup in results:
+        if acc is None:
+            table.add_row(str(index), label, "—", "—", "[red]failed[/red]", "—", "—")
+            continue
+        delta = (
+            f"{(acc - validated_base) * 100:+.2f}"
+            if validated_base is not None and index != base.index
+            else "—"
+        )
+        old = search_acc.get(index)
+        table.add_row(
+            str(index),
+            label,
+            "—" if speedup is None else f"{speedup:.2f}x",
+            "—" if old is None else f"{old * 100:.2f}%",
+            f"{acc * 100:.2f}%",
+            delta,
+            "—" if agreement is None else f"{agreement:.3f}",
+        )
+
+    console.print()
+    console.print(table)
+    console.print(
+        f"\n[dim]Differences smaller than ±{wilson_halfwidth_pp(validated_base or 0.5, n):.2f}pp "
+        f"remain unresolved even at this eval size. 'agree' is paired per-image and is the "
+        f"sharper signal for whether behaviour actually changed.[/dim]"
+    )
+
+    out = path.parent / "validation.json"
+    import json
+
+    out.write_text(
+        json.dumps(
+            {
+                "eval": args.eval,
+                "n_eval": n,
+                "resolution_pp": wilson_halfwidth_pp(validated_base or 0.5, n),
+                "results": [
+                    {
+                        "index": i,
+                        "recipe": lbl,
+                        "accuracy": a,
+                        "top1_agreement": ag,
+                        "speedup": sp,
+                    }
+                    for i, lbl, a, ag, sp in results
+                ],
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    console.print(f"[dim]validation: {out}[/dim]")
+    return 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     from anneal.core.ledger import Ledger
     from anneal.report import console_table, write_report
@@ -368,6 +518,23 @@ def build_parser() -> argparse.ArgumentParser:
     sens.add_argument("--top", type=int, default=20)
     sens.add_argument("--per-tensor", action="store_true", help="per-tensor instead of per-channel")
     sens.set_defaults(func=cmd_sensitivity)
+
+    val = sub.add_parser(
+        "validate", help="re-score a run's frontier on a much larger eval set"
+    )
+    val.add_argument("ledger", help="path to ledger.json")
+    val.add_argument("--eval", default="imagenette")
+    val.add_argument("--eval-limit", type=int, default=None, help="default: the whole set")
+    val.add_argument("--eval-batch", type=int, default=32)
+    val.add_argument(
+        "--skip-slower-than",
+        type=float,
+        default=2.0,
+        metavar="X",
+        help="don't spend eval time on candidates more than X times slower than baseline",
+    )
+    val.add_argument("--cache", default=str(DEFAULT_CACHE))
+    val.set_defaults(func=cmd_validate)
 
     rep = sub.add_parser("report", help="re-render a report from a ledger")
     rep.add_argument("ledger", help="path to ledger.json")

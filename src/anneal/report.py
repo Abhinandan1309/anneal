@@ -60,6 +60,23 @@ def compact_label(trial: Trial) -> str:
     return " > ".join(parts)
 
 
+def wilson_halfwidth_pp(accuracy: float | None, n: int, z: float = 1.96) -> float | None:
+    """Half-width of the 95% Wilson score interval, in percentage points.
+
+    This matters more than it looks. On a 256-image eval set a 2.7pp accuracy difference
+    is roughly one standard error — which is to say, not evidence of anything. Reporting
+    top-1 to two decimal places without also reporting how much of that is sampling noise
+    invites exactly the wrong conclusion. Wilson rather than the normal approximation
+    because it stays sane near p=0 and p=1.
+    """
+    if accuracy is None or n <= 0:
+        return None
+    z2 = z * z
+    denom = 1 + z2 / n
+    half = z * ((accuracy * (1 - accuracy) / n + z2 / (4 * n * n)) ** 0.5) / denom
+    return half * 100
+
+
 def _acc_delta_pp(ledger: Ledger, trial: Trial) -> float | None:
     base = ledger.baseline
     if (
@@ -169,6 +186,19 @@ def markdown_report(ledger: Ledger, *, svg_path: str | None = None) -> str:
         f"| Budget | {cfg.get('budget', '?')} trials |",
         "",
     ]
+
+    if base is not None and base.measurement is not None:
+        half = wilson_halfwidth_pp(base.measurement.accuracy, base.measurement.n_eval)
+        if half is not None:
+            lines += [
+                f"**Accuracy resolution: ±{half:.1f}pp** (95% Wilson interval at "
+                f"n={base.measurement.n_eval}). Two trials whose top-1 differs by less "
+                f"than roughly this much are tied, not ranked. When the difference is "
+                f"within noise, `agreement` — the fraction of images where a candidate "
+                f"predicts the same class as the baseline — is the sharper signal, "
+                f"because it is paired per-image rather than an aggregate.",
+                "",
+            ]
 
     if cfg.get("evalset_synthetic"):
         lines += [

@@ -7,7 +7,13 @@ from xml.etree import ElementTree
 
 from anneal.core.artifact import TransformRecord
 from anneal.core.ledger import Ledger
-from anneal.report import compact_label, frontier_svg, markdown_report, write_report
+from anneal.report import (
+    compact_label,
+    frontier_svg,
+    markdown_report,
+    wilson_halfwidth_pp,
+    write_report,
+)
 from conftest import make_trial
 
 
@@ -59,6 +65,31 @@ def test_compact_label_shows_chained_transforms():
 
 
 # ----- markdown ------------------------------------------------------------
+
+
+def test_wilson_interval_shrinks_as_the_eval_set_grows():
+    small = wilson_halfwidth_pp(0.668, 256)
+    large = wilson_halfwidth_pp(0.668, 25_600)
+    assert small is not None and large is not None
+    assert small > large
+    # 256 images cannot resolve a 2pp difference; the README claims this, so pin it.
+    assert small > 2.0
+
+
+def test_wilson_interval_stays_finite_at_the_extremes():
+    assert wilson_halfwidth_pp(1.0, 100) > 0
+    assert wilson_halfwidth_pp(0.0, 100) > 0
+
+
+def test_wilson_interval_is_undefined_without_data():
+    assert wilson_halfwidth_pp(None, 256) is None
+    assert wilson_halfwidth_pp(0.5, 0) is None
+
+
+def test_markdown_states_the_accuracy_resolution(ledger: Ledger):
+    md = markdown_report(ledger)
+    assert "Accuracy resolution:" in md
+    assert "tied, not ranked" in md
 
 
 def test_markdown_report_has_the_sections_a_reader_needs(ledger: Ledger):
