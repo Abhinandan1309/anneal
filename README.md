@@ -232,6 +232,44 @@ even a change of silicon.
 This is the entire thesis, and it is why the edge targets in `anneal targets` refuse to
 fake it.
 
+### A second model: MobileNetV3-Large says "don't"
+
+Same protocol, same target, same budget. Full artifacts in
+[`examples/mobilenetv3-cpu1t/`](examples/mobilenetv3-cpu1t/).
+
+| # | recipe | p50 ms | speedup | size MB | top-1 | agreement |
+|---:|---|---:|---:|---:|---:|---:|
+| 0 | baseline fp32 | 7.03 | 1.00x | 20.9 | 71.48% | — |
+| 1 | graph fusion | 7.25 | 0.97x | 20.9 | 71.48% | 1.000 |
+| 2 | dynamic INT8, per-channel | 105.46 | 0.07x | 5.5 | 41.41% | 0.453 |
+| 3 | static INT8 (QDQ) | 8.25 | **0.85x** | 5.7 | **42.19%** | **0.480** |
+| 5 | static INT8, per-tensor | 8.77 | 0.80x | 5.5 | 20.31% | 0.223 |
+| 6 | selective INT8, spare k=1 (measured) | 97.63 | 0.07x | 5.5 | 49.22% | 0.602 |
+| 7 | selective INT8, spare k=2 (measured) | 100.96 | 0.07x | 5.5 | 50.00% | 0.625 |
+| 8 | selective INT8, spare k=4 (measured) | 110.75 | 0.06x | 5.5 | 57.42% | 0.738 |
+
+**Nothing helps, and the tool says so.** Static INT8 — the transform that bought 1.33x on
+ResNet-18 — is *slower* here, and top-1 collapses from 71.5% to 42.2% with more than half
+of all predictions changed. Fusion is within noise of the baseline. The recommended pick is
+the unmodified FP32 model. MobileNetV3's depthwise convolutions, hard-swish activations and
+squeeze-excite blocks are known to resist post-training quantization; it needs
+quantization-aware training, which is outside this action space. The value here is the
+negative result arriving in minutes, with the evidence attached, instead of after a week of
+hand-tuning.
+
+**The measured ranking finds the fragile layers on its own.** The four layers it chose to
+spare are all depthwise convolutions — the layer type the literature singles out as
+quantization-sensitive — and accuracy climbs monotonically as more are spared (49.2% →
+50.0% → 57.4%, agreement 0.60 → 0.74). Still nowhere near FP32, and still on the slow
+`ConvInteger` path, but it is the ranking doing its job on an unfamiliar architecture.
+
+**The ledger caught a bug in the policy.** Trial 9 is `fusion → fusion`: the heuristic's
+"stack the fastest candidate on the fused graph" rule assumed the fastest candidate would be
+a quantization. On MobileNetV3 it was fusion itself, so the rule proposed fusing twice. The
+transform refused it and the trial was recorded as a failure — which is how it was noticed —
+and the rule now only stacks quantizations. This run predates the fix and is committed as it
+happened.
+
 ---
 
 ## What makes the measurements trustworthy

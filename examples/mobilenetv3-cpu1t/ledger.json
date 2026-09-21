@@ -1,0 +1,688 @@
+{
+  "run_id": "de67915676f5",
+  "started_at": 1789980547.8623834,
+  "target_fingerprint": {
+    "target": "cpu-1t",
+    "providers": [
+      "CPUExecutionProvider"
+    ],
+    "intra_op_threads": 1,
+    "inter_op_threads": 1,
+    "graph_opt_level": "all",
+    "machine": "AMD64",
+    "processor": "AMD64 Family 23 Model 96 Stepping 1, AuthenticAMD",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.10",
+    "onnxruntime": "1.30.0"
+  },
+  "config": {
+    "budget": 10,
+    "batch_size": 1,
+    "warmup": 10,
+    "runs": 50,
+    "calib_samples": 64,
+    "seed": 0,
+    "sensitivity_source": null,
+    "constraints": {
+      "max_accuracy_drop_pp": 1.0,
+      "min_accuracy": null,
+      "max_size_bytes": null,
+      "max_latency_ms": null
+    },
+    "policy": "heuristic",
+    "baseline_model": "torchvision:mobilenet_v3_large",
+    "evalset": "imagenette",
+    "evalset_size": 256,
+    "evalset_synthetic": false,
+    "transforms_available": [
+      "graph_optimize",
+      "quantize_dynamic_int8",
+      "quantize_dynamic_sensitive",
+      "quantize_static_int8"
+    ]
+  },
+  "trials": [
+    {
+      "index": 0,
+      "artifact": {
+        "path": "examples\\mobilenetv3-cpu1t\\models\\mobilenet_v3_large-fp32.onnx",
+        "lineage": [],
+        "label": "baseline",
+        "meta": {
+          "source": "torchvision:mobilenet_v3_large",
+          "weights": "DEFAULT",
+          "image_size": 224,
+          "batch_size": 1,
+          "opset": 17
+        }
+      },
+      "measurement": {
+        "latency_ms_p50": 7.0258,
+        "latency_ms_p90": 7.9873,
+        "latency_ms_p99": 8.4057,
+        "latency_ms_mean": 7.108032000000001,
+        "latency_ms_std": 0.5577802181648251,
+        "n_runs": 50,
+        "n_warmup": 10,
+        "batch_size": 1,
+        "size_bytes": 21922145,
+        "providers_used": [
+          "CPUExecutionProvider"
+        ],
+        "load_time_ms": 59.96259999938047,
+        "accuracy": 0.71484375,
+        "n_eval": 256,
+        "top1_agreement": null,
+        "logit_cosine": null,
+        "notes": {},
+        "size_mb": 20.9066,
+        "throughput_ips": 142.333
+      },
+      "error": null,
+      "proposer": "harness",
+      "rationale": "Unmodified model. Every other number is relative to this one.",
+      "duration_s": 3.2083,
+      "timestamp": 1789980551.0707862
+    },
+    {
+      "index": 1,
+      "artifact": {
+        "path": "examples\\mobilenetv3-cpu1t\\candidates\\graph-optimize-level-all-edffb711bd.onnx",
+        "lineage": [
+          {
+            "name": "graph_optimize",
+            "params": {
+              "level": "all"
+            }
+          }
+        ],
+        "label": "graph_optimize(level=all)",
+        "meta": {
+          "source": "torchvision:mobilenet_v3_large",
+          "weights": "DEFAULT",
+          "image_size": 224,
+          "batch_size": 1,
+          "opset": 17,
+          "portability_warning": "level='all' bakes in NCHWc layout transforms specific to the CPU that ran the optimisation; this artifact is only valid on matching hardware. Use level='extended' for a portable file."
+        }
+      },
+      "measurement": {
+        "latency_ms_p50": 7.2527,
+        "latency_ms_p90": 8.341,
+        "latency_ms_p99": 10.0005,
+        "latency_ms_mean": 7.353300000000001,
+        "latency_ms_std": 0.656655484101062,
+        "n_runs": 50,
+        "n_warmup": 10,
+        "batch_size": 1,
+        "size_bytes": 21921208,
+        "providers_used": [
+          "CPUExecutionProvider"
+        ],
+        "load_time_ms": 44.71949999970093,
+        "accuracy": 0.71484375,
+        "n_eval": 256,
+        "top1_agreement": 1.0,
+        "logit_cosine": 0.9999999999999993,
+        "notes": {},
+        "size_mb": 20.9057,
+        "throughput_ips": 137.88
+      },
+      "error": null,
+      "proposer": "heuristic",
+      "rationale": "Lossless baseline: establish what fusion alone buys before touching precision.",
+      "duration_s": 2.603,
+      "timestamp": 1789980553.6748838
+    },
+    {
+      "index": 2,
+      "artifact": {
+        "path": "examples\\mobilenetv3-cpu1t\\candidates\\quantize-dynamic-int8-per-channel-True-reduce-range-False-we-46fc60ac92.onnx",
+        "lineage": [
+          {
+            "name": "quantize_dynamic_int8",
+            "params": {
+              "per_channel": true,
+              "reduce_range": false,
+              "weight_type": "int8"
+            }
+          }
+        ],
+        "label": "quantize_dynamic_int8(per_channel=True,reduce_range=False,weight_type=int8)",
+        "meta": {
+          "source": "torchvision:mobilenet_v3_large",
+          "weights": "DEFAULT",
+          "image_size": 224,
+          "batch_size": 1,
+          "opset": 17
+        }
+      },
+      "measurement": {
+        "latency_ms_p50": 105.459,
+        "latency_ms_p90": 115.611,
+        "latency_ms_p99": 135.3826,
+        "latency_ms_mean": 106.656476,
+        "latency_ms_std": 7.303521252178568,
+        "n_runs": 50,
+        "n_warmup": 10,
+        "batch_size": 1,
+        "size_bytes": 5721160,
+        "providers_used": [
+          "CPUExecutionProvider"
+        ],
+        "load_time_ms": 132.4758999999176,
+        "accuracy": 0.4140625,
+        "n_eval": 256,
+        "top1_agreement": 0.453125,
+        "logit_cosine": 0.5862367356862725,
+        "notes": {},
+        "size_mb": 5.4561,
+        "throughput_ips": 9.482
+      },
+      "error": null,
+      "proposer": "heuristic",
+      "rationale": "Cheapest INT8 path; no calibration needed. Probes whether this target has INT8 kernels worth using.",
+      "duration_s": 36.0622,
+      "timestamp": 1789980589.7249153
+    },
+    {
+      "index": 3,
+      "artifact": {
+        "path": "examples\\mobilenetv3-cpu1t\\candidates\\quantize-static-int8-calib-samples-64-calibrate-method-minma-e10197ea14.onnx",
+        "lineage": [
+          {
+            "name": "quantize_static_int8",
+            "params": {
+              "per_channel": true,
+              "reduce_range": false,
+              "calibrate_method": "minmax",
+              "calib_samples": 64
+            }
+          }
+        ],
+        "label": "quantize_static_int8(calib_samples=64,calibrate_method=minmax,per_channel=True,reduce_range=False)",
+        "meta": {
+          "source": "torchvision:mobilenet_v3_large",
+          "weights": "DEFAULT",
+          "image_size": 224,
+          "batch_size": 1,
+          "opset": 17,
+          "calib_samples": 64
+        }
+      },
+      "measurement": {
+        "latency_ms_p50": 8.2546,
+        "latency_ms_p90": 9.0957,
+        "latency_ms_p99": 9.4494,
+        "latency_ms_mean": 8.39707,
+        "latency_ms_std": 0.43318470159967565,
+        "n_runs": 50,
+        "n_warmup": 10,
+        "batch_size": 1,
+        "size_bytes": 6004006,
+        "providers_used": [
+          "CPUExecutionProvider"
+        ],
+        "load_time_ms": 116.71970000043075,
+        "accuracy": 0.421875,
+        "n_eval": 256,
+        "top1_agreement": 0.48046875,
+        "logit_cosine": 0.6017873378083604,
+        "notes": {},
+        "size_mb": 5.7259,
+        "throughput_ips": 121.145
+      },
+      "error": null,
+      "proposer": "heuristic",
+      "rationale": "Full INT8 with real calibration \u2014 the largest potential latency win and the largest accuracy risk.",
+      "duration_s": 6.6458,
+      "timestamp": 1789980596.3707094
+    },
+    {
+      "index": 4,
+      "artifact": {
+        "path": "examples\\mobilenetv3-cpu1t\\candidates\\quantize-dynamic-int8-per-channel-False-reduce-range-False-w-a3e1b71b99.onnx",
+        "lineage": [
+          {
+            "name": "quantize_dynamic_int8",
+            "params": {
+              "per_channel": false,
+              "reduce_range": false,
+              "weight_type": "int8"
+            }
+          }
+        ],
+        "label": "quantize_dynamic_int8(per_channel=False,reduce_range=False,weight_type=int8)",
+        "meta": {
+          "source": "torchvision:mobilenet_v3_large",
+          "weights": "DEFAULT",
+          "image_size": 224,
+          "batch_size": 1,
+          "opset": 17
+        }
+      },
+      "measurement": {
+        "latency_ms_p50": 100.5233,
+        "latency_ms_p90": 105.7084,
+        "latency_ms_p99": 109.8129,
+        "latency_ms_mean": 101.13372,
+        "latency_ms_std": 2.90073058549049,
+        "n_runs": 50,
+        "n_warmup": 10,
+        "batch_size": 1,
+        "size_bytes": 5709750,
+        "providers_used": [
+          "CPUExecutionProvider"
+        ],
+        "load_time_ms": 117.30420000003505,
+        "accuracy": 0.41015625,
+        "n_eval": 256,
+        "top1_agreement": 0.44921875,
+        "logit_cosine": 0.5859182987016074,
+        "notes": {},
+        "size_mb": 5.4452,
+        "throughput_ips": 9.948
+      },
+      "error": null,
+      "proposer": "heuristic",
+      "rationale": "Trial [2] came out 15.0x SLOWER than FP32. Per-channel dynamic scales are the usual cause on CPU targets; retry with per-tensor scales before writing off this transform.",
+      "duration_s": 34.777,
+      "timestamp": 1789980631.1517894
+    },
+    {
+      "index": 5,
+      "artifact": {
+        "path": "examples\\mobilenetv3-cpu1t\\candidates\\quantize-static-int8-calib-samples-64-calibrate-method-minma-5f95545e45.onnx",
+        "lineage": [
+          {
+            "name": "quantize_static_int8",
+            "params": {
+              "per_channel": false,
+              "reduce_range": false,
+              "calibrate_method": "minmax",
+              "calib_samples": 64
+            }
+          }
+        ],
+        "label": "quantize_static_int8(calib_samples=64,calibrate_method=minmax,per_channel=False,reduce_range=False)",
+        "meta": {
+          "source": "torchvision:mobilenet_v3_large",
+          "weights": "DEFAULT",
+          "image_size": 224,
+          "batch_size": 1,
+          "opset": 17,
+          "calib_samples": 64
+        }
+      },
+      "measurement": {
+        "latency_ms_p50": 8.7705,
+        "latency_ms_p90": 9.7001,
+        "latency_ms_p99": 10.3667,
+        "latency_ms_mean": 8.836158000000001,
+        "latency_ms_std": 0.5407421256347613,
+        "n_runs": 50,
+        "n_warmup": 10,
+        "batch_size": 1,
+        "size_bytes": 5747756,
+        "providers_used": [
+          "CPUExecutionProvider"
+        ],
+        "load_time_ms": 131.4181000007011,
+        "accuracy": 0.203125,
+        "n_eval": 256,
+        "top1_agreement": 0.22265625,
+        "logit_cosine": 0.3832409999486651,
+        "notes": {},
+        "size_mb": 5.4815,
+        "throughput_ips": 114.019
+      },
+      "error": null,
+      "proposer": "heuristic",
+      "rationale": "Trial [3] came out 1.2x SLOWER than FP32. Per-channel dynamic scales are the usual cause on CPU targets; retry with per-tensor scales before writing off this transform.",
+      "duration_s": 5.4375,
+      "timestamp": 1789980636.6038766
+    },
+    {
+      "index": 6,
+      "artifact": {
+        "path": "examples\\mobilenetv3-cpu1t\\candidates\\quantize-dynamic-sensitive-per-channel-True-ranking-measured-223cfeed0a.onnx",
+        "lineage": [
+          {
+            "name": "quantize_dynamic_sensitive",
+            "params": {
+              "skip_top_k": 1,
+              "skip_first_last": false,
+              "per_channel": true,
+              "ranking": "measured"
+            }
+          }
+        ],
+        "label": "quantize_dynamic_sensitive(per_channel=True,ranking=measured,skip_first_last=False,skip_top_k=1)",
+        "meta": {
+          "source": "torchvision:mobilenet_v3_large",
+          "weights": "DEFAULT",
+          "image_size": 224,
+          "batch_size": 1,
+          "opset": 17,
+          "excluded_nodes": [
+            "/features/features.1/block/block.0/block.0.0/Conv"
+          ],
+          "sensitivity_ranking": "measured",
+          "sensitivity_top5": [
+            {
+              "node": "/features/features.11/block/block.2/fc1/Conv",
+              "rel_err": 0.01958,
+              "op": "Conv"
+            },
+            {
+              "node": "/features/features.12/block/block.2/fc1/Conv",
+              "rel_err": 0.01647,
+              "op": "Conv"
+            },
+            {
+              "node": "/features/features.15/block/block.2/fc1/Conv",
+              "rel_err": 0.01488,
+              "op": "Conv"
+            },
+            {
+              "node": "/features/features.13/block/block.2/fc1/Conv",
+              "rel_err": 0.01468,
+              "op": "Conv"
+            },
+            {
+              "node": "/features/features.14/block/block.2/fc1/Conv",
+              "rel_err": 0.01438,
+              "op": "Conv"
+            }
+          ]
+        }
+      },
+      "measurement": {
+        "latency_ms_p50": 97.6326,
+        "latency_ms_p90": 102.449,
+        "latency_ms_p99": 105.1496,
+        "latency_ms_mean": 98.295444,
+        "latency_ms_std": 2.6719492271493483,
+        "n_runs": 50,
+        "n_warmup": 10,
+        "batch_size": 1,
+        "size_bytes": 5719653,
+        "providers_used": [
+          "CPUExecutionProvider"
+        ],
+        "load_time_ms": 126.00519999978133,
+        "accuracy": 0.4921875,
+        "n_eval": 256,
+        "top1_agreement": 0.6015625,
+        "logit_cosine": 0.7519651641302717,
+        "notes": {},
+        "size_mb": 5.4547,
+        "throughput_ips": 10.242
+      },
+      "error": null,
+      "proposer": "heuristic",
+      "rationale": "2 quantized candidate(s) fell below the accuracy floor; spare the 1 most quantization-sensitive layer(s) and re-measure.",
+      "duration_s": 195.8029,
+      "timestamp": 1789980832.4036002
+    },
+    {
+      "index": 7,
+      "artifact": {
+        "path": "examples\\mobilenetv3-cpu1t\\candidates\\quantize-dynamic-sensitive-per-channel-True-ranking-measured-6337c6d96e.onnx",
+        "lineage": [
+          {
+            "name": "quantize_dynamic_sensitive",
+            "params": {
+              "skip_top_k": 2,
+              "skip_first_last": false,
+              "per_channel": true,
+              "ranking": "measured"
+            }
+          }
+        ],
+        "label": "quantize_dynamic_sensitive(per_channel=True,ranking=measured,skip_first_last=False,skip_top_k=2)",
+        "meta": {
+          "source": "torchvision:mobilenet_v3_large",
+          "weights": "DEFAULT",
+          "image_size": 224,
+          "batch_size": 1,
+          "opset": 17,
+          "excluded_nodes": [
+            "/features/features.1/block/block.0/block.0.0/Conv",
+            "/features/features.15/block/block.1/block.1.0/Conv"
+          ],
+          "sensitivity_ranking": "measured",
+          "sensitivity_top5": [
+            {
+              "node": "/features/features.11/block/block.2/fc1/Conv",
+              "rel_err": 0.01958,
+              "op": "Conv"
+            },
+            {
+              "node": "/features/features.12/block/block.2/fc1/Conv",
+              "rel_err": 0.01647,
+              "op": "Conv"
+            },
+            {
+              "node": "/features/features.15/block/block.2/fc1/Conv",
+              "rel_err": 0.01488,
+              "op": "Conv"
+            },
+            {
+              "node": "/features/features.13/block/block.2/fc1/Conv",
+              "rel_err": 0.01468,
+              "op": "Conv"
+            },
+            {
+              "node": "/features/features.14/block/block.2/fc1/Conv",
+              "rel_err": 0.01438,
+              "op": "Conv"
+            }
+          ]
+        }
+      },
+      "measurement": {
+        "latency_ms_p50": 100.9553,
+        "latency_ms_p90": 121.5007,
+        "latency_ms_p99": 148.2581,
+        "latency_ms_mean": 103.66287200000001,
+        "latency_ms_std": 11.741148602347899,
+        "n_runs": 50,
+        "n_warmup": 10,
+        "batch_size": 1,
+        "size_bytes": 5789616,
+        "providers_used": [
+          "CPUExecutionProvider"
+        ],
+        "load_time_ms": 156.95640000012645,
+        "accuracy": 0.5,
+        "n_eval": 256,
+        "top1_agreement": 0.625,
+        "logit_cosine": 0.7754074826548497,
+        "notes": {},
+        "size_mb": 5.5214,
+        "throughput_ips": 9.905
+      },
+      "error": null,
+      "proposer": "heuristic",
+      "rationale": "2 quantized candidate(s) fell below the accuracy floor; spare the 2 most quantization-sensitive layer(s) and re-measure.",
+      "duration_s": 35.3278,
+      "timestamp": 1789980867.734813
+    },
+    {
+      "index": 8,
+      "artifact": {
+        "path": "examples\\mobilenetv3-cpu1t\\candidates\\quantize-dynamic-sensitive-per-channel-True-ranking-measured-6c36b46ba4.onnx",
+        "lineage": [
+          {
+            "name": "quantize_dynamic_sensitive",
+            "params": {
+              "skip_top_k": 4,
+              "skip_first_last": false,
+              "per_channel": true,
+              "ranking": "measured"
+            }
+          }
+        ],
+        "label": "quantize_dynamic_sensitive(per_channel=True,ranking=measured,skip_first_last=False,skip_top_k=4)",
+        "meta": {
+          "source": "torchvision:mobilenet_v3_large",
+          "weights": "DEFAULT",
+          "image_size": 224,
+          "batch_size": 1,
+          "opset": 17,
+          "excluded_nodes": [
+            "/features/features.1/block/block.0/block.0.0/Conv",
+            "/features/features.15/block/block.1/block.1.0/Conv",
+            "/features/features.12/block/block.1/block.1.0/Conv",
+            "/features/features.11/block/block.1/block.1.0/Conv"
+          ],
+          "sensitivity_ranking": "measured",
+          "sensitivity_top5": [
+            {
+              "node": "/features/features.11/block/block.2/fc1/Conv",
+              "rel_err": 0.01958,
+              "op": "Conv"
+            },
+            {
+              "node": "/features/features.12/block/block.2/fc1/Conv",
+              "rel_err": 0.01647,
+              "op": "Conv"
+            },
+            {
+              "node": "/features/features.15/block/block.2/fc1/Conv",
+              "rel_err": 0.01488,
+              "op": "Conv"
+            },
+            {
+              "node": "/features/features.13/block/block.2/fc1/Conv",
+              "rel_err": 0.01468,
+              "op": "Conv"
+            },
+            {
+              "node": "/features/features.14/block/block.2/fc1/Conv",
+              "rel_err": 0.01438,
+              "op": "Conv"
+            }
+          ]
+        }
+      },
+      "measurement": {
+        "latency_ms_p50": 110.747,
+        "latency_ms_p90": 131.5597,
+        "latency_ms_p99": 145.8285,
+        "latency_ms_mean": 112.76832,
+        "latency_ms_std": 13.589079311594292,
+        "n_runs": 50,
+        "n_warmup": 10,
+        "batch_size": 1,
+        "size_bytes": 5816650,
+        "providers_used": [
+          "CPUExecutionProvider"
+        ],
+        "load_time_ms": 140.0684000000183,
+        "accuracy": 0.57421875,
+        "n_eval": 256,
+        "top1_agreement": 0.73828125,
+        "logit_cosine": 0.8447203203984333,
+        "notes": {},
+        "size_mb": 5.5472,
+        "throughput_ips": 9.03
+      },
+      "error": null,
+      "proposer": "heuristic",
+      "rationale": "2 quantized candidate(s) fell below the accuracy floor; spare the 4 most quantization-sensitive layer(s) and re-measure.",
+      "duration_s": 36.0513,
+      "timestamp": 1789980903.7892683
+    },
+    {
+      "index": 9,
+      "artifact": {
+        "path": "examples\\mobilenetv3-cpu1t\\candidates\\graph-optimize-level-all-edffb711bd.onnx",
+        "lineage": [
+          {
+            "name": "graph_optimize",
+            "params": {
+              "level": "all"
+            }
+          },
+          {
+            "name": "graph_optimize",
+            "params": {
+              "level": "all"
+            }
+          }
+        ],
+        "label": "graph_optimize(level=all) -> graph_optimize(level=all)",
+        "meta": {
+          "source": "torchvision:mobilenet_v3_large",
+          "weights": "DEFAULT",
+          "image_size": 224,
+          "batch_size": 1,
+          "opset": 17,
+          "portability_warning": "level='all' bakes in NCHWc layout transforms specific to the CPU that ran the optimisation; this artifact is only valid on matching hardware. Use level='extended' for a portable file.",
+          "failed": true
+        }
+      },
+      "measurement": null,
+      "error": "TransformError: 'graph_optimize' is already in this model's lineage; applying it twice is a no-op",
+      "proposer": "heuristic",
+      "rationale": "Trial [1] was fastest; re-apply it on top of the graph-optimised graph to see if fusion and quantization compose.",
+      "duration_s": 0.0013,
+      "timestamp": 1789980903.7919383
+    },
+    {
+      "index": 10,
+      "artifact": {
+        "path": "examples\\mobilenetv3-cpu1t\\candidates\\quantize-static-int8-calib-samples-64-calibrate-method-entro-92518d68a4.onnx",
+        "lineage": [
+          {
+            "name": "quantize_static_int8",
+            "params": {
+              "per_channel": true,
+              "reduce_range": false,
+              "calibrate_method": "entropy",
+              "calib_samples": 64
+            }
+          }
+        ],
+        "label": "quantize_static_int8(calib_samples=64,calibrate_method=entropy,per_channel=True,reduce_range=False)",
+        "meta": {
+          "source": "torchvision:mobilenet_v3_large",
+          "weights": "DEFAULT",
+          "image_size": 224,
+          "batch_size": 1,
+          "opset": 17,
+          "calib_samples": 64
+        }
+      },
+      "measurement": {
+        "latency_ms_p50": 9.2069,
+        "latency_ms_p90": 10.2017,
+        "latency_ms_p99": 10.8473,
+        "latency_ms_mean": 9.287722,
+        "latency_ms_std": 0.6118783487883847,
+        "n_runs": 50,
+        "n_warmup": 10,
+        "batch_size": 1,
+        "size_bytes": 6004006,
+        "providers_used": [
+          "CPUExecutionProvider"
+        ],
+        "load_time_ms": 142.34380000016245,
+        "accuracy": 0.421875,
+        "n_eval": 256,
+        "top1_agreement": 0.48046875,
+        "logit_cosine": 0.6017873378083604,
+        "notes": {},
+        "size_mb": 5.7259,
+        "throughput_ips": 108.614
+      },
+      "error": null,
+      "proposer": "heuristic",
+      "rationale": "Entropy calibration clips activation outliers that MinMax stretches the scale to cover; usually recovers accuracy at equal latency.",
+      "duration_s": 14.9767,
+      "timestamp": 1789980918.7660973
+    }
+  ]
+}
