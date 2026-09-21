@@ -7,9 +7,12 @@ calibrated on the same 64 Imagenette *train* images and differs only in
 * per-channel vs per-tensor weight scales
 * reduce_range (7-bit weights)
 
-Hypothesis under test: on x86 CPUs without VNNI (this machine is a Zen 2 Ryzen 7 4800H),
-U8S8 kernels multiply u8 x s8 pairs and add them into 16-bit intermediates that can
-saturate, silently corrupting results. S8S8 and reduce_range both avoid it.
+First run (Zen 2 Ryzen 7 4800H, AVX2, no VNNI): the original hypothesis — that unsigned
+activations were to blame — was wrong. S8S8 per-channel broke exactly as badly as U8S8.
+Full-range per-channel *weights* were the problem, and reduce_range (7-bit weights) fixed it,
+consistent with the 16-bit intermediate saturation onnxruntime documents for x86 CPUs
+without VNNI. examples/hardware_lab runs this same study on other CPUs to test that
+explanation where VNNI is present.
 
     python examples/static_recipe_ab.py --eval-limit 1024
 """
@@ -96,10 +99,20 @@ def main() -> None:
               f"{delta:+6.2f}pp [{lo:+.2f},{hi:+.2f}] p={row['mcnemar_p']:.2g}  "
               f"changed {row['changed_fraction'] * 100:5.1f}%  {row['speedup']:.2f}x")
 
+    # Time FP32 again: on a shared or battery-powered machine the performance state can move
+    # during the study, and then no speedup above is comparable.
+    from anneal.core.environment import drift, snapshot, warnings_for
+
+    base_lat_end = bench.measure(base).latency_ms_p50
+    moved = drift(base_lat, base_lat_end)
+    print(f"FP32 re-timed: {base_lat:.2f}ms -> {base_lat_end:.2f}ms ({moved * 100:.1f}% drift)")
+
+    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps({
         "model": MODEL.name, "target": target.name, "n_eval": n,
         "calibration": "64 Imagenette train images", "fp32_accuracy": float(base_right.mean()),
-        "fp32_p50_ms": base_lat, "rows": rows,
+        "fp32_p50_ms": base_lat, "fp32_p50_end_ms": base_lat_end, "latency_drift": moved,
+        "environment_warnings": warnings_for(snapshot()), "rows": rows,
     }, indent=2), encoding="utf-8")
     print(f"written: {args.out}")
 

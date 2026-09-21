@@ -1,0 +1,86 @@
+name: hardware-lab
+
+# Runs the static INT8 recipe study on several kinds of GitHub-hosted machine, to see which
+# findings depend on the CPU. Manual only: each run takes a while, and there is no reason to
+# repeat it on every push.
+on:
+  workflow_dispatch:
+    inputs:
+      eval_limit:
+        description: "validation images per model"
+        default: "1024"
+      target:
+        description: "anneal target (cpu-1t or cpu-4t)"
+        default: "cpu-1t"
+
+jobs:
+  lab:
+    name: lab (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        # ubuntu-24.04-arm: GitHub-hosted ARM64 runner for public repositories.
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          # CPU-only torch is only needed to export ResNet-18; fall back to the default index
+          # on platforms the CPU index does not cover.
+          python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu \
+            || python -m pip install torch torchvision
+          python -m pip install -e . py-cpuinfo
+
+      - name: Cache Imagenette
+        uses: actions/cache@v4
+        with:
+          path: ~/.anneal_cache
+          key: imagenette2-160
+
+      - name: Run the study
+        shell: bash
+        run: |
+          python examples/hardware_lab/run_lab.py \
+            --eval-limit "${{ inputs.eval_limit || '1024' }}" \
+            --target "${{ inputs.target || 'cpu-1t' }}" \
+            --out "lab-${{ matrix.os }}.json"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lab-${{ matrix.os }}
+          path: lab-${{ matrix.os }}.json
+
+  summarize:
+    needs: lab
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          path: results
+          merge-multiple: true
+      - name: Summarize
+        run: |
+          python examples/hardware_lab/summarize.py results/*.json | tee results.md
+          cat results.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hardware-lab-summary
+          path: |
+            results.md
+            results/*.json
