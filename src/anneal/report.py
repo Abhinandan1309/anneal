@@ -189,6 +189,35 @@ def markdown_report(ledger: Ledger, *, svg_path: str | None = None) -> str:
         "",
     ]
 
+    env = cfg.get("environment") or {}
+    if env:
+        drift = env.get("baseline_drift")
+        trustworthy = env.get("latency_trustworthy")
+        if trustworthy is False:
+            lines += [
+                "> **Latencies in this run are not trustworthy.** The machine's performance "
+                "state was degraded or changed while it ran:",
+                ">",
+                *[f"> - {w}" for w in env.get("warnings", [])],
+                *(
+                    [f"> - the baseline measured {env['baseline_p50_start_ms']:.2f}ms at the "
+                     f"start and {env['baseline_p50_end_ms']:.2f}ms at the end "
+                     f"({drift * 100:.1f}% drift)"]
+                    if drift is not None
+                    else []
+                ),
+                ">",
+                "> Accuracy numbers are unaffected. Re-run on a stable machine before comparing speeds.",
+                "",
+            ]
+        elif drift is not None:
+            lines += [
+                f"**Measurement stability:** the baseline re-measured at the end of the run "
+                f"drifted {drift * 100:.1f}% (tolerance 10%), and no power or throttling "
+                f"problems were detected.",
+                "",
+            ]
+
     if base is not None and base.measurement is not None:
         half = wilson_halfwidth_pp(base.measurement.accuracy, base.measurement.n_eval)
         if half is not None:

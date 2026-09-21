@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from anneal.agent.policy import BASELINE, Constraints, Policy, Proposal, SearchState
+from anneal.core import environment
 from anneal.core.artifact import ModelArtifact
 from anneal.core.ledger import Ledger, Trial
 from anneal.core.measure import Benchmarker, EvalSet, MeasurementError
@@ -122,6 +123,11 @@ class OptimizationRun:
                 "transforms_available": sorted(self.transforms),
             },
         )
+        start_env = environment.snapshot()
+        self.ledger.config["environment"] = {
+            "start": start_env,
+            "warnings": environment.warnings_for(start_env),
+        }
 
     # ----- main -----------------------------------------------------------
 
@@ -157,8 +163,40 @@ class OptimizationRun:
                 continue
             rejections = 0
 
+        self._check_drift()
         self._emit("finished", {"trials": len(self.ledger.trials)})
         return self.ledger
+
+    def _check_drift(self) -> None:
+        """Re-measure the baseline: if it moved, no latency in this run is comparable.
+
+        A laptop that drops into battery saver halfway through a search makes every later
+        trial look slow. Timing the same model at both ends is the cheapest way to notice.
+        """
+        base = self.ledger.baseline
+        if base is None or base.measurement is None:
+            return
+        try:
+            again = self.benchmarker.measure(self.baseline)
+        except MeasurementError:
+            return
+        start = base.measurement.latency_ms_p50
+        end = again.latency_ms_p50
+        moved = environment.drift(start, end)
+        end_env = environment.snapshot()
+        env = self.ledger.config.setdefault("environment", {})
+        env["end"] = end_env
+        env["warnings"] = sorted(
+            set(env.get("warnings", [])) | set(environment.warnings_for(end_env))
+        )
+        env["baseline_p50_start_ms"] = start
+        env["baseline_p50_end_ms"] = end
+        env["baseline_drift"] = moved
+        env["latency_trustworthy"] = bool(
+            moved <= environment.DRIFT_TOLERANCE and not env["warnings"]
+        )
+        self._emit("drift", {"start_ms": start, "end_ms": end, "drift": moved,
+                             "warnings": env["warnings"]})
 
     # ----- steps ----------------------------------------------------------
 

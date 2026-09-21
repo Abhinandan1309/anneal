@@ -147,3 +147,14 @@ def test_audit_command_rejects_a_missing_model(tmp_path: Path):
     from anneal.cli import main
 
     assert main(["audit", str(tmp_path / "a.onnx"), str(tmp_path / "b.onnx")]) == 2
+
+
+def test_latency_is_flagged_untrustworthy_when_the_machine_is_unstable(tiny_onnx: Path, evalset):
+    model = ModelArtifact(path=tiny_onnx)
+    result = audit(model, model, get_target("cpu-1t"), evalset, warmup=1, runs=3)
+    result.environment_warnings = ["running on battery (20%)"]
+    assert result.verdict()[0].startswith("LATENCY UNTRUSTWORTHY")
+
+    result.environment_warnings = []
+    result.latency_drift = 0.5
+    assert "moved 50%" in result.verdict()[0]

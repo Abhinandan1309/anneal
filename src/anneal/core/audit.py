@@ -145,6 +145,9 @@ class AuditResult:
     ci_high_pp: float
     classes: list[ClassDelta] = field(default_factory=list)
     profile_diff: list[dict[str, Any]] = field(default_factory=list)
+    #: Original re-timed after the candidate (A-B-A). Relative change between the two.
+    latency_drift: float = 0.0
+    environment_warnings: list[str] = field(default_factory=list)
 
     @property
     def speedup_p50(self) -> float:
@@ -165,6 +168,18 @@ class AuditResult:
     def verdict(self, max_drop_pp: float = 1.0) -> list[str]:
         """Plain-language findings, most important first."""
         lines: list[str] = []
+
+        if self.environment_warnings or self.latency_drift > 0.10:
+            why = list(self.environment_warnings)
+            if self.latency_drift > 0.10:
+                why.append(
+                    f"the original model's latency moved {self.latency_drift * 100:.0f}% between "
+                    f"two timings minutes apart"
+                )
+            lines.append(
+                "LATENCY UNTRUSTWORTHY on this machine right now (" + "; ".join(why) + "). "
+                "The accuracy findings below still hold."
+            )
 
         if self.speedup_p50 < 1.0:
             lines.append(
@@ -262,6 +277,8 @@ class AuditResult:
                 for c in self.classes
             ],
             "profile_diff": self.profile_diff,
+            "latency_drift": self.latency_drift,
+            "environment_warnings": self.environment_warnings,
             "verdict": self.verdict(),
         }
 
@@ -346,8 +363,15 @@ def audit(
 ) -> AuditResult:
     """Measure both models on ``target`` and compare them image by image."""
     bench = Benchmarker(target, warmup=warmup, runs=runs)
+    from anneal.core import environment
+
+    env_warnings = environment.warnings_for(environment.snapshot())
+    # A-B-A: timing the original again after the candidate exposes any drift in the
+    # machine's performance state between the two measurements.
     lat_o = bench.measure(original)
     lat_c = bench.measure(candidate)
+    lat_o_again = bench.measure(original)
+    drift = environment.drift(lat_o.latency_ms_p50, lat_o_again.latency_ms_p50)
 
     pred_o, labels = predict(original, target, evalset)
     pred_c, labels_c = predict(candidate, target, evalset)
@@ -410,4 +434,8 @@ def audit(
         ci_high_pp=hi,
         classes=classes,
         profile_diff=profile_rows,
+        latency_drift=drift,
+        environment_warnings=sorted(
+            set(env_warnings) | set(environment.warnings_for(environment.snapshot()))
+        ),
     )

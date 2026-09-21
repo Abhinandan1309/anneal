@@ -50,6 +50,11 @@ def cmd_run(args: argparse.Namespace) -> int:
     console.rule(f"[bold]anneal[/bold] · {target.name}")
     console.print(f"[dim]{target.description}[/dim]\n")
 
+    from anneal.core.environment import snapshot, warnings_for
+
+    for warning in warnings_for(snapshot()):
+        console.print(f"[bold red]environment:[/bold red] {warning}")
+
     console.print(f"Loading model [cyan]{args.model}[/cyan] …")
     try:
         baseline = resolve_model(
@@ -182,6 +187,19 @@ def cmd_run(args: argparse.Namespace) -> int:
             console.print("    [yellow]already tried that recipe — skipping[/yellow]")
         elif kind == "stopped":
             console.print(f"\n[dim]stopped: {payload['reason']}[/dim]")
+        elif kind == "drift":
+            moved = payload["drift"]
+            bad = moved > 0.10 or bool(payload["warnings"])
+            colour = "red" if bad else "green"
+            console.print(
+                f"[{colour}]baseline re-measured: {payload['start_ms']:.2f}ms -> "
+                f"{payload['end_ms']:.2f}ms ({moved * 100:.1f}% drift)[/{colour}]"
+            )
+            if bad:
+                console.print(
+                    "[bold red]latencies in this run are not trustworthy: the machine's "
+                    "performance state changed or was degraded while it ran[/bold red]"
+                )
 
     run = OptimizationRun(
         baseline, target, policy, config, evalset=evalset, calibset=calibset, on_event=on_event
