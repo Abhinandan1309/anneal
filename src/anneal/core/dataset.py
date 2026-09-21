@@ -40,6 +40,20 @@ IMAGENETTE_SYNSET_TO_IMAGENET_IDX = {
     "n03888257": 701,  # parachute
 }
 
+#: Human-readable names for the ImageNet indices above, for per-class reporting.
+IMAGENETTE_CLASS_NAMES = {
+    0: "tench",
+    217: "English springer",
+    482: "cassette player",
+    491: "chain saw",
+    497: "church",
+    566: "French horn",
+    569: "garbage truck",
+    571: "gas pump",
+    574: "golf ball",
+    701: "parachute",
+}
+
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
@@ -247,17 +261,42 @@ def load_evalset(
     cache_dir: Path,
     batch_size: int = 16,
     limit: int | None = None,
+    sample_shape: tuple[int, ...] | None = None,
 ) -> EvalSet:
-    """Resolve an eval-set spec string to a concrete EvalSet."""
+    """Resolve an eval-set spec string to a concrete EvalSet.
+
+    ``sample_shape`` is one input's shape without the batch axis (e.g. ``(3, 224, 224)``),
+    normally read from the model. Without it every eval set assumes 224x224 RGB, which
+    silently breaks for any model that expects something else.
+    """
+    image_size = 224
+    if sample_shape is not None and len(sample_shape) == 3 and sample_shape[1] == sample_shape[2]:
+        image_size = int(sample_shape[1])
     if spec == "synthetic":
-        return SyntheticEvalSet(batch_size=batch_size, n=limit or 32)
+        return SyntheticEvalSet(
+            shape=tuple(sample_shape) if sample_shape else (3, 224, 224),
+            batch_size=batch_size,
+            n=limit or 32,
+        )
     if spec.startswith("imagenette"):
         variant = spec.split(":", 1)[1] if ":" in spec else "160"
         root = download_imagenette(Path(cache_dir), variant)
-        return ImagenetteEvalSet(root, batch_size=batch_size, limit=limit)
+        return ImagenetteEvalSet(
+            root,
+            batch_size=batch_size,
+            limit=limit,
+            image_size=image_size,
+            resize=round(image_size * 256 / 224),
+        )
     path = Path(spec)
     if path.is_dir():
-        return ImagenetteEvalSet(path, batch_size=batch_size, limit=limit)
+        return ImagenetteEvalSet(
+            path,
+            batch_size=batch_size,
+            limit=limit,
+            image_size=image_size,
+            resize=round(image_size * 256 / 224),
+        )
     raise ValueError(
         f"unrecognised eval set {spec!r}; expected 'synthetic', 'imagenette[:160|:320]', "
         f"or a path to an Imagenette-layout directory"

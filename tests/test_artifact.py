@@ -116,3 +116,21 @@ def test_concrete_input_shape_refuses_to_guess_spatial_dims():
 def test_concrete_input_shape_leaves_a_fixed_batch_alone():
     spec = {"name": "input", "shape": [1, 3, 224, 224]}
     assert concrete_input_shape(spec, batch_size=8) == (1, 3, 224, 224)
+
+
+def test_sample_shape_drops_the_batch_axis(tiny_onnx: Path):
+    from anneal.core.artifact import sample_shape
+
+    assert sample_shape(tiny_onnx) == (3, 16, 16)
+
+
+def test_synthetic_eval_set_follows_the_model_shape(tiny_onnx: Path, tmp_path: Path):
+    # Regression: the synthetic set used to be 224x224 regardless of the model, so any
+    # model with a different input size failed with an onnxruntime shape error.
+    from anneal.core.artifact import sample_shape
+    from anneal.core.dataset import load_evalset
+
+    ds = load_evalset("synthetic", cache_dir=tmp_path, batch_size=4, limit=8,
+                      sample_shape=sample_shape(tiny_onnx))
+    x, _ = next(iter(ds.batches()))
+    assert x.shape[1:] == (3, 16, 16)

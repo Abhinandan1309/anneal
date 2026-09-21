@@ -175,6 +175,17 @@ def model_batch_dim(model_path: Path) -> int | None:
     return shape[0]
 
 
+def sample_shape(model_path: Path) -> tuple[int, ...] | None:
+    """One input's shape without the batch axis, or None if any of it is dynamic."""
+    io = describe_io(model_path)
+    if not io["inputs"]:
+        return None
+    dims = io["inputs"][0]["shape"][1:]
+    if not dims or any(d is None for d in dims):
+        return None
+    return tuple(int(d) for d in dims)
+
+
 def write_sidecar(artifact: ModelArtifact, dest: Path) -> None:
     """Persist an artifact's provenance next to the model file."""
     dest.write_text(json.dumps(artifact.to_dict(), indent=2), encoding="utf-8")
