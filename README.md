@@ -131,6 +131,12 @@ this target, the recommended pick is graph fusion at **1.07x** — because the 1
 static INT8 costs more accuracy than the budget allows. A tool that returned "1.33x
 speedup!" would have been lying by omission.
 
+**…and it was also incomplete.** Auditing Microsoft Olive's output later showed that a
+recipe already in Anneal's action space — static INT8 with `reduce_range` — keeps full
+accuracy at roughly 1.5x. This search never tried it on the plain graph. The policy now
+does; see [Auditing other tools' output](#auditing-other-tools-output). The run above is
+committed as it happened.
+
 ### Confirming the finalists on the full eval set
 
 The search scores every trial on 256 images, which is cheap enough to run eleven times
@@ -272,6 +278,56 @@ happened.
 
 ---
 
+## Auditing other tools' output
+
+Anneal's search is one way to get an optimised model. Microsoft Olive, Intel Neural
+Compressor, NNCF and TensorRT are others, with far larger teams and action spaces. Anneal
+does not try to out-optimise them. `anneal audit` checks **any** optimised model against its
+original, on the target it will run on:
+
+```console
+$ anneal audit original.onnx candidate.onnx --target cpu-4t --eval-limit 4000 --profile
+```
+
+It compares the two models **image by image**: regressions (original right, candidate
+wrong), fixes (the reverse), an exact McNemar test on those, a paired 95% interval on the
+accuracy change — including how large a loss the data *cannot* rule out — plus how many
+predictions changed class, a per-class breakdown, p50/p99 speedup, and which operators the
+latency moved to. It exits non-zero on a significant loss beyond budget or a slowdown, so
+it can gate CI.
+
+**Olive head-to-head on ResNet-18** (full write-up in
+[`examples/olive_resnet18/`](examples/olive_resnet18/)):
+
+- Olive's default static quantization, by Olive's own report, came out **1.70x slower**,
+  and was written out as the result because the workflow set no search objective.
+- The audit agrees it is slower on this target (1.35x), and establishes something Olive's
+  256-image evaluation could not: accuracy is **genuinely unchanged** (+0.33pp on 3,925
+  images, McNemar p = 0.32, any loss ≤ 0.27pp) — while **8.1% of predictions change class**.
+- Olive's recipe kept accuracy where Anneal's own static INT8 lost 4.28pp. A controlled
+  experiment traced it to **full-range per-channel weights**, not activation signedness as
+  I first guessed: adding `reduce_range` restores full accuracy at **1.52x**, beating both
+  tools' defaults on this CPU. The heuristic policy now tries that fix first.
+
+**What the audit found was mostly wrong with Anneal, not with Olive.** That is the point of
+an auditor that does not care which tool produced the model.
+
+---
+
+## Related work
+
+| | what it does | where Anneal differs |
+|---|---|---|
+| [Microsoft Olive](https://github.com/microsoft/Olive) | Hardware-aware optimisation workflows for ONNX/PyTorch, with a search over pass parameters and an evaluator. | Much broader, and vendor-integrated. Anneal's distinct part is the audit: paired significance testing, prediction-change counts, operator attribution, cross-target checks. |
+| [Intel Neural Compressor](https://github.com/intel/neural-compressor) | Accuracy-driven quantization tuning with a tolerance loop. | Tunes to an accuracy target; Anneal reports the statistical resolution of that accuracy and what it cannot rule out. |
+| [OpenVINO NNCF](https://github.com/openvinotoolkit/nncf), [Qualcomm AIMET](https://github.com/quic/aimet) | Compression and quantization, including quantization-aware training. | They can fix what post-training quantization breaks (MobileNetV3 here); Anneal cannot and says so. |
+| TensorRT, TI TIDL tools | Vendor compilers that choose kernels for their own silicon. | Anneal declares these targets but does not implement them yet. |
+
+This comparison reflects those projects as I understand them; check their current docs
+before relying on it.
+
+---
+
 ## What makes the measurements trustworthy
 
 This took the most care, because an optimisation tool that reports flattering numbers is
@@ -353,6 +409,7 @@ anneal compare      # re-measure the frontier on a different target
 anneal profile      # attribute runtime to operators; --against to diff two models
 anneal sensitivity  # rank layers by INT8 damage; --measured for the real sweep
 anneal export       # emit a standalone script that rebuilds a frontier point
+anneal audit        # check any optimised model (from any tool) against its original
 anneal report       # re-render from a ledger
 anneal targets      # what can actually run here
 anneal transforms   # the action space
@@ -446,6 +503,17 @@ Stated plainly, because the alternative is letting someone find them in a review
   NAS. Those are real transforms with real payoffs and they are absent; the registry is the
   extension point.
 - **The Claude policy has not been run against the live API.** See the disclosure above.
+- **The committed ResNet-18 and MobileNetV3 search runs predate two fixes.** They calibrated
+  static INT8 on evaluation images (now held-out train images), and their policy never tried
+  `reduce_range` on a broken static model (it does now). Re-running them would change the
+  ResNet-18 recommendation; the recipe experiment in `examples/olive_resnet18/` shows by how
+  much. They are kept as they ran rather than silently replaced.
+- **Absolute latencies drift between sessions** on the laptop these ran on: FP32 ResNet-18 on
+  4 threads measured 18–30 ms across sessions. Every comparison in this README is between
+  models measured in the same session — compare the ratios, not milliseconds across tables.
+- **The saturation explanation is unconfirmed.** `reduce_range` fixing per-channel static
+  INT8 on a Zen 2 CPU fits onnxruntime's documented non-VNNI saturation issue, but I have not
+  run the same experiment on a VNNI CPU to confirm it.
 - **`graph_optimize(level='all')` produces a non-portable artifact** — onnxruntime's NCHWc
   transformer bakes in the optimising CPU's layout and SIMD width. Anneal records this on
   the artifact and warns in the report. Use `level='extended'` if the file must travel.

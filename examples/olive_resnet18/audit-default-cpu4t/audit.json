@@ -1,0 +1,181 @@
+{
+  "original": "resnet18-fp32.onnx",
+  "candidate": "model.onnx",
+  "target": "cpu-4t",
+  "n": 3925,
+  "latency": {
+    "original_p50_ms": 23.0043,
+    "original_p99_ms": 39.0419,
+    "candidate_p50_ms": 30.9513,
+    "candidate_p99_ms": 43.8155,
+    "speedup_p50": 0.7432418024444853,
+    "speedup_p99": 0.8910522531980691
+  },
+  "size": {
+    "original_bytes": 46748561,
+    "candidate_bytes": 11747148,
+    "ratio": 0.25128362774631713
+  },
+  "accuracy": {
+    "original": 0.6687898089171974,
+    "candidate": 0.6721019108280255,
+    "delta_pp": 0.33121019108280253,
+    "ci95_pp": [
+      -0.2741466635114829,
+      0.9365670456770882
+    ],
+    "mcnemar_p": 0.3223076486087748,
+    "regressions": 67,
+    "fixes": 80,
+    "changed": 319
+  },
+  "classes": [
+    {
+      "label": 571,
+      "name": "gas pump",
+      "n": 419,
+      "original_acc": 0.6921241050119332,
+      "candidate_acc": 0.6587112171837709,
+      "delta_pp": -3.341288782816232
+    },
+    {
+      "label": 566,
+      "name": "French horn",
+      "n": 394,
+      "original_acc": 0.7157360406091371,
+      "candidate_acc": 0.6979695431472082,
+      "delta_pp": -1.7766497461928932
+    },
+    {
+      "label": 569,
+      "name": "garbage truck",
+      "n": 389,
+      "original_acc": 0.622107969151671,
+      "candidate_acc": 0.6143958868894601,
+      "delta_pp": -0.7712082262210873
+    },
+    {
+      "label": 574,
+      "name": "golf ball",
+      "n": 399,
+      "original_acc": 0.8721804511278195,
+      "candidate_acc": 0.8721804511278195,
+      "delta_pp": 0.0
+    },
+    {
+      "label": 497,
+      "name": "church",
+      "n": 409,
+      "original_acc": 0.29584352078239606,
+      "candidate_acc": 0.2982885085574572,
+      "delta_pp": 0.2444987775061136
+    },
+    {
+      "label": 0,
+      "name": "tench",
+      "n": 387,
+      "original_acc": 0.9224806201550387,
+      "candidate_acc": 0.9302325581395349,
+      "delta_pp": 0.7751937984496138
+    },
+    {
+      "label": 491,
+      "name": "chain saw",
+      "n": 386,
+      "original_acc": 0.6269430051813472,
+      "candidate_acc": 0.6347150259067358,
+      "delta_pp": 0.7772020725388629
+    },
+    {
+      "label": 701,
+      "name": "parachute",
+      "n": 390,
+      "original_acc": 0.7974358974358975,
+      "candidate_acc": 0.8102564102564103,
+      "delta_pp": 1.2820512820512775
+    },
+    {
+      "label": 217,
+      "name": "English springer",
+      "n": 395,
+      "original_acc": 0.6075949367088608,
+      "candidate_acc": 0.6253164556962025,
+      "delta_pp": 1.7721518987341756
+    },
+    {
+      "label": 482,
+      "name": "cassette player",
+      "n": 357,
+      "original_acc": 0.5378151260504201,
+      "candidate_acc": 0.5882352941176471,
+      "delta_pp": 5.042016806722693
+    }
+  ],
+  "profile_diff": [
+    {
+      "op_type": "QLinearConv",
+      "before_ms": 0.0,
+      "after_ms": 8.7576,
+      "delta_ms": 8.7576
+    },
+    {
+      "op_type": "DequantizeLinear",
+      "before_ms": 0.0,
+      "after_ms": 4.136,
+      "delta_ms": 4.136
+    },
+    {
+      "op_type": "QuantizeLinear",
+      "before_ms": 0.0,
+      "after_ms": 0.97892,
+      "delta_ms": 0.97892
+    },
+    {
+      "op_type": "Transpose",
+      "before_ms": 0.0,
+      "after_ms": 0.93548,
+      "delta_ms": 0.93548
+    },
+    {
+      "op_type": "Add",
+      "before_ms": 0.0,
+      "after_ms": 0.40212,
+      "delta_ms": 0.40212
+    },
+    {
+      "op_type": "ReorderInput",
+      "before_ms": 0.0,
+      "after_ms": 0.37951999999999997,
+      "delta_ms": 0.37951999999999997
+    },
+    {
+      "op_type": "MaxPool",
+      "before_ms": 0.11704,
+      "after_ms": 0.22456,
+      "delta_ms": 0.10751999999999999
+    },
+    {
+      "op_type": "QGemm",
+      "before_ms": 0.0,
+      "after_ms": 0.054799999999999995,
+      "delta_ms": 0.054799999999999995
+    },
+    {
+      "op_type": "Gemm",
+      "before_ms": 0.101,
+      "after_ms": 0.0,
+      "delta_ms": -0.101
+    },
+    {
+      "op_type": "Conv",
+      "before_ms": 16.19212,
+      "after_ms": 9.415,
+      "delta_ms": -6.777120000000001
+    }
+  ],
+  "verdict": [
+    "SLOWER, not faster: 1.35x the original's median latency on cpu-4t.",
+    "No detectable accuracy change at n=3925 (p = 0.32), but the data cannot rule out a loss of up to 0.27pp.",
+    "8.1% of predictions changed class \u2014 far more than the accuracy delta alone suggests, because regressions and fixes partly cancel."
+  ]
+}

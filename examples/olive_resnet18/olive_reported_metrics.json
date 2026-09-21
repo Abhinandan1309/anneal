@@ -1,0 +1,13 @@
+{
+  "olive_version": "0.13.0",
+  "workflow": "examples/olive_resnet18/olive_config.json",
+  "eval_images": 256,
+  "input_model": {
+    "accuracy-accuracy_score": 0.66796875,
+    "latency-avg": 11.82353
+  },
+  "output_model": {
+    "accuracy-accuracy_score": 0.6640625,
+    "latency-avg": 20.11936
+  }
+}
