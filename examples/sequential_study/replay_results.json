@@ -1,0 +1,47 @@
+{
+  "reps": 1000,
+  "alpha": 0.05,
+  "budget_pp": 1.0,
+  "n_full": 3925,
+  "rows": [
+    {
+      "candidate": "static INT8, full-range per-channel",
+      "full_set_delta_pp": -4.305732484076433,
+      "full_set_decision": "reject",
+      "regressions": 289,
+      "fixes": 120,
+      "sequential_agrees": 0.999,
+      "sequential_contradicts": 0.001,
+      "sequential_undecided": 0.0,
+      "median_n": 612.0,
+      "p90_n": 1340.5,
+      "fixed256_contradicts": 0.034
+    },
+    {
+      "candidate": "static INT8, reduce_range",
+      "full_set_delta_pp": 0.535031847133758,
+      "full_set_decision": "accept",
+      "regressions": 35,
+      "fixes": 56,
+      "sequential_agrees": 1.0,
+      "sequential_contradicts": 0.0,
+      "sequential_undecided": 0.0,
+      "median_n": 630.0,
+      "p90_n": 1355.8000000000002,
+      "fixed256_contradicts": 0.044
+    },
+    {
+      "candidate": "Olive default static INT8",
+      "full_set_delta_pp": 0.33121019108280253,
+      "full_set_decision": "accept",
+      "regressions": 67,
+      "fixes": 80,
+      "sequential_agrees": 1.0,
+      "sequential_contradicts": 0.0,
+      "sequential_undecided": 0.0,
+      "median_n": 1463.0,
+      "p90_n": 2785.2,
+      "fixed256_contradicts": 0.131
+    }
+  ]
+}
