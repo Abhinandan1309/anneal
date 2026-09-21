@@ -158,3 +158,31 @@ def test_latency_is_flagged_untrustworthy_when_the_machine_is_unstable(tiny_onnx
     result.environment_warnings = []
     result.latency_drift = 0.5
     assert "moved 50%" in result.verdict()[0]
+
+
+def test_sequential_audit_of_a_model_against_itself_accepts_early(tiny_onnx: Path):
+    model = ModelArtifact(path=tiny_onnx)
+    big = SyntheticEvalSet(shape=(3, 16, 16), n=2000, batch_size=50, n_classes=4)
+    result = audit(model, model, get_target("cpu-1t"), big, warmup=1, runs=3,
+                   sequential=True, budget_pp=1.0)
+    assert result.sequential.decision == "accept"
+    # It must actually have stopped early, and every count must refer to the images used.
+    assert result.n == result.sequential.n < 2000
+    assert result.verdict()[0].startswith(("ACCEPT", "No meaningful", "SLOWER", "LATENCY"))
+    assert any(line.startswith("ACCEPT") for line in result.verdict())
+
+
+def test_sequential_audit_exit_codes(tiny_onnx: Path, tmp_path: Path):
+    from anneal.cli import main
+
+    code = main(
+        [
+            "audit", str(tiny_onnx), str(tiny_onnx), "--target", "cpu-1t",
+            "--eval", "synthetic", "--eval-limit", "1500", "--eval-batch", "50",
+            "--warmup", "1", "--runs", "3", "--sequential", "--out", str(tmp_path / "a"),
+        ]
+    )
+    # Identical models: accepted (0) unless timing noise made the copy look slower (3).
+    assert code in (0, 3)
+    report = json.loads((tmp_path / "a" / "audit.json").read_text(encoding="utf-8"))
+    assert report["sequential"]["decision"] == "accept"

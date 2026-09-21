@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -59,6 +60,8 @@ def main() -> None:
     parser.add_argument("--alpha", type=float, default=0.05)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
+    # Windows consoles default to cp1252, which cannot print the delta symbol.
+    sys.stdout.reconfigure(errors="replace")
     rng = np.random.default_rng(args.seed)
 
     rows = []

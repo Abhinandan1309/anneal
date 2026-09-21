@@ -1021,6 +1021,9 @@ def cmd_audit(args: argparse.Namespace) -> int:
             runs=args.runs,
             class_names=IMAGENETTE_CLASS_NAMES if args.eval.startswith("imagenette") else None,
             profile=args.profile,
+            sequential=args.sequential,
+            budget_pp=args.max_accuracy_drop,
+            alpha=args.alpha,
         )
     except MeasurementError as exc:
         console.print(f"[red]audit failed:[/red] {exc}")
@@ -1041,9 +1044,12 @@ def cmd_audit(args: argparse.Namespace) -> int:
     console.print(f"[dim]written: {out / 'audit.md'}[/dim]")
 
     # Non-zero exit when the audit finds a real problem, so this can gate a CI pipeline.
-    failed = (result.significant and result.delta_pp < -args.max_accuracy_drop) or (
-        result.speedup_p50 < 1.0
-    )
+    # Exit codes, for gating CI: 0 pass, 3 a real problem, 4 could not decide.
+    if result.speedup_p50 < 1.0:
+        return 3
+    if result.sequential is not None:
+        return {"accept": 0, "reject": 3, "undecided": 4}[result.sequential.decision]
+    failed = result.significant and result.delta_pp < -args.max_accuracy_drop
     return 3 if failed else 0
 
 
@@ -1204,6 +1210,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="exit non-zero if a statistically significant loss exceeds this",
     )
     aud.add_argument("--profile", action="store_true", help="also attribute the latency change to operators")
+    aud.add_argument(
+        "--sequential",
+        action="store_true",
+        help="stop evaluating as soon as an anytime-valid test decides whether the accuracy "
+        "change is within --max-accuracy-drop (exit 0 accept, 3 reject, 4 undecided)",
+    )
+    aud.add_argument("--alpha", type=float, default=0.05, help="error rate per sequential decision")
     aud.add_argument("--out", default=None)
     aud.add_argument("--cache", default=str(DEFAULT_CACHE))
     aud.set_defaults(func=cmd_audit)

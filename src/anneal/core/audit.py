@@ -105,6 +105,71 @@ def predict(
     return np.concatenate(preds), np.concatenate(labels)
 
 
+def _open(artifact: ModelArtifact, target: Target):
+    import onnxruntime as ort
+
+    try:
+        session = ort.InferenceSession(
+            str(artifact.path),
+            sess_options=target.session_options(),
+            providers=list(target.providers),
+        )
+    except Exception as exc:
+        raise MeasurementError(f"could not load {artifact.path.name}: {exc}") from exc
+    return session, session.get_inputs()[0].name, session.get_outputs()[0].name
+
+
+def predict_sequential(
+    original: ModelArtifact,
+    candidate: ModelArtifact,
+    target: Target,
+    evalset: EvalSet,
+    *,
+    budget_pp: float,
+    alpha: float,
+):
+    """Score both models in lockstep, stopping once the sequential test decides.
+
+    Returns ``(pred_original, pred_candidate, labels, SequentialResult)`` for the images
+    actually evaluated. Batches are scored whole; the test itself stops at the exact image,
+    and only images up to that point are counted.
+    """
+    from anneal.core.sequential import SequentialBudgetTest
+
+    so, in_o, out_o = _open(original, target)
+    sc, in_c, out_c = _open(candidate, target)
+    test = SequentialBudgetTest(budget_pp=budget_pp, alpha=alpha)
+    n_max = len(evalset)
+    preds_o: list[np.ndarray] = []
+    preds_c: list[np.ndarray] = []
+    labels: list[np.ndarray] = []
+    for x, y in evalset.batches():
+        try:
+            po = evalset.decode(np.asarray(so.run([out_o], {in_o: x})[0], dtype=np.float32))
+            pc = evalset.decode(np.asarray(sc.run([out_c], {in_c: x})[0], dtype=np.float32))
+        except Exception as exc:
+            raise MeasurementError(f"inference failed on the eval set: {exc}") from exc
+        y = np.asarray(y)
+        used = 0
+        for i in range(y.shape[0]):
+            used += 1
+            score = int(pc[i] == y[i]) - int(po[i] == y[i])
+            if test.update(score) != "undecided":
+                break
+        preds_o.append(np.asarray(po)[:used])
+        preds_c.append(np.asarray(pc)[:used])
+        labels.append(y[:used])
+        if test.decision != "undecided":
+            break
+    del so, sc
+    return (
+        np.concatenate(preds_o),
+        np.concatenate(preds_c),
+        np.concatenate(labels),
+        test.result(n_max),
+    )
+
+
 # ---------------------------------------------------------------------------
 # result
 # ---------------------------------------------------------------------------
@@ -148,6 +213,8 @@ class AuditResult:
     #: Original re-timed after the candidate (A-B-A). Relative change between the two.
     latency_drift: float = 0.0
     environment_warnings: list[str] = field(default_factory=list)
+    #: Set when the audit stopped early under the anytime-valid sequential test.
+    sequential: Any = None
 
     @property
     def speedup_p50(self) -> float:
@@ -196,7 +263,9 @@ class AuditResult:
                 f"{self.speedup_p50:.2f}x at p50."
             )
 
-        if self.significant and self.delta_pp < 0:
+        if self.sequential is not None:
+            lines.append(self.sequential.describe())
+        elif self.significant and self.delta_pp < 0:
             lines.append(
                 f"Accuracy loss is real: {self.delta_pp:+.2f}pp "
                 f"(95% CI {self.ci_low_pp:+.2f} to {self.ci_high_pp:+.2f}), McNemar p = "
@@ -278,6 +347,7 @@ class AuditResult:
             ],
             "profile_diff": self.profile_diff,
             "latency_drift": self.latency_drift,
+            "sequential": self.sequential.to_dict() if self.sequential is not None else None,
             "environment_warnings": self.environment_warnings,
             "verdict": self.verdict(),
         }
@@ -360,6 +430,9 @@ def audit(
     runs: int = 50,
     class_names: dict[int, str] | None = None,
     profile: bool = False,
+    sequential: bool = False,
+    budget_pp: float = 1.0,
+    alpha: float = 0.05,
 ) -> AuditResult:
     """Measure both models on ``target`` and compare them image by image."""
     bench = Benchmarker(target, warmup=warmup, runs=runs)
@@ -373,10 +446,16 @@ def audit(
     lat_o_again = bench.measure(original)
     drift = environment.drift(lat_o.latency_ms_p50, lat_o_again.latency_ms_p50)
 
-    pred_o, labels = predict(original, target, evalset)
-    pred_c, labels_c = predict(candidate, target, evalset)
-    if not np.array_equal(labels, labels_c):  # pragma: no cover - eval sets are deterministic
-        raise MeasurementError("eval set was not deterministic between the two passes")
+    seq_result = None
+    if sequential:
+        pred_o, pred_c, labels, seq_result = predict_sequential(
+            original, candidate, target, evalset, budget_pp=budget_pp, alpha=alpha
+        )
+    else:
+        pred_o, labels = predict(original, target, evalset)
+        pred_c, labels_c = predict(candidate, target, evalset)
+        if not np.array_equal(labels, labels_c):  # pragma: no cover - deterministic eval sets
+            raise MeasurementError("eval set was not deterministic between the two passes")
 
     right_o = pred_o == labels
     right_c = pred_c == labels
@@ -435,6 +514,7 @@ def audit(
         classes=classes,
         profile_diff=profile_rows,
         latency_drift=drift,
+        sequential=seq_result,
         environment_warnings=sorted(
             set(env_warnings) | set(environment.warnings_for(environment.snapshot()))
         ),
