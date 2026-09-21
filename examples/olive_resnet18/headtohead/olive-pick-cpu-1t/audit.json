@@ -1,0 +1,124 @@
+{
+  "original": "resnet18-fp32.onnx",
+  "candidate": "model.onnx",
+  "target": "cpu-1t",
+  "n": 3925,
+  "latency": {
+    "original_p50_ms": 32.8905,
+    "original_p99_ms": 37.9746,
+    "candidate_p50_ms": 32.7168,
+    "candidate_p99_ms": 40.3793,
+    "speedup_p50": 1.005309198943662,
+    "speedup_p99": 0.9404472093374576
+  },
+  "size": {
+    "original_bytes": 46748561,
+    "candidate_bytes": 11727255,
+    "ratio": 0.2508580959315518
+  },
+  "accuracy": {
+    "original": 0.6687898089171974,
+    "candidate": 0.6639490445859872,
+    "delta_pp": -0.4840764331210191,
+    "ci95_pp": [
+      -1.2329679078641496,
+      0.26481504162211134
+    ],
+    "mcnemar_p": 0.23006418625550473,
+    "regressions": 122,
+    "fixes": 103,
+    "changed": 489
+  },
+  "classes": [
+    {
+      "label": 217,
+      "name": "English springer",
+      "n": 395,
+      "original_acc": 0.6075949367088608,
+      "candidate_acc": 0.5848101265822785,
+      "delta_pp": -2.278481012658229
+    },
+    {
+      "label": 491,
+      "name": "chain saw",
+      "n": 386,
+      "original_acc": 0.6269430051813472,
+      "candidate_acc": 0.6062176165803109,
+      "delta_pp": -2.072538860103623
+    },
+    {
+      "label": 574,
+      "name": "golf ball",
+      "n": 399,
+      "original_acc": 0.8721804511278195,
+      "candidate_acc": 0.8521303258145363,
+      "delta_pp": -2.0050125313283207
+    },
+    {
+      "label": 571,
+      "name": "gas pump",
+      "n": 419,
+      "original_acc": 0.6921241050119332,
+      "candidate_acc": 0.6730310262529833,
+      "delta_pp": -1.9093078758949944
+    },
+    {
+      "label": 701,
+      "name": "parachute",
+      "n": 390,
+      "original_acc": 0.7974358974358975,
+      "candidate_acc": 0.7871794871794872,
+      "delta_pp": -1.025641025641033
+    },
+    {
+      "label": 566,
+      "name": "French horn",
+      "n": 394,
+      "original_acc": 0.7157360406091371,
+      "candidate_acc": 0.7157360406091371,
+      "delta_pp": 0.0
+    },
+    {
+      "label": 569,
+      "name": "garbage truck",
+      "n": 389,
+      "original_acc": 0.622107969151671,
+      "candidate_acc": 0.6272493573264781,
+      "delta_pp": 0.5141388174807138
+    },
+    {
+      "label": 0,
+      "name": "tench",
+      "n": 387,
+      "original_acc": 0.9224806201550387,
+      "candidate_acc": 0.9276485788113695,
+      "delta_pp": 0.5167958656330796
+    },
+    {
+      "label": 482,
+      "name": "cassette player",
+      "n": 357,
+      "original_acc": 0.5378151260504201,
+      "candidate_acc": 0.5546218487394958,
+      "delta_pp": 1.6806722689075682
+    },
+    {
+      "label": 497,
+      "name": "church",
+      "n": 409,
+      "original_acc": 0.29584352078239606,
+      "candidate_acc": 0.3154034229828851,
+      "delta_pp": 1.9559902200489032
+    }
+  ],
+  "profile_diff": [],
+  "latency_drift": 0.017248141560632885,
+  "sequential": null,
+  "environment_warnings": [],
+  "verdict": [
+    "No meaningful speedup on cpu-1t (1.01x).",
+    "No detectable accuracy change at n=3925 (p = 0.23), but the data cannot rule out a loss of up to 1.23pp.",
+    "That is wider than a 1.0pp budget: audit on more images before signing this off.",
+    "12.5% of predictions changed class \u2014 far more than the accuracy delta alone suggests, because regressions and fixes partly cancel."
+  ]
+}

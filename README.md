@@ -131,11 +131,15 @@ this target, the recommended pick is graph fusion at **1.07x** — because the 1
 static INT8 costs more accuracy than the budget allows. A tool that returned "1.33x
 speedup!" would have been lying by omission.
 
-**…and it was also incomplete.** Auditing Microsoft Olive's output later showed that a
-recipe already in Anneal's action space — static INT8 with `reduce_range` — keeps full
-accuracy at roughly 1.5x. This search never tried it on the plain graph. The policy now
-does; see [Auditing other tools' output](#auditing-other-tools-output). The run above is
-committed as it happened.
+**…and it was also incomplete.** Auditing Microsoft Olive's output later showed that
+recipes already in Anneal's action space — static INT8 with `reduce_range`, or with
+per-tensor scales — keep full accuracy. This search never tried them on the plain graph. The
+policy now does, and a rerun with the fix, on AC power with a 2.5% baseline drift
+([`examples/resnet18-cpu1t-v2/`](examples/resnet18-cpu1t-v2/)), picks static INT8 per-tensor:
+**1.08x at no accuracy loss** (audited on all 3,925 images: +0.43pp, any loss ≤ 0.17pp). In
+the rerun, fusion measures 0.97x, so the 1.07x above was within run-to-run noise. On one
+thread the speed prize for INT8 on this CPU is small; the honest headline is how small, and
+how certain. The run above is committed as it happened.
 
 ### Confirming the finalists on the full eval set
 
@@ -301,16 +305,29 @@ it can gate CI.
 
 - Olive's default static quantization, by Olive's own report, came out **1.70x slower**,
   and was written out as the result because the workflow set no search objective.
-- The audit agrees it is slower on this target (1.35x), and establishes something Olive's
-  256-image evaluation could not: accuracy is **genuinely unchanged** (+0.33pp on 3,925
-  images, McNemar p = 0.32, any loss ≤ 0.27pp) — while **8.1% of predictions change class**.
+- The audit agrees it is slower on this target (0.72x on 4 threads), and establishes
+  something Olive's 256-image evaluation could not: accuracy is **genuinely unchanged**
+  (+0.33pp on 3,925 images, McNemar p = 0.32, any loss ≤ 0.27pp) — while **8.1% of
+  predictions change class**.
 - Olive's recipe kept accuracy where Anneal's own static INT8 lost 4.28pp. A controlled
   experiment traced it to **full-range per-channel weights**, not activation signedness as
-  I first guessed: adding `reduce_range` restores full accuracy at **1.52x**, beating both
-  tools' defaults on this CPU. The heuristic policy now tries that fix first.
+  I first guessed: adding `reduce_range` restores full accuracy. The heuristic policy now
+  tries that fix first.
+- **With its search enabled, Olive finds the same fix.** Audited identically, the two tools'
+  final picks each win on the thread count they were chosen for, within measurement noise.
+  The difference is in the accuracy: Anneal's pick is confirmed within the 1pp budget (any
+  loss ≤ 0.17pp); Olive's cannot be — it was selected for "+1.56pp" on 256 images, which
+  is four images, and on 3,925 images its possible loss extends to 1.23pp. Picking the
+  best-looking of many candidates on a small sample reliably picks a lucky one.
 
-**What the audit found was mostly wrong with Anneal, not with Olive.** That is the point of
+**What the audit found was mostly wrong with Anneal, not with Olive** — and where it did
+find something about Olive, it was about statistics, not optimisation. That is the point of
 an auditor that does not care which tool produced the model.
+
+> **Correction:** an earlier version of this section reported `reduce_range` at 1.52x FP32
+> speed. That was measured on battery with battery saver engaged, which slowed FP32 by ~25%
+> and INT8 hardly at all. On AC power the same recipe is 1.05x on one thread. Details in
+> [`examples/olive_resnet18/`](examples/olive_resnet18/).
 
 ---
 
@@ -395,9 +412,12 @@ rather than letting two decimal places imply precision that is not there.
 the reader.
 
 **The machine is checked, not trusted.** A rerun of the ResNet-18 search once reported a
-recipe at 0.36x FP32 speed that had measured 1.5x before. Nothing was wrong with the model:
-the laptop had fallen to 21% battery mid-run and battery saver had cut the CPU from 2.9 to
-1.7 GHz. Anneal now reads AC/battery state, battery saver and clock ceilings before
+recipe at 0.36x FP32 speed that had measured 1.5x before. Neither number was right. The
+laptop had been on battery for both: in the first session battery saver slowed FP32 more
+than INT8, inflating the speedup to 1.5x; in the second the battery fell to 21% mid-run and
+the CPU dropped from 2.9 to 1.7 GHz, deflating it. On AC power the recipe is 1.05x. Throttling
+does not just slow everything down — it changes *ratios*, so "compare within a session" is
+not a sufficient safeguard. Anneal now reads AC/battery state, battery saver and clock ceilings before
 measuring and warns loudly; re-times the baseline at the end of every search and marks the
 whole run latency-untrustworthy if it drifted more than 10%; and `anneal audit` times the
 original model before *and* after the candidate (A-B-A) to catch the same drift between two
@@ -551,15 +571,19 @@ Stated plainly, because the alternative is letting someone find them in a review
   NAS. Those are real transforms with real payoffs and they are absent; the registry is the
   extension point.
 - **The Claude policy has not been run against the live API.** See the disclosure above.
-- **The committed ResNet-18 and MobileNetV3 search runs predate two fixes.** They calibrated
-  static INT8 on evaluation images (now held-out train images), and their policy never tried
-  `reduce_range` on a broken static model (it does now). Re-running them would change the
-  ResNet-18 recommendation; the recipe experiment in `examples/olive_resnet18/` shows by how
-  much. They are kept as they ran rather than silently replaced.
-- **Absolute latencies drift between sessions** on the laptop these ran on: FP32 ResNet-18 on
-  4 threads measured 18–30 ms across sessions, and power state was not recorded for runs made
-  before the environment check existed. Every comparison in this README is between models
-  measured in the same session — compare the ratios, not milliseconds across tables.
+- **The original ResNet-18 and MobileNetV3 search runs predate three fixes:** calibration on
+  held-out images, the reduce_range retry, and the machine-state check. ResNet-18 has been
+  re-run with all three (`examples/resnet18-cpu1t-v2/`); MobileNetV3 has not. The originals
+  are kept as they ran rather than silently replaced.
+- **Four-thread latencies on this laptop are not reliable.** Even on AC power, with low drift
+  *within* each run, the same model measured 0.92x in one audit and 1.19x in the next.
+  One-thread figures agree across runs to within a few percent, so claims here rest on them.
+  The within-run drift check does not catch variation *between* runs; repeated,
+  interleaved measurement would, and is not implemented yet.
+- **Latencies measured before the environment check existed may be distorted.** Power state
+  was not recorded for them, and one set is known to have run on battery (see the
+  correction above). Figures from the first ResNet-18 and MobileNetV3 runs, the cross-target
+  table and the earlier Olive audit fall in that period.
 - **The saturation explanation is unconfirmed.** `reduce_range` fixing per-channel static
   INT8 on a Zen 2 CPU fits onnxruntime's documented non-VNNI saturation issue, but I have not
   run the same experiment on a VNNI CPU to confirm it.

@@ -1,0 +1,399 @@
+{
+  "olive_version": "0.13.0",
+  "config": "examples/olive_resnet18/olive_search_config.json",
+  "candidates": [
+    {
+      "model_id": "967aa610",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": false,
+        "reduce_range": true,
+        "calibrate_method": "Entropy",
+        "quant_format": "QOperator",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.68359375,
+      "latency_p50_ms_as_reported_by_olive": 7.67245,
+      "olive_pareto_frontier": true,
+      "written_out_as_result": true
+    },
+    {
+      "model_id": "4b40d01c",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": false,
+        "reduce_range": true,
+        "calibrate_method": "Entropy",
+        "quant_format": "QOperator",
+        "quant_preprocess": true
+      },
+      "accuracy_256": 0.68359375,
+      "latency_p50_ms_as_reported_by_olive": 9.1286,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "3ecb9b6b",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": false,
+        "reduce_range": true,
+        "calibrate_method": "MinMax",
+        "quant_format": "QOperator",
+        "quant_preprocess": true
+      },
+      "accuracy_256": 0.68359375,
+      "latency_p50_ms_as_reported_by_olive": 9.28535,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "42afd4e3",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": false,
+        "reduce_range": true,
+        "calibrate_method": "MinMax",
+        "quant_format": "QOperator",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.68359375,
+      "latency_p50_ms_as_reported_by_olive": 9.34395,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": true
+    },
+    {
+      "model_id": "04968b4d",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": false,
+        "reduce_range": true,
+        "calibrate_method": "Percentile",
+        "quant_format": "QDQ",
+        "quant_preprocess": true
+      },
+      "accuracy_256": 0.67578125,
+      "latency_p50_ms_as_reported_by_olive": 12.45525,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "5e4b3349",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": false,
+        "reduce_range": false,
+        "calibrate_method": "Percentile",
+        "quant_format": "QOperator",
+        "quant_preprocess": true
+      },
+      "accuracy_256": 0.67578125,
+      "latency_p50_ms_as_reported_by_olive": 9.20715,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "a52b2b31",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": true,
+        "reduce_range": true,
+        "calibrate_method": "MinMax",
+        "quant_format": "QDQ",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.671875,
+      "latency_p50_ms_as_reported_by_olive": 8.383,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "49574420",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": false,
+        "reduce_range": false,
+        "calibrate_method": "MinMax",
+        "quant_format": "QOperator",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.671875,
+      "latency_p50_ms_as_reported_by_olive": 8.3568,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "d06586db",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": true,
+        "reduce_range": true,
+        "calibrate_method": "MinMax",
+        "quant_format": "QOperator",
+        "quant_preprocess": true
+      },
+      "accuracy_256": 0.671875,
+      "latency_p50_ms_as_reported_by_olive": 6.853,
+      "olive_pareto_frontier": true,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "6f0d8399",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": false,
+        "reduce_range": true,
+        "calibrate_method": "Entropy",
+        "quant_format": "QDQ",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.671875,
+      "latency_p50_ms_as_reported_by_olive": 9.3654,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "b799c74a",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": true,
+        "reduce_range": true,
+        "calibrate_method": "Entropy",
+        "quant_format": "QDQ",
+        "quant_preprocess": true
+      },
+      "accuracy_256": 0.671875,
+      "latency_p50_ms_as_reported_by_olive": 9.17295,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "72eb479e",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": true,
+        "reduce_range": true,
+        "calibrate_method": "Entropy",
+        "quant_format": "QOperator",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.671875,
+      "latency_p50_ms_as_reported_by_olive": 7.34745,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "0f756ed6",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": true,
+        "reduce_range": false,
+        "calibrate_method": "MinMax",
+        "quant_format": "QDQ",
+        "quant_preprocess": true
+      },
+      "accuracy_256": 0.671875,
+      "latency_p50_ms_as_reported_by_olive": 9.27805,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "90f6117f",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": true,
+        "reduce_range": true,
+        "calibrate_method": "MinMax",
+        "quant_format": "QOperator",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.671875,
+      "latency_p50_ms_as_reported_by_olive": 8.2583,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "7f43838f",
+      "recipe": "input model (FP32)",
+      "accuracy_256": 0.66796875,
+      "latency_p50_ms_as_reported_by_olive": 7.97265,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "5320eec9",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": true,
+        "reduce_range": true,
+        "calibrate_method": "Percentile",
+        "quant_format": "QOperator",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.66796875,
+      "latency_p50_ms_as_reported_by_olive": 6.97515,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "146467bf",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": true,
+        "reduce_range": true,
+        "calibrate_method": "Percentile",
+        "quant_format": "QOperator",
+        "quant_preprocess": true
+      },
+      "accuracy_256": 0.66796875,
+      "latency_p50_ms_as_reported_by_olive": 8.0308,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "9a11c2f8",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": true,
+        "reduce_range": true,
+        "calibrate_method": "Percentile",
+        "quant_format": "QDQ",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.66796875,
+      "latency_p50_ms_as_reported_by_olive": 9.5706,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "59e06390",
+      "recipe": {
+        "precision": "int8",
+        "activation_type": "int8",
+        "per_channel": false,
+        "reduce_range": true,
+        "calibrate_method": "Entropy",
+        "quant_format": "QDQ",
+        "quant_preprocess": true
+      },
+      "accuracy_256": 0.6640625,
+      "latency_p50_ms_as_reported_by_olive": 16.8503,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "c2f4fa11",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": false,
+        "reduce_range": true,
+        "calibrate_method": "Percentile",
+        "quant_format": "QOperator",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.65625,
+      "latency_p50_ms_as_reported_by_olive": 8.88455,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "e7d29535",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": true,
+        "reduce_range": false,
+        "calibrate_method": "Percentile",
+        "quant_format": "QOperator",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.640625,
+      "latency_p50_ms_as_reported_by_olive": 7.04605,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "c798bdda",
+      "recipe": {
+        "precision": "int8",
+        "activation_type": "int8",
+        "per_channel": true,
+        "reduce_range": true,
+        "calibrate_method": "MinMax",
+        "quant_format": "QDQ",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.63671875,
+      "latency_p50_ms_as_reported_by_olive": 15.70785,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "9d4671fe",
+      "recipe": {
+        "precision": "int8",
+        "activation_type": "int8",
+        "per_channel": true,
+        "reduce_range": false,
+        "calibrate_method": "Percentile",
+        "quant_format": "QDQ",
+        "quant_preprocess": false
+      },
+      "accuracy_256": 0.63671875,
+      "latency_p50_ms_as_reported_by_olive": 15.16845,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "34223b55",
+      "recipe": {
+        "precision": "int8",
+        "activation_type": "int8",
+        "per_channel": true,
+        "reduce_range": false,
+        "calibrate_method": "Entropy",
+        "quant_format": "QDQ",
+        "quant_preprocess": true
+      },
+      "accuracy_256": 0.63671875,
+      "latency_p50_ms_as_reported_by_olive": 16.5474,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    },
+    {
+      "model_id": "c7f5799a",
+      "recipe": {
+        "precision": "uint8",
+        "activation_type": "uint8",
+        "per_channel": true,
+        "reduce_range": false,
+        "calibrate_method": "Entropy",
+        "quant_format": "QOperator",
+        "quant_preprocess": true
+      },
+      "accuracy_256": 0.6328125,
+      "latency_p50_ms_as_reported_by_olive": 7.9072,
+      "olive_pareto_frontier": false,
+      "written_out_as_result": false
+    }
+  ],
+  "note": "Byte-identical model files can come from different recipes; every candidate matching the written-out file is marked."
+}
