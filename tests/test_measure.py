@@ -82,3 +82,18 @@ def test_measurement_round_trip():
 
 def test_size_mb_uses_binary_megabytes():
     assert make_measurement(size_bytes=1024 * 1024).size_mb == pytest.approx(1.0)
+
+
+def test_an_unloadable_graph_becomes_a_measurement_error_not_a_crash(tmp_path):
+    # e.g. a quantized graph whose kernels this onnxruntime build does not ship. The loop
+    # turns MeasurementError into a recorded failed trial, so the run carries on.
+    from pathlib import Path
+
+    from anneal.core.artifact import ModelArtifact
+    from anneal.core.measure import Benchmarker, MeasurementError
+    from anneal.core.targets import get_target
+
+    bad = Path(tmp_path) / "broken.onnx"
+    bad.write_bytes(b"not an onnx graph")
+    with pytest.raises(MeasurementError, match="could not load"):
+        Benchmarker(get_target("cpu-1t"), warmup=1, runs=1).measure(ModelArtifact(path=bad))

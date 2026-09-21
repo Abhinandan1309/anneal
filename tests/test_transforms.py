@@ -120,11 +120,16 @@ def test_graph_optimize_produces_a_new_loadable_model(tiny_onnx: Path, ctx):
     ort.InferenceSession(str(result.path), providers=["CPUExecutionProvider"])
 
 
-def test_dynamic_quantization_shrinks_the_model_and_preserves_behaviour(tiny_onnx: Path, ctx):
+@pytest.mark.parametrize("weight_type", ["uint8", "int8"])
+def test_dynamic_quantization_shrinks_the_model_and_preserves_behaviour(
+    tiny_onnx: Path, ctx, weight_type: str
+):
     import onnxruntime as ort
 
     base = ModelArtifact(path=tiny_onnx)
-    result = apply_transform("quantize_dynamic_int8", {"per_channel": False}, base, ctx)
+    result = apply_transform(
+        "quantize_dynamic_int8", {"per_channel": False, "weight_type": weight_type}, base, ctx
+    )
 
     assert result.path.exists()
     assert "quantize_dynamic_int8" in result.lineage_key
@@ -136,7 +141,17 @@ def test_dynamic_quantization_shrinks_the_model_and_preserves_behaviour(tiny_onn
         sess = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
         return sess.run(None, {"input": x})[0]
 
-    before, after = run(tiny_onnx), run(result.path)
+    try:
+        after = run(result.path)
+    except Exception as exc:
+        # onnxruntime <= 1.23 (the last release for Python 3.10) ships no CPU ConvInteger
+        # kernel for *signed* INT8 weights, so this graph does not load at all there. That
+        # is a property of the runtime, not a bug in the transform — in a real run it
+        # becomes a recorded failed trial. uint8 weights must load everywhere.
+        if weight_type == "int8" and "ConvInteger" in str(exc):
+            pytest.skip(f"onnxruntime {ort.__version__} has no signed-INT8 ConvInteger kernel")
+        raise
+    before = run(tiny_onnx)
     assert before.shape == after.shape
     # INT8 should perturb, not destroy: the outputs must stay strongly correlated.
     correlation = np.corrcoef(before.ravel(), after.ravel())[0, 1]
