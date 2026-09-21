@@ -40,6 +40,10 @@ class RunConfig:
     calib_samples: int = 64
     seed: int = 0
     constraints: Constraints = field(default_factory=Constraints)
+    #: Layer order from a saved `anneal sensitivity --measured` sweep, most damaging
+    #: first. Saves re-running a sweep that costs one eval pass per layer.
+    measured_ranking: list[str] | None = None
+    measured_ranking_source: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -49,6 +53,7 @@ class RunConfig:
             "runs": self.runs,
             "calib_samples": self.calib_samples,
             "seed": self.seed,
+            "sensitivity_source": self.measured_ranking_source,
             "constraints": {
                 "max_accuracy_drop_pp": self.constraints.max_accuracy_drop_pp,
                 "min_accuracy": self.constraints.min_accuracy,
@@ -93,6 +98,9 @@ class OptimizationRun:
             evalset=evalset,
             calib_samples=config.calib_samples,
         )
+        if config.measured_ranking:
+            self.ctx.extra["measured_ranking"] = list(config.measured_ranking)
+        self.can_measure_sensitivity = evalset is not None or bool(config.measured_ranking)
         self.transforms = available_transforms()
 
         self.ledger = Ledger(
@@ -121,6 +129,7 @@ class OptimizationRun:
                 budget_remaining=self.config.budget - self._spent(),
                 constraints=self.config.constraints,
                 baseline_artifact=self.baseline,
+                can_measure_sensitivity=self.can_measure_sensitivity,
             )
 
             proposal = self.policy.propose(state)

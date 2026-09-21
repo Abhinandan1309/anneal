@@ -286,26 +286,47 @@ def quantize_dynamic_sensitive(
 ) -> ModelArtifact:
     """INT8 dynamic quantization that *spares* the k most quantization-sensitive layers.
 
-    ``skip_top_k`` layers with the highest weight-quantization error stay in FP32. This
-    is the accuracy/latency dial: k=0 is blanket quantization, larger k trades speed back
-    for fidelity. ``skip_first_last`` additionally spares the stem convolution and the
-    classifier, which are sensitive in almost every vision backbone.
+    ``skip_top_k`` layers stay in FP32. This is the accuracy/latency dial: k=0 is blanket
+    quantization, larger k trades speed back for fidelity. ``skip_first_last`` additionally
+    spares the stem convolution and the classifier.
+
+    ``ranking`` decides what "most sensitive" means:
+
+    ``measured`` (the default whenever calibration data is available)
+        Quantize each layer alone, run the eval set, and rank by how many predictions
+        changed. Costs one eval pass per layer, once per base model per run — then cached.
+    ``proxy``
+        Rank by weight-quantization error. Free, and on ResNet-18 only weakly predictive
+        (Spearman +0.33 against the measured sweep): it ranks the stem convolution, the
+        most damaging layer to quantize, last of 21, because stem sensitivity lives in the
+        raw-pixel activations and the proxy only looks at weights. Kept for when there is
+        no eval set, and so the two can be compared.
     """
     from onnxruntime.quantization import QuantType, quantize_dynamic
 
     skip_top_k = int(params.get("skip_top_k", 2))
     skip_first_last = bool(params.get("skip_first_last", False))
     per_channel = bool(params.get("per_channel", True))
+    ranking = params.get("ranking") or (
+        "measured" if (ctx.evalset is not None or ctx.extra.get("measured_ranking")) else "proxy"
+    )
 
     if skip_top_k < 0:
         raise TransformError("skip_top_k must be >= 0")
+    if ranking not in ("measured", "proxy"):
+        raise TransformError(f"ranking must be 'measured' or 'proxy', got {ranking!r}")
 
     src = _preprocessed(artifact, ctx)
     ranked = rank_layer_sensitivity(src, per_channel=per_channel)
     if not ranked:
         raise TransformError("no quantizable Conv/Gemm/MatMul nodes found in this graph")
 
-    exclude = [name for name, _, _ in ranked[:skip_top_k]]
+    if ranking == "measured":
+        order = _measured_order(src, ctx, per_channel, {name for name, _, _ in ranked})
+    else:
+        order = [name for name, _, _ in ranked]
+
+    exclude = order[:skip_top_k]
 
     if skip_first_last:
         import onnx
@@ -323,6 +344,9 @@ def quantize_dynamic_sensitive(
             "skip_top_k": skip_top_k,
             "skip_first_last": skip_first_last,
             "per_channel": per_channel,
+            # Recorded resolved, not as passed: two runs that defaulted differently must
+            # not share a lineage key.
+            "ranking": ranking,
         },
     )
     out = ctx.path_for(artifact, record)
@@ -339,8 +363,89 @@ def quantize_dynamic_sensitive(
         record,
         out,
         excluded_nodes=exclude,
+        sensitivity_ranking=ranking,
         sensitivity_top5=[{"node": n, "rel_err": round(e, 5), "op": o} for n, e, o in ranked[:5]],
     )
+
+
+def _measured_order(
+    src: Path, ctx: TransformContext, per_channel: bool, graph_nodes: set[str]
+) -> list[str]:
+    """Layers ordered most-damaging-first by the measured one-layer-at-a-time sweep.
+
+    Resolution order: a ranking seeded into ``ctx.extra['measured_ranking']`` (e.g. from
+    a saved ``anneal sensitivity --measured`` run), then one cached earlier in this run
+    for the same graph, then a fresh sweep. The sweep is expensive — one eval pass per
+    layer — so it runs at most once per (graph, per_channel) per run.
+    """
+    seeded = ctx.extra.get("measured_ranking")
+    if seeded:
+        order = [n for n in seeded if n in graph_nodes]
+        if not order:
+            raise TransformError(
+                "the supplied measured sensitivity ranking shares no node names with this "
+                "graph; it was probably produced for a different model"
+            )
+        # Layers the saved sweep never scored go last, least-known-first is not a ranking.
+        return order + sorted(graph_nodes - set(order))
+
+    cache: dict[tuple[str, bool], list[str]] = ctx.extra.setdefault("_measured_cache", {})
+    key = (str(src), per_channel)
+    if key in cache:
+        return cache[key]
+
+    if ctx.evalset is None:
+        raise TransformError(
+            "ranking='measured' needs an eval set to measure against; pass one, supply a "
+            "saved sweep with --sensitivity, or use ranking='proxy'"
+        )
+
+    from anneal.core.sensitivity import measured_sensitivity
+    from anneal.core.targets import default_target
+
+    # Accuracy is a property of the graph, not the runtime, so any working CPU target
+    # scores it correctly; the fastest available one is used.
+    results = measured_sensitivity(
+        ModelArtifact(path=src),
+        ctx.extra.get("scoring_target") or default_target(),
+        ctx.evalset,
+        TransformContext(workdir=ctx.workdir / "sweep", evalset=ctx.evalset),
+        per_channel=per_channel,
+    )
+    order = order_by_measured_damage(results)
+    cache[key] = order
+    return order
+
+
+def order_by_measured_damage(results: Any) -> list[str]:
+    """Most prediction changes first; ties broken by the proxy; failures last."""
+    measured = [r for r in results if r.changed_fraction is not None]
+    unmeasured = [r for r in results if r.changed_fraction is None]
+    measured.sort(key=lambda r: (r.changed_fraction, r.proxy_error), reverse=True)
+    return [r.node for r in measured] + [r.node for r in unmeasured]
+
+
+def load_measured_ranking(path: Path) -> list[str]:
+    """Read the node order out of an ``anneal sensitivity --measured`` result file."""
+    import json
+
+    from anneal.core.sensitivity import LayerSensitivity
+
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    layers = [
+        LayerSensitivity(
+            node=layer["node"],
+            op_type=layer.get("op_type", "?"),
+            proxy_error=float(layer.get("proxy_error", 0.0)),
+            changed_fraction=layer.get("changed_fraction"),
+            accuracy_drop_pp=layer.get("accuracy_drop_pp"),
+            error=layer.get("error"),
+        )
+        for layer in data.get("layers", [])
+    ]
+    if not layers:
+        raise ValueError(f"{path} contains no layer measurements")
+    return order_by_measured_damage(layers)
 
 
 def quantize_static_int8(
@@ -467,8 +572,9 @@ REGISTRY: dict[str, TransformSpec] = {
         name="quantize_dynamic_sensitive",
         summary=(
             "INT8 dynamic quantization that leaves the k most quantization-sensitive "
-            "layers in FP32, ranked by weight-quantization error. The main dial for "
-            "trading a little speed back for accuracy."
+            "layers in FP32. The main dial for trading a little speed back for accuracy. "
+            "By default layers are ranked by a measured one-layer-at-a-time sweep; the "
+            "free weight-error proxy is available but weakly predictive."
         ),
         params={
             "skip_top_k": {
@@ -482,6 +588,16 @@ REGISTRY: dict[str, TransformSpec] = {
             "per_channel": {
                 "type": "boolean",
                 "description": "Per-output-channel weight scales.",
+            },
+            "ranking": {
+                "type": "string",
+                "enum": ["measured", "proxy"],
+                "description": (
+                    "How sensitivity is ranked. 'measured' quantizes each layer alone and "
+                    "counts changed predictions (one eval pass per layer, cached per run). "
+                    "'proxy' uses weight-quantization error: free, but on ResNet-18 it ranked "
+                    "the most damaging layer last."
+                ),
             },
         },
         fn=quantize_dynamic_sensitive,

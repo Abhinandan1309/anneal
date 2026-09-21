@@ -199,3 +199,20 @@ def test_written_ledger_can_be_loaded_back(ledger: Ledger, tmp_path: Path):
     paths = write_report(ledger, tmp_path / "out")
     restored = Ledger.load(paths["ledger"])
     assert len(restored.trials) == len(ledger.trials)
+
+
+def test_compact_label_distinguishes_measured_from_proxy_ranking():
+    def label(ranking: str) -> str:
+        return compact_label(
+            make_trial(
+                1,
+                lineage=(
+                    TransformRecord(
+                        "quantize_dynamic_sensitive", {"skip_top_k": 1, "ranking": ranking}
+                    ),
+                ),
+            )
+        )
+
+    assert label("measured") == "sel-int8[k=1,meas]"
+    assert label("proxy") == "sel-int8[k=1,proxy]"

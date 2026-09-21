@@ -174,3 +174,144 @@ def test_candidate_paths_differ_for_different_recipes(tiny_onnx: Path, ctx):
     a = ctx.path_for(base, TransformRecord("graph_optimize", {"level": "all"}))
     b = ctx.path_for(base, TransformRecord("graph_optimize", {"level": "basic"}))
     assert a != b
+
+
+# ----- measured ranking ----------------------------------------------------
+
+
+def _sens(node, proxy, changed, error=None):
+    from anneal.core.sensitivity import LayerSensitivity
+
+    return LayerSensitivity(
+        node=node, op_type="Conv", proxy_error=proxy, changed_fraction=changed, error=error
+    )
+
+
+def test_measured_order_puts_the_most_damaging_layer_first():
+    from anneal.core.transforms import order_by_measured_damage
+
+    order = order_by_measured_damage(
+        [_sens("a", 0.02, 0.004), _sens("stem", 0.001, 0.035), _sens("b", 0.01, 0.016)]
+    )
+    # The stem has the *lowest* proxy error and the *highest* measured damage — the exact
+    # case on ResNet-18 that the proxy got backwards.
+    assert order == ["stem", "b", "a"]
+
+
+def test_measured_ties_are_broken_by_the_proxy():
+    from anneal.core.transforms import order_by_measured_damage
+
+    order = order_by_measured_damage([_sens("low", 0.001, 0.016), _sens("high", 0.02, 0.016)])
+    assert order == ["high", "low"]
+
+
+def test_layers_that_failed_to_measure_go_last():
+    from anneal.core.transforms import order_by_measured_damage
+
+    order = order_by_measured_damage([_sens("broken", 0.9, None, "boom"), _sens("ok", 0.1, 0.01)])
+    assert order == ["ok", "broken"]
+
+
+def test_saved_sweep_round_trips_into_a_ranking(tmp_path: Path):
+    import json
+
+    from anneal.core.transforms import load_measured_ranking
+
+    path = tmp_path / "sensitivity.json"
+    path.write_text(
+        json.dumps(
+            {
+                "layers": [
+                    {"node": "a", "op_type": "Conv", "proxy_error": 0.02, "changed_fraction": 0.004},
+                    {"node": "stem", "op_type": "Conv", "proxy_error": 0.001, "changed_fraction": 0.035},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert load_measured_ranking(path) == ["stem", "a"]
+
+
+def test_empty_saved_sweep_is_rejected(tmp_path: Path):
+    from anneal.core.transforms import load_measured_ranking
+
+    path = tmp_path / "sensitivity.json"
+    path.write_text('{"layers": []}', encoding="utf-8")
+    with pytest.raises(ValueError, match="no layer measurements"):
+        load_measured_ranking(path)
+
+
+def test_seeded_ranking_overrides_the_proxy(tiny_onnx: Path, ctx):
+    proxy_order = [n for n, _, _ in rank_layer_sensitivity(tiny_onnx, per_channel=False)]
+    seeded = list(reversed(proxy_order))
+    ctx.extra["measured_ranking"] = seeded
+
+    result = apply_transform(
+        "quantize_dynamic_sensitive",
+        {"skip_top_k": 1, "per_channel": False},
+        ModelArtifact(path=tiny_onnx),
+        ctx,
+    )
+    assert result.meta["excluded_nodes"] == [seeded[0]]
+    assert result.meta["excluded_nodes"] != [proxy_order[0]]
+    assert result.lineage[-1].params["ranking"] == "measured"
+
+
+def test_a_seeded_ranking_for_a_different_model_is_refused(tiny_onnx: Path, ctx):
+    ctx.extra["measured_ranking"] = ["/some/other/model/Conv"]
+    with pytest.raises(TransformError, match="different model"):
+        apply_transform(
+            "quantize_dynamic_sensitive", {"skip_top_k": 1}, ModelArtifact(path=tiny_onnx), ctx
+        )
+
+
+def test_without_data_the_ranking_falls_back_to_the_proxy_and_says_so(tiny_onnx: Path, ctx):
+    result = apply_transform(
+        "quantize_dynamic_sensitive", {"skip_top_k": 1}, ModelArtifact(path=tiny_onnx), ctx
+    )
+    # Recorded resolved, so a proxy-ranked candidate never masquerades as a measured one.
+    assert result.lineage[-1].params["ranking"] == "proxy"
+    assert result.meta["sensitivity_ranking"] == "proxy"
+
+
+def test_asking_for_measured_ranking_without_data_is_an_error(tiny_onnx: Path, ctx):
+    with pytest.raises(TransformError, match="needs an eval set"):
+        apply_transform(
+            "quantize_dynamic_sensitive",
+            {"skip_top_k": 1, "ranking": "measured"},
+            ModelArtifact(path=tiny_onnx),
+            ctx,
+        )
+
+
+def test_unknown_ranking_is_rejected(tiny_onnx: Path, ctx):
+    with pytest.raises(TransformError, match="ranking must be"):
+        apply_transform(
+            "quantize_dynamic_sensitive",
+            {"ranking": "vibes"},
+            ModelArtifact(path=tiny_onnx),
+            ctx,
+        )
+
+
+def test_measured_sweep_runs_once_and_is_cached(tiny_onnx: Path, tmp_path: Path):
+    from anneal.core.dataset import SyntheticEvalSet
+
+    ctx = TransformContext(
+        workdir=tmp_path / "candidates",
+        evalset=SyntheticEvalSet(shape=(3, 16, 16), n=16, batch_size=8),
+    )
+    base = ModelArtifact(path=tiny_onnx)
+
+    first = apply_transform(
+        "quantize_dynamic_sensitive", {"skip_top_k": 1, "per_channel": False}, base, ctx
+    )
+    assert first.lineage[-1].params["ranking"] == "measured"
+    cache = ctx.extra["_measured_cache"]
+    assert len(cache) == 1
+    (order,) = cache.values()
+    assert set(order) == {n for n, _, _ in rank_layer_sensitivity(tiny_onnx, per_channel=False)}
+
+    # A second recipe on the same graph must reuse the sweep, not pay for it again.
+    apply_transform("quantize_dynamic_sensitive", {"skip_top_k": 0, "per_channel": False}, base, ctx)
+    assert len(ctx.extra["_measured_cache"]) == 1

@@ -99,8 +99,24 @@ def cmd_run(args: argparse.Namespace) -> int:
         console.print(f"[red]policy error:[/red] {exc}")
         return 2
 
+    measured_ranking = None
+    if args.sensitivity:
+        from anneal.core.transforms import load_measured_ranking
+
+        try:
+            measured_ranking = load_measured_ranking(Path(args.sensitivity))
+        except (OSError, ValueError, KeyError) as exc:
+            console.print(f"[red]could not read sensitivity sweep:[/red] {exc}")
+            return 2
+        console.print(
+            f"Using measured layer ranking from [cyan]{args.sensitivity}[/cyan] "
+            f"({len(measured_ranking)} layers)"
+        )
+
     config = RunConfig(
         workdir=outdir,
+        measured_ranking=measured_ranking,
+        measured_ranking_source=str(args.sensitivity) if args.sensitivity else None,
         budget=args.budget,
         batch_size=args.batch_size,
         warmup=args.warmup,
@@ -968,6 +984,13 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--min-accuracy", type=float, default=None, help="absolute floor, 0-1")
     run.add_argument("--max-size-mb", type=float, default=None)
     run.add_argument("--max-latency-ms", type=float, default=None)
+    run.add_argument(
+        "--sensitivity",
+        default=None,
+        metavar="JSON",
+        help="reuse a saved `anneal sensitivity --measured` result to rank layers for "
+        "selective quantization, instead of sweeping again",
+    )
     run.add_argument("--out", default=None, help="output directory")
     run.add_argument("--cache", default=str(DEFAULT_CACHE), help="dataset cache directory")
     run.set_defaults(func=cmd_run)

@@ -226,3 +226,40 @@ def test_preview_key_composes_lineage():
     )
     key = Proposal("quantize_dynamic_int8", {"per_channel": True}).preview_key(base)
     assert key == "graph_optimize(level=all)|quantize_dynamic_int8(per_channel=True)"
+
+
+def test_policy_asks_for_measured_ranking_when_it_can():
+    ledger = fresh_ledger(0.90)
+    ledger.add(
+        make_trial(
+            1,
+            lineage=(TransformRecord("quantize_static_int8", {"per_channel": True}),),
+            latency=20.0,
+            accuracy=0.80,
+        )
+    )
+    state = state_for(ledger)
+    state.can_measure_sensitivity = True
+
+    policy = HeuristicPolicy()
+    policy._generation = 1
+    selective = [p for p in policy._react(state) if p.transform == "quantize_dynamic_sensitive"]
+    assert selective and all(p.params["ranking"] == "measured" for p in selective)
+
+
+def test_policy_falls_back_to_the_proxy_without_data():
+    ledger = fresh_ledger(0.90)
+    ledger.add(
+        make_trial(
+            1,
+            lineage=(TransformRecord("quantize_static_int8", {"per_channel": True}),),
+            latency=20.0,
+            accuracy=0.80,
+        )
+    )
+    policy = HeuristicPolicy()
+    policy._generation = 1
+    selective = [
+        p for p in policy._react(state_for(ledger)) if p.transform == "quantize_dynamic_sensitive"
+    ]
+    assert selective and all(p.params["ranking"] == "proxy" for p in selective)

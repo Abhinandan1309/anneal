@@ -76,6 +76,9 @@ class SearchState:
     budget_remaining: int
     constraints: Constraints
     baseline_artifact: ModelArtifact
+    #: Whether a measured layer-sensitivity ranking can be used this run — an eval set to
+    #: sweep against, or a saved sweep. The policy prefers it when it can.
+    can_measure_sensitivity: bool = False
 
     def artifact(self, index: int) -> ModelArtifact | None:
         if index == BASELINE:
@@ -252,7 +255,8 @@ class HeuristicPolicy:
                 out.append(
                     Proposal(
                         "quantize_dynamic_sensitive",
-                        {"skip_top_k": k, "skip_first_last": False, "per_channel": True},
+                        {"skip_top_k": k, "skip_first_last": False, "per_channel": True,
+                         "ranking": self._ranking(state)},
                         BASELINE,
                         f"{len(broke_accuracy)} quantized candidate(s) fell below the accuracy "
                         f"floor; spare the {k} most quantization-sensitive layer(s) and re-measure.",
@@ -263,7 +267,8 @@ class HeuristicPolicy:
             out.append(
                 Proposal(
                     "quantize_dynamic_sensitive",
-                    {"skip_top_k": 0, "skip_first_last": False, "per_channel": True},
+                    {"skip_top_k": 0, "skip_first_last": False, "per_channel": True,
+                     "ranking": self._ranking(state)},
                     BASELINE,
                     "Accuracy held everywhere; check whether sparing zero layers (blanket "
                     "quantization via the selective path) is faster still.",
@@ -310,7 +315,8 @@ class HeuristicPolicy:
                 out.append(
                     Proposal(
                         "quantize_dynamic_sensitive",
-                        {"skip_top_k": k, "skip_first_last": True, "per_channel": True},
+                        {"skip_top_k": k, "skip_first_last": True, "per_channel": True,
+                         "ranking": self._ranking(state)},
                         BASELINE,
                         f"Still nothing inside the accuracy budget; spare the top {k} "
                         f"sensitive layers plus stem and classifier.",
@@ -334,7 +340,8 @@ class HeuristicPolicy:
             out.append(
                 Proposal(
                     "quantize_dynamic_sensitive",
-                    {"skip_top_k": 1, "skip_first_last": True, "per_channel": True},
+                    {"skip_top_k": 1, "skip_first_last": True, "per_channel": True,
+                     "ranking": self._ranking(state)},
                     BASELINE,
                     "Cheap frontier point: spare only the stem, classifier and single worst "
                     "layer — should sit between blanket INT8 and FP32.",
@@ -363,6 +370,12 @@ class HeuristicPolicy:
         ]
 
     # ----- ledger queries -------------------------------------------------
+
+    @staticmethod
+    def _ranking(state: SearchState) -> str:
+        # The weight-error proxy scored Spearman +0.33 against a measured sweep on
+        # ResNet-18 and ranked the most damaging layer last. Use measurement when it exists.
+        return "measured" if state.can_measure_sensitivity else "proxy"
 
     @staticmethod
     def _fastest(state: SearchState) -> Trial | None:
