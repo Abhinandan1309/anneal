@@ -1,0 +1,27 @@
+{
+  "n_eval": 1024,
+  "baseline_accuracy": 0.67578125,
+  "accuracy_resolution_pp": 2.8623948037231663,
+  "rows": [
+    {
+      "k": 1,
+      "ranking": "proxy",
+      "spared": [
+        "/layer3/layer3.0/conv2/Conv"
+      ],
+      "accuracy": 0.685546875,
+      "changed_fraction": 0.0615234375,
+      "changed_images": 63
+    },
+    {
+      "k": 1,
+      "ranking": "measured",
+      "spared": [
+        "/conv1/Conv"
+      ],
+      "accuracy": 0.6796875,
+      "changed_fraction": 0.05078125,
+      "changed_images": 52
+    }
+  ]
+}

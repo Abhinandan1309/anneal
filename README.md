@@ -184,9 +184,24 @@ from quantizing raw-pixel activations with a wide dynamic range, and a proxy tha
 at weights cannot see activations at all.
 
 What this means for the tool, stated plainly: the proxy is a usable prior for the middle of
-the network and blind at the input. The heuristic policy's separate `skip_first_last` knob
-covers exactly that blind spot — but that is a folk rule doing the work, not the proxy. The
-honest next step is to let the measured sweep, not the proxy, drive `skip_top_k`.
+the network and blind at the input. So selective quantization now ranks by measurement by
+default (`ranking='measured'`), sweeping once per model per run, or reusing a saved sweep
+via `anneal run --sensitivity sweep.json`. The proxy remains available as
+`ranking='proxy'` for runs with no eval set.
+
+Did that change help? [`examples/ranking_ab.py`](examples/ranking_ab.py) spares one layer
+under each ranking and counts changed predictions on 1,024 images:
+
+| spare 1 layer | chosen by | predictions changed vs FP32 |
+|---|---|---:|
+| `/layer3/layer3.0/conv2/Conv` | proxy | 6.15% (63 images) |
+| `/conv1/Conv` (stem) | measurement | **5.08% (52 images)** |
+
+Measured ranking changes 11 fewer predictions — the right direction, and consistent with the
+sweep. But 11 images is roughly one standard deviation for a paired count this size, so this
+is **suggestive, not conclusive**. The accuracy difference between the two (68.55% vs 67.97%)
+is inside the ±2.9pp interval and means nothing. A larger `k` or eval set would be needed to
+claim a real improvement.
 
 A resolution caveat: at n=256 each image is 0.39pp, so the 0.4–1.6% tail is a handful of
 images per layer and largely tied. The stem result — 9 images, more than double the next
@@ -386,8 +401,9 @@ Stated plainly, because the alternative is letting someone find them in a review
   understated static INT8's damage by more than a third. `anneal validate` exists because of
   this, and the report prints its own resolution.
 - **The layer-sensitivity proxy is weak** (ρ = +0.33 against the measured sweep) and blind to
-  the stem layer. Selective quantization still ranks layers with it; the measured sweep should
-  replace it.
+  the stem layer. Selective quantization now ranks by measurement by default, but the evidence
+  that this protects accuracy better is so far a single, marginal A/B (52 vs 63 changed
+  predictions of 1,024).
 - **The action space is quantization and graph optimisation.** No pruning, distillation, or
   NAS. Those are real transforms with real payoffs and they are absent; the registry is the
   extension point.
