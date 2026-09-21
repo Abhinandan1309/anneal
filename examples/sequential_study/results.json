@@ -1,0 +1,153 @@
+{
+  "reps": 1000,
+  "alpha": 0.05,
+  "budget_pp": 1.0,
+  "n_full": 3925,
+  "seed": 0,
+  "rows": [
+    {
+      "scenario": "static INT8, full-range per-channel",
+      "source": "ResNet-18 recipe A/B, n=1024 (-4.20pp)",
+      "true_delta_pp": -4.19921875,
+      "discordance": 0.1103515625,
+      "truth": "reject",
+      "sequential": {
+        "error_rate": 0.0,
+        "undecided_rate": 0.0,
+        "accept_rate": 0.0,
+        "mean_n": 867.965,
+        "median_n": 723.5,
+        "p90_n": 1802.2
+      },
+      "fixed_256": {
+        "error_rate": 0.066,
+        "accept_rate": 0.066
+      },
+      "fixed_3925": {
+        "error_rate": 0.0,
+        "accept_rate": 0.0
+      },
+      "fixed_n_for_90pct_power": 909
+    },
+    {
+      "scenario": "static INT8, reduce_range",
+      "source": "ResNet-18 recipe A/B, n=1024 (+0.39pp)",
+      "true_delta_pp": 0.390625,
+      "discordance": 0.017578125,
+      "truth": "accept",
+      "sequential": {
+        "error_rate": 0.0,
+        "undecided_rate": 0.0,
+        "accept_rate": 1.0,
+        "mean_n": 738.442,
+        "median_n": 600.5,
+        "p90_n": 1383.1
+      },
+      "fixed_256": {
+        "error_rate": 0.038,
+        "accept_rate": 0.962
+      },
+      "fixed_3925": {
+        "error_rate": 0.0,
+        "accept_rate": 1.0
+      },
+      "fixed_n_for_90pct_power": 778
+    },
+    {
+      "scenario": "Olive default static INT8",
+      "source": "anneal audit of Olive's model, n=3925 (+0.33pp)",
+      "true_delta_pp": 0.33121019108280253,
+      "discordance": 0.03745222929936305,
+      "truth": "accept",
+      "sequential": {
+        "error_rate": 0.0,
+        "undecided_rate": 0.078,
+        "accept_rate": 0.922,
+        "mean_n": 1647.085,
+        "median_n": 1405.5,
+        "p90_n": 3560.9000000000005
+      },
+      "fixed_256": {
+        "error_rate": 0.136,
+        "accept_rate": 0.864
+      },
+      "fixed_3925": {
+        "error_rate": 0.0,
+        "accept_rate": 1.0
+      },
+      "fixed_n_for_90pct_power": 1810
+    },
+    {
+      "scenario": "near budget, acceptable",
+      "source": "synthetic: -0.5pp, 9.5% discordant",
+      "true_delta_pp": -0.5000000000000004,
+      "discordance": 0.095,
+      "truth": "accept",
+      "sequential": {
+        "error_rate": 0.014,
+        "undecided_rate": 0.91,
+        "accept_rate": 0.076,
+        "mean_n": 3661.85,
+        "median_n": 3925.0,
+        "p90_n": 3925.0
+      },
+      "fixed_256": {
+        "error_rate": 0.414,
+        "accept_rate": 0.586
+      },
+      "fixed_3925": {
+        "error_rate": 0.143,
+        "accept_rate": 0.857
+      },
+      "fixed_n_for_90pct_power": 32535
+    },
+    {
+      "scenario": "near budget, unacceptable",
+      "source": "synthetic: -1.5pp, 10% discordant",
+      "true_delta_pp": -1.5,
+      "discordance": 0.1,
+      "truth": "reject",
+      "sequential": {
+        "error_rate": 0.01,
+        "undecided_rate": 0.905,
+        "accept_rate": 0.01,
+        "mean_n": 3676.548,
+        "median_n": 3925.0,
+        "p90_n": 3925.0
+      },
+      "fixed_256": {
+        "error_rate": 0.425,
+        "accept_rate": 0.425
+      },
+      "fixed_3925": {
+        "error_rate": 0.161,
+        "accept_rate": 0.161
+      },
+      "fixed_n_for_90pct_power": 34179
+    },
+    {
+      "scenario": "exactly on budget",
+      "source": "synthetic: -1.0pp, 10% discordant",
+      "true_delta_pp": -1.0000000000000002,
+      "discordance": 0.1,
+      "truth": "boundary",
+      "sequential": {
+        "error_rate": null,
+        "undecided_rate": 0.95,
+        "accept_rate": 0.028,
+        "mean_n": 3761.631,
+        "median_n": 3925.0,
+        "p90_n": 3925.0
+      },
+      "fixed_256": {
+        "error_rate": null,
+        "accept_rate": 0.485
+      },
+      "fixed_3925": {
+        "error_rate": null,
+        "accept_rate": 0.506
+      },
+      "fixed_n_for_90pct_power": null
+    }
+  ]
+}
