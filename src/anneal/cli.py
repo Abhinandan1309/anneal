@@ -29,7 +29,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     from anneal.agent.policy import Constraints, build_policy
     from anneal.core.dataset import load_evalset
     from anneal.core.targets import TargetUnavailable, default_target, get_target
-    from anneal.core.artifact import model_batch_dim
+    from anneal.core.artifact import model_batch_dim, sample_shape
     from anneal.core.measure import MeasurementError
     from anneal.models import resolve_model
     from anneal.report import console_table, write_report
@@ -81,7 +81,11 @@ def cmd_run(args: argparse.Namespace) -> int:
         console.print(f"Loading eval set [cyan]{args.eval}[/cyan] …")
         try:
             evalset = load_evalset(
-                args.eval, cache_dir=cache, batch_size=eval_batch, limit=args.eval_limit
+                args.eval,
+                cache_dir=cache,
+                batch_size=eval_batch,
+                limit=args.eval_limit,
+                sample_shape=sample_shape(baseline.path),
             )
         except Exception as exc:
             console.print(f"[red]could not load eval set:[/red] {exc}")
@@ -321,8 +325,14 @@ def cmd_sensitivity(args: argparse.Namespace) -> int:
         return 2
 
     console.print(f"Loading eval set [cyan]{args.eval}[/cyan] …")
+    from anneal.core.artifact import sample_shape
+
     evalset = load_evalset(
-        args.eval, cache_dir=Path(args.cache), batch_size=args.eval_batch, limit=args.eval_limit
+        args.eval,
+        cache_dir=Path(args.cache),
+        batch_size=args.eval_batch,
+        limit=args.eval_limit,
+        sample_shape=sample_shape(path),
     )
     n_layers = min(len(ranked), args.top)
     console.print(
@@ -469,8 +479,14 @@ def cmd_validate(args: argparse.Namespace) -> int:
         return 2
 
     console.print(f"Loading eval set [cyan]{args.eval}[/cyan] …")
+    from anneal.core.artifact import sample_shape
+
     evalset = load_evalset(
-        args.eval, cache_dir=Path(args.cache), batch_size=args.eval_batch, limit=args.eval_limit
+        args.eval,
+        cache_dir=Path(args.cache),
+        batch_size=args.eval_batch,
+        limit=args.eval_limit,
+        sample_shape=sample_shape(base.artifact.path),
     )
     n = len(evalset)
     mode = "cached" if getattr(evalset, "caching", True) else "streamed (too large to cache)"
@@ -920,6 +936,86 @@ def _floor_from_ledger(ledger) -> float | None:
     return max(floors) if floors else None
 
 
+def cmd_audit(args: argparse.Namespace) -> int:
+    """Check an optimised model against its original, whichever tool produced it."""
+    import json
+
+    from anneal.core.audit import audit
+    from anneal.core.dataset import IMAGENETTE_CLASS_NAMES, load_evalset
+    from anneal.core.measure import MeasurementError
+    from anneal.core.targets import TargetUnavailable, default_target, get_target
+    from anneal.models import load_onnx
+
+    console = _console()
+    try:
+        original = load_onnx(Path(args.original))
+        candidate = load_onnx(Path(args.candidate))
+    except (FileNotFoundError, ValueError) as exc:
+        console.print(f"[red]{exc}[/red]")
+        return 2
+
+    try:
+        target = get_target(args.target) if args.target else default_target()
+        target.ensure_available()
+    except (KeyError, TargetUnavailable) as exc:
+        console.print(f"[red]target error:[/red] {exc}")
+        return 2
+
+    console.print(f"Loading eval set [cyan]{args.eval}[/cyan] …")
+    from anneal.core.artifact import sample_shape
+
+    evalset = load_evalset(
+        args.eval,
+        cache_dir=Path(args.cache),
+        batch_size=args.eval_batch,
+        limit=args.eval_limit,
+        sample_shape=sample_shape(original.path),
+    )
+    if getattr(evalset, "synthetic", False):
+        console.print(
+            "[yellow]synthetic eval set: the accuracy half of this audit is meaningless[/yellow]"
+        )
+    console.print(
+        f"Auditing [cyan]{candidate.path.name}[/cyan] against [cyan]{original.path.name}[/cyan] "
+        f"on [cyan]{target.name}[/cyan], {len(evalset)} images …\n"
+    )
+
+    try:
+        result = audit(
+            original,
+            candidate,
+            target,
+            evalset,
+            warmup=args.warmup,
+            runs=args.runs,
+            class_names=IMAGENETTE_CLASS_NAMES if args.eval.startswith("imagenette") else None,
+            profile=args.profile,
+        )
+    except MeasurementError as exc:
+        console.print(f"[red]audit failed:[/red] {exc}")
+        return 1
+
+    console.print("[bold]Verdict[/bold]")
+    for line in result.verdict(max_drop_pp=args.max_accuracy_drop):
+        console.print(f"  - {line}")
+    console.print(
+        f"\n[dim]regressions {result.regressions} · fixes {result.fixes} · changed "
+        f"{result.changed}/{result.n} · McNemar p = {result.p_value:.3g}[/dim]"
+    )
+
+    out = Path(args.out) if args.out else candidate.path.parent / f"audit-{candidate.path.stem}"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "audit.json").write_text(json.dumps(result.to_dict(), indent=2), encoding="utf-8")
+    (out / "audit.md").write_text(result.markdown(), encoding="utf-8")
+    console.print(f"[dim]written: {out / 'audit.md'}[/dim]")
+
+    # Non-zero exit when the audit finds a real problem, so this can gate a CI pipeline.
+    failed = (result.significant and result.delta_pp < -args.max_accuracy_drop) or (
+        result.speedup_p50 < 1.0
+    )
+    return 3 if failed else 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     from anneal.core.ledger import Ledger
     from anneal.report import console_table, write_report
@@ -1056,6 +1152,30 @@ def build_parser() -> argparse.ArgumentParser:
     )
     val.add_argument("--cache", default=str(DEFAULT_CACHE))
     val.set_defaults(func=cmd_validate)
+
+    aud = sub.add_parser(
+        "audit",
+        help="check any optimised model against its original (works on other tools' output)",
+    )
+    aud.add_argument("original", help="the unoptimised .onnx")
+    aud.add_argument("candidate", help="the optimised .onnx, from any tool")
+    aud.add_argument("--target", default=None)
+    aud.add_argument("--eval", default="imagenette")
+    aud.add_argument("--eval-limit", type=int, default=1024)
+    aud.add_argument("--eval-batch", type=int, default=32)
+    aud.add_argument("--warmup", type=int, default=10)
+    aud.add_argument("--runs", type=int, default=50)
+    aud.add_argument(
+        "--max-accuracy-drop",
+        type=float,
+        default=1.0,
+        metavar="PP",
+        help="exit non-zero if a statistically significant loss exceeds this",
+    )
+    aud.add_argument("--profile", action="store_true", help="also attribute the latency change to operators")
+    aud.add_argument("--out", default=None)
+    aud.add_argument("--cache", default=str(DEFAULT_CACHE))
+    aud.set_defaults(func=cmd_audit)
 
     exp = sub.add_parser(
         "export", help="emit a standalone script that rebuilds one trial's model"
