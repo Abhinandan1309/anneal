@@ -1,0 +1,195 @@
+{
+  "model": "examples\\resnet18-cpu1t\\models\\resnet18-fp32.onnx",
+  "target": "cpu-1t",
+  "n_eval": 256,
+  "layers": [
+    {
+      "node": "/layer3/layer3.0/conv2/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.015971774235367775,
+      "changed_fraction": 0.015625,
+      "accuracy_drop_pp": -0.390625,
+      "error": null
+    },
+    {
+      "node": "/layer1/layer1.0/conv1/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.015624596737325191,
+      "changed_fraction": 0.015625,
+      "accuracy_drop_pp": 0.0,
+      "error": null
+    },
+    {
+      "node": "/layer4/layer4.0/conv2/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.014835569076240063,
+      "changed_fraction": 0.015625,
+      "accuracy_drop_pp": 0.0,
+      "error": null
+    },
+    {
+      "node": "/layer2/layer2.1/conv1/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.014636209234595299,
+      "changed_fraction": 0.01171875,
+      "accuracy_drop_pp": -0.390625,
+      "error": null
+    },
+    {
+      "node": "/layer2/layer2.0/conv2/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.014591558836400509,
+      "changed_fraction": 0.01171875,
+      "accuracy_drop_pp": -0.78125,
+      "error": null
+    },
+    {
+      "node": "/layer4/layer4.1/conv2/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.014198687858879566,
+      "changed_fraction": 0.00390625,
+      "accuracy_drop_pp": -0.390625,
+      "error": null
+    },
+    {
+      "node": "/layer3/layer3.1/conv1/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.013902805745601654,
+      "changed_fraction": 0.0078125,
+      "accuracy_drop_pp": -0.390625,
+      "error": null
+    },
+    {
+      "node": "/layer3/layer3.0/conv1/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.013361144810914993,
+      "changed_fraction": 0.00390625,
+      "accuracy_drop_pp": 0.390625,
+      "error": null
+    },
+    {
+      "node": "/layer3/layer3.1/conv2/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.013219048269093037,
+      "changed_fraction": 0.0078125,
+      "accuracy_drop_pp": 0.0,
+      "error": null
+    },
+    {
+      "node": "/layer1/layer1.1/conv1/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.013156577944755554,
+      "changed_fraction": 0.01171875,
+      "accuracy_drop_pp": 0.0,
+      "error": null
+    },
+    {
+      "node": "/layer4/layer4.0/conv1/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.01266671996563673,
+      "changed_fraction": 0.0078125,
+      "accuracy_drop_pp": 0.0,
+      "error": null
+    },
+    {
+      "node": "/layer4/layer4.1/conv1/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.01260599959641695,
+      "changed_fraction": 0.0078125,
+      "accuracy_drop_pp": 0.0,
+      "error": null
+    },
+    {
+      "node": "/fc/Gemm",
+      "op_type": "Gemm",
+      "proxy_error": 0.012157239951193333,
+      "changed_fraction": 0.0,
+      "accuracy_drop_pp": 0.0,
+      "error": null
+    },
+    {
+      "node": "/layer2/layer2.1/conv2/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.011999120935797691,
+      "changed_fraction": 0.0078125,
+      "accuracy_drop_pp": -0.390625,
+      "error": null
+    },
+    {
+      "node": "/layer2/layer2.0/conv1/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.011992870829999447,
+      "changed_fraction": 0.015625,
+      "accuracy_drop_pp": -0.390625,
+      "error": null
+    },
+    {
+      "node": "/layer1/layer1.1/conv2/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.011507551185786724,
+      "changed_fraction": 0.00390625,
+      "accuracy_drop_pp": 0.0,
+      "error": null
+    },
+    {
+      "node": "/layer1/layer1.0/conv2/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.011446313932538033,
+      "changed_fraction": 0.00390625,
+      "accuracy_drop_pp": 0.0,
+      "error": null
+    },
+    {
+      "node": "/layer4/layer4.0/downsample/downsample.0/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.010417522862553596,
+      "changed_fraction": 0.0078125,
+      "accuracy_drop_pp": -0.390625,
+      "error": null
+    },
+    {
+      "node": "/layer2/layer2.0/downsample/downsample.0/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.00936394277960062,
+      "changed_fraction": 0.0078125,
+      "accuracy_drop_pp": 0.0,
+      "error": null
+    },
+    {
+      "node": "/layer3/layer3.0/downsample/downsample.0/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.009338627569377422,
+      "changed_fraction": 0.00390625,
+      "accuracy_drop_pp": 0.0,
+      "error": null
+    },
+    {
+      "node": "/conv1/Conv",
+      "op_type": "Conv",
+      "proxy_error": 0.009175768122076988,
+      "changed_fraction": 0.03515625,
+      "accuracy_drop_pp": -0.390625,
+      "error": null
+    }
+  ],
+  "proxy_agreement": {
+    "n": 21,
+    "spearman": 0.3285769776980352,
+    "verdict": "weak \u2014 the proxy barely beats picking layers at random",
+    "top5_overlap": 3,
+    "top5_proxy": [
+      "/layer1/layer1.0/conv1/Conv",
+      "/layer2/layer2.0/conv2/Conv",
+      "/layer2/layer2.1/conv1/Conv",
+      "/layer3/layer3.0/conv2/Conv",
+      "/layer4/layer4.0/conv2/Conv"
+    ],
+    "top5_measured": [
+      "/conv1/Conv",
+      "/layer1/layer1.0/conv1/Conv",
+      "/layer2/layer2.0/conv1/Conv",
+      "/layer3/layer3.0/conv2/Conv",
+      "/layer4/layer4.0/conv2/Conv"
+    ]
+  }
+}

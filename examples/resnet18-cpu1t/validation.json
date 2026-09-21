@@ -1,0 +1,28 @@
+{
+  "eval": "imagenette",
+  "n_eval": 3925,
+  "resolution_pp": 1.471796573394277,
+  "results": [
+    {
+      "index": 0,
+      "recipe": "baseline (fp32)",
+      "accuracy": 0.6687898089171974,
+      "top1_agreement": null,
+      "speedup": 1.0
+    },
+    {
+      "index": 1,
+      "recipe": "fuse[all]",
+      "accuracy": 0.6687898089171974,
+      "top1_agreement": 1.0,
+      "speedup": 1.0708283120798758
+    },
+    {
+      "index": 3,
+      "recipe": "static-int8[pc,minmax]",
+      "accuracy": 0.6259872611464968,
+      "top1_agreement": 0.8239490445859873,
+      "speedup": 1.3332525116525846
+    }
+  ]
+}
