@@ -103,13 +103,13 @@ def test_export_chains_multiple_transforms_in_order(tmp_path: Path):
     assert text.index("graph_optimize") < text.index("quantize_static_int8")
     assert "# step 1" in text and "# step 2" in text
     # A static-quantization recipe must carry calibration data with it, or it cannot run.
-    assert "load_evalset" in text
+    assert "load_calibset" in text
 
 
 def test_export_omits_calibration_when_no_transform_needs_it(saved_ledger: Path, tmp_path: Path):
     out = tmp_path / "repro.py"
     main(["export", str(saved_ledger), "--trial", "1", "--out", str(out)])
-    assert "load_evalset" not in out.read_text(encoding="utf-8")
+    assert "load_calibset" not in out.read_text(encoding="utf-8")
 
 
 def test_exporting_the_baseline_is_refused(saved_ledger: Path, tmp_path: Path):

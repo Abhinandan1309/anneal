@@ -209,6 +209,7 @@ class HeuristicPolicy:
                     "reduce_range": False,
                     "calibrate_method": "minmax",
                     "calib_samples": 64,
+                    "activation_type": "uint8",
                 },
                 BASELINE,
                 "Full INT8 with real calibration — the largest potential latency win and "
@@ -249,7 +250,40 @@ class HeuristicPolicy:
         ]
 
         if broke_accuracy:
-            # Quantization cost too much accuracy. Spare the worst layers and re-measure.
+            # A static INT8 model that broke accuracy is retried with 7-bit weights and with
+            # per-tensor scales first. On ResNet-18 / Zen 2 the full-range per-channel recipe
+            # lost 4.2pp while the reduce_range variant lost nothing at the same speed —
+            # consistent with the intermediate saturation onnxruntime documents for x86 CPUs
+            # without VNNI. These are fast kernels, so they are tried before the slow
+            # selective-dynamic path.
+            for trial in broke_accuracy:
+                head = trial.artifact.lineage[-1]
+                if head.name != "quantize_static_int8" or len(trial.artifact.lineage) != 1:
+                    continue
+                if head.params.get("per_channel") and not head.params.get("reduce_range"):
+                    out.append(
+                        Proposal(
+                            "quantize_static_int8",
+                            {**head.params, "reduce_range": True},
+                            BASELINE,
+                            f"Trial [{trial.index}] (static INT8, full-range per-channel "
+                            f"weights) fell below the accuracy floor. 7-bit weights avoid the "
+                            f"int16 saturation that full-range per-channel scales invite on "
+                            f"CPUs without VNNI; retry with reduce_range.",
+                        )
+                    )
+                if head.params.get("per_channel"):
+                    out.append(
+                        Proposal(
+                            "quantize_static_int8",
+                            {**head.params, "per_channel": False},
+                            BASELINE,
+                            f"Trial [{trial.index}] broke accuracy with per-channel scales; "
+                            f"per-tensor scales keep most weights well below full range.",
+                        )
+                    )
+
+            # Then spare the worst layers and re-measure.
             for k in (1, 2, 4):
                 out.append(
                     Proposal(
@@ -281,6 +315,7 @@ class HeuristicPolicy:
                         "reduce_range": False,
                         "calibrate_method": "minmax",
                         "calib_samples": 64,
+                        "activation_type": "uint8",
                     },
                     BASELINE,
                     "Per-tensor scales drop the per-channel dequant overhead; accuracy budget "
@@ -341,6 +376,7 @@ class HeuristicPolicy:
                         "reduce_range": False,
                         "calibrate_method": "entropy",
                         "calib_samples": 64,
+                        "activation_type": "uint8",
                     },
                     BASELINE,
                     "Entropy calibration clips activation outliers that MinMax stretches the "
@@ -372,6 +408,7 @@ class HeuristicPolicy:
                     "reduce_range": True,
                     "calibrate_method": "minmax",
                     "calib_samples": 64,
+                    "activation_type": "uint8",
                 },
                 opt_idx,
                 "Final probe: reduced-range static INT8 over the fused graph, the most "

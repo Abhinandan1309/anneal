@@ -288,3 +288,28 @@ def test_policy_never_proposes_fusing_twice_when_fusion_is_the_fastest_result():
     assert all(p.transform != "graph_optimize" for p in stacked)
     # It should still try the fastest *quantization* on the fused graph.
     assert any(p.transform == "quantize_static_int8" for p in stacked)
+
+
+def test_broken_static_int8_is_retried_with_reduce_range_and_per_tensor_first():
+    # ResNet-18 on a Zen 2 CPU: full-range per-channel static INT8 lost 4.2pp, while the
+    # same recipe with reduce_range lost nothing at the same speed. The search never
+    # tried that. It must now, before the slow selective-dynamic path.
+    ledger = fresh_ledger(0.90)
+    params = {
+        "per_channel": True, "reduce_range": False, "calibrate_method": "minmax",
+        "calib_samples": 64, "activation_type": "uint8",
+    }
+    ledger.add(
+        make_trial(1, lineage=(TransformRecord("quantize_static_int8", params),),
+                   latency=20.0, accuracy=0.85)
+    )
+
+    policy = HeuristicPolicy()
+    policy._generation = 1
+    proposals = policy._react(state_for(ledger))
+
+    static = [p for p in proposals if p.transform == "quantize_static_int8"]
+    assert {"reduce_range": True}.items() <= static[0].params.items()
+    assert any(p.params["per_channel"] is False for p in static)
+    first_dynamic = next(i for i, p in enumerate(proposals) if p.transform == "quantize_dynamic_sensitive")
+    assert all(proposals.index(p) < first_dynamic for p in static)

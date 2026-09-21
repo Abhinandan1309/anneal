@@ -74,6 +74,7 @@ class OptimizationRun:
         config: RunConfig,
         *,
         evalset: EvalSet | None = None,
+        calibset: EvalSet | None = None,
         on_event: EventHandler | None = None,
     ) -> None:
         self.baseline = baseline
@@ -96,6 +97,7 @@ class OptimizationRun:
         self.ctx = TransformContext(
             workdir=self.workdir / "candidates",
             evalset=evalset,
+            calibset=calibset,
             calib_samples=config.calib_samples,
         )
         if config.measured_ranking:
@@ -112,6 +114,11 @@ class OptimizationRun:
                 "evalset": getattr(evalset, "name", None),
                 "evalset_size": len(evalset) if evalset is not None else 0,
                 "evalset_synthetic": getattr(evalset, "synthetic", None),
+                "calibration_set": (
+                    f"{getattr(calibset, 'name', '?')} {getattr(calibset, 'split', '')}".strip()
+                    if calibset is not None
+                    else ("eval set (overlapping)" if evalset is not None else None)
+                ),
                 "transforms_available": sorted(self.transforms),
             },
         )

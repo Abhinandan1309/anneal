@@ -131,6 +131,7 @@ class ImagenetteEvalSet(EvalSet):
         cache: bool | None = None,
     ) -> None:
         self.root = Path(root)
+        self.split = split
         self.batch_size = batch_size
         self.image_size = image_size
         self.resize = resize
@@ -300,4 +301,47 @@ def load_evalset(
     raise ValueError(
         f"unrecognised eval set {spec!r}; expected 'synthetic', 'imagenette[:160|:320]', "
         f"or a path to an Imagenette-layout directory"
+    )
+
+
+def load_calibset(
+    spec: str,
+    *,
+    cache_dir: Path,
+    batch_size: int = 16,
+    limit: int = 64,
+    sample_shape: tuple[int, ...] | None = None,
+) -> EvalSet | None:
+    """Calibration data *disjoint from the eval set*, or None if the spec has none.
+
+    Imagenette calibrates from its train split. The synthetic set uses a different seed from
+    its eval counterpart. A bare directory is used only if it has a ``train/`` split.
+    """
+    image_size = 224
+    if sample_shape is not None and len(sample_shape) == 3 and sample_shape[1] == sample_shape[2]:
+        image_size = int(sample_shape[1])
+    resize = round(image_size * 256 / 224)
+
+    if spec == "synthetic":
+        return SyntheticEvalSet(
+            shape=tuple(sample_shape) if sample_shape else (3, 224, 224),
+            batch_size=batch_size,
+            n=limit,
+            seed=1,
+        )
+    if spec.startswith("imagenette"):
+        variant = spec.split(":", 1)[1] if ":" in spec else "160"
+        root = download_imagenette(Path(cache_dir), variant)
+    else:
+        root = Path(spec)
+        if not (root / "train").is_dir():
+            return None
+    return ImagenetteEvalSet(
+        root,
+        split="train",
+        batch_size=batch_size,
+        limit=limit,
+        image_size=image_size,
+        resize=resize,
+        seed=1,
     )

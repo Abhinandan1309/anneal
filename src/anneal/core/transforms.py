@@ -34,6 +34,10 @@ class TransformContext:
 
     workdir: Path
     evalset: EvalSet | None = None
+    #: Where static quantization draws calibration inputs. Should be disjoint from
+    #: ``evalset``: calibrating on the images you then score on fits activation ranges to
+    #: the test data and flatters the accuracy that gets reported.
+    calibset: EvalSet | None = None
     calib_samples: int = 64
     extra: dict[str, Any] = field(default_factory=dict)
 
@@ -464,12 +468,17 @@ def quantize_static_int8(
         quantize_static,
     )
 
-    if ctx.evalset is None:
-        raise TransformError("static quantization needs calibration data; no eval set supplied")
+    if ctx.calibset is None and ctx.evalset is None:
+        raise TransformError("static quantization needs calibration data; none supplied")
+    calib_source = ctx.calibset if ctx.calibset is not None else ctx.evalset
+    leaks = ctx.calibset is None
 
     per_channel = bool(params.get("per_channel", True))
     reduce_range = bool(params.get("reduce_range", False))
     calib_method = params.get("calibrate_method", "minmax")
+    activation_type = params.get("activation_type", "uint8")
+    if activation_type not in ("uint8", "int8"):
+        raise TransformError(f"activation_type must be 'uint8' or 'int8', got {activation_type!r}")
     n_calib = int(params.get("calib_samples", ctx.calib_samples))
 
     methods = {
@@ -487,24 +496,35 @@ def quantize_static_int8(
             "reduce_range": reduce_range,
             "calibrate_method": calib_method,
             "calib_samples": n_calib,
+            "activation_type": activation_type,
         },
     )
     out = ctx.path_for(artifact, record)
     src = _preprocessed(artifact, ctx)
 
-    reader = _EvalSetCalibrationReader(ctx.evalset, _input_name(src), n_calib)
+    reader = _EvalSetCalibrationReader(calib_source, _input_name(src), n_calib)
     quantize_static(
         model_input=str(src),
         model_output=str(out),
         calibration_data_reader=reader,
         quant_format=QuantFormat.QDQ,
-        activation_type=QuantType.QUInt8,
+        activation_type=QuantType.QUInt8 if activation_type == "uint8" else QuantType.QInt8,
         weight_type=QuantType.QInt8,
         per_channel=per_channel,
         reduce_range=reduce_range,
         calibrate_method=methods[calib_method],
     )
-    return artifact.derive(record, out, calib_samples=n_calib)
+    return artifact.derive(
+        record,
+        out,
+        calib_samples=n_calib,
+        calibration_source=(
+            "eval set (overlaps evaluation images; accuracy is optimistic)"
+            if leaks
+            else f"{getattr(calib_source, 'name', 'calibration set')} "
+            f"{getattr(calib_source, 'split', '')}".strip()
+        ),
+    )
 
 
 def cast_fp16(
@@ -620,6 +640,15 @@ REGISTRY: dict[str, TransformSpec] = {
             "calib_samples": {
                 "type": "integer",
                 "description": "Number of calibration images to use.",
+            },
+            "activation_type": {
+                "type": "string",
+                "enum": ["uint8", "int8"],
+                "description": (
+                    "Activation precision. uint8 with int8 weights (U8S8) is the classic x86 "
+                    "pairing; int8 activations (S8S8) avoid the intermediate saturation U8S8 "
+                    "can hit on CPUs without VNNI."
+                ),
             },
         },
         fn=quantize_static_int8,

@@ -330,3 +330,49 @@ def test_measured_sweep_runs_once_and_is_cached(tiny_onnx: Path, tmp_path: Path)
     # A second recipe on the same graph must reuse the sweep, not pay for it again.
     apply_transform("quantize_dynamic_sensitive", {"skip_top_k": 0, "per_channel": False}, base, ctx)
     assert len(ctx.extra["_measured_cache"]) == 1
+
+
+# ----- calibration hygiene -------------------------------------------------
+
+
+def test_static_quantization_prefers_a_separate_calibration_set(tiny_onnx: Path, tmp_path: Path):
+    from anneal.core.dataset import SyntheticEvalSet
+
+    ctx = TransformContext(
+        workdir=tmp_path / "c",
+        evalset=SyntheticEvalSet(shape=(3, 16, 16), n=16, batch_size=8, seed=0),
+        calibset=SyntheticEvalSet(shape=(3, 16, 16), n=16, batch_size=8, seed=1),
+        calib_samples=16,
+    )
+    result = apply_transform("quantize_static_int8", {}, ModelArtifact(path=tiny_onnx), ctx)
+    assert "overlap" not in result.meta["calibration_source"]
+
+
+def test_calibrating_on_the_eval_set_is_flagged_on_the_artifact(tiny_onnx: Path, tmp_path: Path):
+    # Allowed as a fallback, but the artifact must say its accuracy is optimistic.
+    from anneal.core.dataset import SyntheticEvalSet
+
+    ctx = TransformContext(
+        workdir=tmp_path / "c",
+        evalset=SyntheticEvalSet(shape=(3, 16, 16), n=16, batch_size=8),
+        calib_samples=16,
+    )
+    result = apply_transform("quantize_static_int8", {}, ModelArtifact(path=tiny_onnx), ctx)
+    assert "overlaps evaluation images" in result.meta["calibration_source"]
+
+
+def test_synthetic_calibration_data_differs_from_synthetic_eval_data(tmp_path: Path):
+    import numpy as np
+
+    from anneal.core.dataset import load_calibset, load_evalset
+
+    ev = load_evalset("synthetic", cache_dir=tmp_path, batch_size=4, limit=4, sample_shape=(3, 8, 8))
+    cal = load_calibset("synthetic", cache_dir=tmp_path, batch_size=4, limit=4, sample_shape=(3, 8, 8))
+    assert not np.array_equal(next(iter(ev.batches()))[0], next(iter(cal.batches()))[0])
+
+
+def test_a_directory_without_a_train_split_has_no_calibration_set(tmp_path: Path):
+    from anneal.core.dataset import load_calibset
+
+    (tmp_path / "val").mkdir()
+    assert load_calibset(str(tmp_path), cache_dir=tmp_path) is None

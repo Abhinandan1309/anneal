@@ -27,7 +27,7 @@ def _console():
 def cmd_run(args: argparse.Namespace) -> int:
     from anneal.agent.loop import OptimizationRun, RunConfig
     from anneal.agent.policy import Constraints, build_policy
-    from anneal.core.dataset import load_evalset
+    from anneal.core.dataset import load_calibset, load_evalset
     from anneal.core.targets import TargetUnavailable, default_target, get_target
     from anneal.core.artifact import model_batch_dim, sample_shape
     from anneal.core.measure import MeasurementError
@@ -77,6 +77,7 @@ def cmd_run(args: argparse.Namespace) -> int:
             )
 
     evalset = None
+    calibset = None
     if args.eval != "none":
         console.print(f"Loading eval set [cyan]{args.eval}[/cyan] …")
         try:
@@ -91,6 +92,18 @@ def cmd_run(args: argparse.Namespace) -> int:
             console.print(f"[red]could not load eval set:[/red] {exc}")
             return 2
         console.print(f"  {len(evalset)} images")
+        calibset = load_calibset(
+            args.eval,
+            cache_dir=cache,
+            batch_size=eval_batch,
+            limit=args.calib_samples,
+            sample_shape=sample_shape(baseline.path),
+        )
+        if calibset is None:
+            console.print(
+                "  [yellow]no separate calibration split found; static quantization will "
+                "calibrate on eval images, which flatters its accuracy[/yellow]"
+            )
         if getattr(evalset, "synthetic", False):
             console.print(
                 "  [yellow]synthetic data — accuracy numbers from this run are not "
@@ -171,7 +184,7 @@ def cmd_run(args: argparse.Namespace) -> int:
             console.print(f"\n[dim]stopped: {payload['reason']}[/dim]")
 
     run = OptimizationRun(
-        baseline, target, policy, config, evalset=evalset, on_event=on_event
+        baseline, target, policy, config, evalset=evalset, calibset=calibset, on_event=on_event
     )
 
     try:
@@ -902,13 +915,13 @@ def cmd_export(args: argparse.Namespace) -> int:
         baseline=base.artifact.path.as_posix(),
         output=Path(args.model_out or f"anneal-trial{trial.index}.onnx").as_posix(),
         dataset_import=(
-            "from anneal.core.dataset import load_evalset\n" if needs_calibration else ""
+            "from anneal.core.dataset import load_calibset\n" if needs_calibration else ""
         ),
         evalset_arg=(
-            "\n        # static quantization calibrates on real data; use the same "
-            "distribution\n        # you will deploy against, not noise.\n"
-            '        evalset=load_evalset("imagenette", cache_dir=Path.home() / ".anneal_cache",\n'
-            "                             batch_size=32, limit=256),"
+            "\n        # static quantization calibrates on real data from the deployment "
+            "distribution,\n        # kept separate from anything you evaluate on.\n"
+            '        calibset=load_calibset("imagenette", cache_dir=Path.home() / ".anneal_cache",\n'
+            "                               batch_size=32, limit=64),"
             if needs_calibration
             else ""
         ),
