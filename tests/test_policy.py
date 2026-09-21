@@ -263,3 +263,28 @@ def test_policy_falls_back_to_the_proxy_without_data():
         p for p in policy._react(state_for(ledger)) if p.transform == "quantize_dynamic_sensitive"
     ]
     assert selective and all(p.params["ranking"] == "proxy" for p in selective)
+
+
+def test_policy_never_proposes_fusing_twice_when_fusion_is_the_fastest_result():
+    # MobileNetV3 regression: fusion was the fastest candidate, and "stack the winner on
+    # the fused graph" proposed graph_optimize on top of graph_optimize — a wasted trial.
+    ledger = fresh_ledger(0.90)
+    fuse = TransformRecord("graph_optimize", {"level": "all"})
+    ledger.add(make_trial(1, lineage=(fuse,), latency=38.0, accuracy=0.90))
+    ledger.add(
+        make_trial(
+            2,
+            lineage=(TransformRecord("quantize_static_int8", {"per_channel": True}),),
+            latency=45.0,
+            accuracy=0.60,
+        )
+    )
+
+    policy = HeuristicPolicy()
+    policy._generation = 1
+    proposals = policy._react(state_for(ledger))
+
+    stacked = [p for p in proposals if p.base_index == 1]
+    assert all(p.transform != "graph_optimize" for p in stacked)
+    # It should still try the fastest *quantization* on the fused graph.
+    assert any(p.transform == "quantize_static_int8" for p in stacked)

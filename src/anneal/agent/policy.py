@@ -218,7 +218,6 @@ class HeuristicPolicy:
 
     def _react(self, state: SearchState) -> list[Proposal]:
         out: list[Proposal] = []
-        winner = self._fastest(state)
         opt_idx = self._index_of(state, "graph_optimize")
 
         # A quantized model that came out *slower* than FP32 is the most informative
@@ -289,16 +288,27 @@ class HeuristicPolicy:
                 )
             )
 
-        # Either way, stacking fusion under the best quantization is worth one trial.
-        if opt_idx is not None and winner is not None and winner.artifact.lineage:
-            head = winner.artifact.lineage[-1]
+        # Either way, stacking fusion under the best quantization is worth one trial. The
+        # candidate must be a *quantization*: when fusion itself is the fastest thing found
+        # (as on MobileNetV3, where every INT8 variant was slower than FP32), "stack the
+        # winner on fusion" would mean fusing twice — a guaranteed-wasted trial.
+        quantized = [
+            t
+            for t in state.ledger.successful()
+            if t.artifact.lineage and t.artifact.lineage[-1].name != "graph_optimize"
+        ]
+        best_quant = min(
+            quantized, key=lambda t: t.measurement.latency_ms_p50, default=None  # type: ignore[union-attr]
+        )
+        if opt_idx is not None and best_quant is not None:
+            head = best_quant.artifact.lineage[-1]
             out.append(
                 Proposal(
                     head.name,
                     dict(head.params),
                     opt_idx,
-                    f"Trial [{winner.index}] was fastest; re-apply it on top of the "
-                    f"graph-optimised graph to see if fusion and quantization compose.",
+                    f"Trial [{best_quant.index}] was the fastest quantization; re-apply it on "
+                    f"top of the graph-optimised graph to see if fusion and quantization compose.",
                 )
             )
         return out
@@ -376,13 +386,6 @@ class HeuristicPolicy:
         # The weight-error proxy scored Spearman +0.33 against a measured sweep on
         # ResNet-18 and ranked the most damaging layer last. Use measurement when it exists.
         return "measured" if state.can_measure_sensitivity else "proxy"
-
-    @staticmethod
-    def _fastest(state: SearchState) -> Trial | None:
-        pool = [t for t in state.ledger.successful() if t.artifact.lineage]
-        if not pool:
-            return None
-        return min(pool, key=lambda t: t.measurement.latency_ms_p50)  # type: ignore[union-attr]
 
     @staticmethod
     def _index_of(state: SearchState, transform: str) -> int | None:
