@@ -73,9 +73,10 @@ Raw results: [`static_recipe_ab_ac_cpu1t.json`](static_recipe_ab_ac_cpu1t.json),
   culprit. S8S8 per-channel breaks exactly as badly.
 - **Full-range per-channel weights are the problem, and 7-bit weights fix it.** Per-channel
   scaling pushes every output channel's weights out to ±127; `reduce_range` restores accuracy
-  completely. That is consistent with the intermediate saturation onnxruntime documents for
-  x86 CPUs without VNNI; confirming the kernel-level cause needs the same experiment on a
-  VNNI CPU, which the [hardware lab](../hardware_lab/) is built to run.
+  completely. The [hardware lab](../hardware_lab/) has since run this study on five CPUs:
+  the loss appears on exactly the two x86 chips without VNNI (this laptop and an AMD EPYC)
+  and not on an Intel Xeon with VNNI or on either ARM chip — the pattern the 16-bit
+  saturation in the AVX2 INT8 path predicts.
 - **S8S8 kernels are slower than FP32 on this CPU** in every session — which is why Olive's
   default model is accurate but slow.
 - **The speed prize is small.** On one thread, where repeated measurements agree to within

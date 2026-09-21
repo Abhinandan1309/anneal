@@ -65,6 +65,40 @@ The policy never sees anything but measured numbers.
 
 ---
 
+## Same model, same recipe, five CPUs
+
+The claim this project rests on is that an optimisation result belongs to the hardware, not
+the model. The [hardware lab](examples/hardware_lab/) tests it directly: ResNet-18 quantized
+with five static INT8 recipes, each compared image by image with FP32 on 1,024 validation
+images, run on GitHub's cloud machines and on the laptop the project started on (one
+thread; [full table](examples/hardware_lab/results/results.md)):
+
+| CPU | INT8 instructions | U8S8 per-channel: accuracy | fastest INT8 recipe | S8S8 per-tensor (Olive's default) |
+|---|---|---:|---:|---:|
+| AMD Ryzen 7 4800H (laptop, Zen 2) | AVX2, no VNNI | **−4.2pp** | 1.07x | 0.83x |
+| AMD EPYC 7763 (Zen 3) | AVX2, no VNNI | **−4.2pp** | 1.95x | 1.14x |
+| Intel Xeon 6973P-C | AVX-512 **VNNI** | +1.0pp | 2.93x | 0.97x |
+| ARM Neoverse-N2 | dot-product, i8mm | +1.1pp | 4.08x | **4.08x** |
+| Apple M1 | dot-product | +1.1pp | 4.44x | **4.44x** |
+
+- **The accuracy failure is a property of the instruction set.** The same model and recipe
+  lose 4.2pp on exactly the x86 CPUs without VNNI, and nothing anywhere else. That matches
+  how the kernels compute: the AVX2 INT8 path (`VPMADDUBSW`) sums pairs of u8×s8 products
+  into *saturating 16-bit* values, while VNNI (`VPDPBUSD`) and ARM's dot-product
+  instructions (`SDOT`) accumulate into 32 bits. Full-range per-channel weights make the
+  16-bit sum overflow; `reduce_range` (7-bit weights) fixes it on those chips and is
+  unnecessary elsewhere.
+- **The best recipe flips between architectures.** S8S8 is the slowest option on every x86
+  chip and the fastest on both ARM chips. Olive's default recipe, the worst choice on the
+  laptop, is the best on ARM.
+- **"Is INT8 worth it?" has no answer without naming the chip.** The identical model and
+  recipe — S8S8 per-tensor — runs at 0.83x FP32 speed on the laptop and 4.44x on an M1.
+
+This finding started as a 4-point accuracy drop on one laptop that looked like a bug in
+Anneal. It is now a statement about x86 instruction sets, checked on five CPUs.
+
+---
+
 ## A real run
 
 ResNet-18, single-threaded CPU, 256 Imagenette images scored with a full 1000-way argmax,
@@ -584,9 +618,11 @@ Stated plainly, because the alternative is letting someone find them in a review
   was not recorded for them, and one set is known to have run on battery (see the
   correction above). Figures from the first ResNet-18 and MobileNetV3 runs, the cross-target
   table and the earlier Olive audit fall in that period.
-- **The saturation explanation is unconfirmed.** `reduce_range` fixing per-channel static
-  INT8 on a Zen 2 CPU fits onnxruntime's documented non-VNNI saturation issue, but I have not
-  run the same experiment on a VNNI CPU to confirm it.
+- **The saturation explanation is supported, not traced.** Across five CPUs the accuracy
+  loss appears on exactly the two x86 chips without VNNI and on none of the others, which
+  matches 16-bit saturation in the AVX2 INT8 path. I have not stepped through the kernel to
+  show the overflow directly. The hardware-lab runners are shared cloud machines, whose
+  exact CPU is assigned rather than chosen, with one run per machine.
 - **`graph_optimize(level='all')` produces a non-portable artifact** — onnxruntime's NCHWc
   transformer bakes in the optimising CPU's layout and SIMD width. Anneal records this on
   the artifact and warns in the report. Use `level='extended'` if the file must travel.

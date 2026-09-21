@@ -1,0 +1,137 @@
+{
+  "cpu": {
+    "machine": "arm64",
+    "system": "Darwin",
+    "processor": "arm",
+    "logical_cpus": 3,
+    "runner": "GitHub Actions 1000000106",
+    "runner_os": "macOS",
+    "runner_arch": "ARM64",
+    "brand": "Apple M1 (Virtual)",
+    "int8_features": [
+      "dotprod"
+    ],
+    "has_vnni": false,
+    "has_arm_dotprod": true
+  },
+  "onnxruntime": "1.30.0",
+  "python": "3.12.10",
+  "study": {
+    "model": "resnet18-fp32.onnx",
+    "target": "cpu-1t",
+    "n_eval": 1024,
+    "calibration": "64 Imagenette train images",
+    "fp32_accuracy": 0.67578125,
+    "fp32_p50_ms": 54.764958,
+    "fp32_p50_end_ms": 57.889167,
+    "latency_drift": 0.05704759236736748,
+    "environment_warnings": [],
+    "rows": [
+      {
+        "variant": "U8S8 per-channel (Anneal's old default)",
+        "params": {
+          "calibrate_method": "minmax",
+          "reduce_range": false,
+          "per_channel": true,
+          "activation_type": "uint8"
+        },
+        "accuracy": 0.6865234375,
+        "delta_pp": 1.07421875,
+        "ci95_pp": [
+          0.04556665945547843,
+          2.102870840544522
+        ],
+        "mcnemar_p": 0.06142834573984146,
+        "regressions": 9,
+        "fixes": 20,
+        "changed_fraction": 0.04296875,
+        "p50_ms": 13.8125,
+        "speedup": 3.964883837104072
+      },
+      {
+        "variant": "U8S8 per-channel + reduce_range",
+        "params": {
+          "calibrate_method": "minmax",
+          "reduce_range": true,
+          "per_channel": true,
+          "activation_type": "uint8"
+        },
+        "accuracy": 0.677734375,
+        "delta_pp": 0.1953125,
+        "ci95_pp": [
+          -0.6166673242265749,
+          1.0072923242265748
+        ],
+        "mcnemar_p": 0.8145294189453125,
+        "regressions": 8,
+        "fixes": 10,
+        "changed_fraction": 0.0390625,
+        "p50_ms": 17.216459,
+        "speedup": 3.180965261207313
+      },
+      {
+        "variant": "S8S8 per-channel",
+        "params": {
+          "calibrate_method": "minmax",
+          "reduce_range": false,
+          "per_channel": true,
+          "activation_type": "int8"
+        },
+        "accuracy": 0.6865234375,
+        "delta_pp": 1.07421875,
+        "ci95_pp": [
+          0.04556665945547843,
+          2.102870840544522
+        ],
+        "mcnemar_p": 0.06142834573984146,
+        "regressions": 9,
+        "fixes": 20,
+        "changed_fraction": 0.04296875,
+        "p50_ms": 13.374666,
+        "speedup": 4.09467855122513
+      },
+      {
+        "variant": "U8S8 per-tensor",
+        "params": {
+          "calibrate_method": "minmax",
+          "reduce_range": false,
+          "per_channel": false,
+          "activation_type": "uint8"
+        },
+        "accuracy": 0.685546875,
+        "delta_pp": 0.9765625,
+        "ci95_pp": [
+          -0.17031627415340073,
+          2.123441274153401
+        ],
+        "mcnemar_p": 0.13249816396273673,
+        "regressions": 13,
+        "fixes": 23,
+        "changed_fraction": 0.0703125,
+        "p50_ms": 16.639375,
+        "speedup": 3.2912869624009313
+      },
+      {
+        "variant": "S8S8 per-tensor (Olive's default)",
+        "params": {
+          "calibrate_method": "minmax",
+          "reduce_range": false,
+          "per_channel": false,
+          "activation_type": "int8"
+        },
+        "accuracy": 0.685546875,
+        "delta_pp": 0.9765625,
+        "ci95_pp": [
+          -0.17031627415340073,
+          2.123441274153401
+        ],
+        "mcnemar_p": 0.13249816396273673,
+        "regressions": 13,
+        "fixes": 23,
+        "changed_fraction": 0.0703125,
+        "p50_ms": 12.336958,
+        "speedup": 4.43909738527115
+      }
+    ]
+  }
+}

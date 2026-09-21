@@ -8,6 +8,17 @@ The question it was built for: on a Zen 2 laptop (no VNNI), full-range per-chann
 INT8 lost ~4pp on ResNet-18 and `reduce_range` fixed it. Is that an artefact of x86 without
 VNNI, as onnxruntime's documentation would suggest, or does it happen everywhere?
 
+## Results (first run, 22 Sep 2026)
+
+[`results/results.md`](results/results.md) has the full table. In short: full-range
+per-channel static INT8 loses 4.2pp on exactly the x86 CPUs without VNNI (a Zen 2 laptop and
+an AMD EPYC 7763) and nothing on an Intel Xeon with AVX-512 VNNI, an ARM Neoverse-N2 or an
+Apple M1. S8S8 is the slowest recipe on every x86 chip and the fastest on both ARM chips.
+Per-machine raw data is in [`results/`](results/).
+
+Caveats: one run per machine, on shared cloud hardware whose CPU is assigned, not chosen;
+latency drift was 0.6–5.7%, all under the 10% tolerance.
+
 ## Running it
 
 On GitHub: **Actions → hardware-lab → Run workflow**. Or from a terminal:
