@@ -314,6 +314,45 @@ an auditor that does not care which tool produced the model.
 
 ---
 
+## Deciding with fewer images: anytime-valid sequential testing
+
+Evaluation is the expensive part of every trial, and the cheap shortcut is unreliable: the
+256-image eval set the search uses understated static INT8's damage by more than a third.
+Checking a fixed-sample test after every batch and stopping when it "looks decided" is not a
+fix — that quietly inflates the error rate.
+
+`anneal audit --sequential` scores each image +1 (candidate fixed it), −1 (broke it) or 0,
+whose mean is exactly the accuracy change, and runs two **betting tests** against the budget
+(aGRAPA bet sizing, [Waudby-Smith & Ramdas, JRSS-B 2023](https://arxiv.org/abs/2010.09686)).
+By Ville's inequality each decision's error stays below α **however early it stops**, so it
+stops as soon as the evidence is decisive and says *undecided* when it is not.
+
+Replayed on **real** per-image outcomes — every model's result on all 3,925 validation
+images, streamed in 1,000 random orders each
+([`examples/sequential_study/replay_results.md`](examples/sequential_study/replay_results.md)):
+
+| candidate | full-set answer | sequential agrees | median images used | fixed 256 images wrong |
+|---|---|---:|---:|---:|
+| static INT8, full-range per-channel (−4.31pp) | reject | 99.9% | 612 | 3.4% |
+| static INT8, reduce_range (+0.54pp) | accept | 100% | 630 | 4.4% |
+| Olive's default static INT8 (+0.33pp) | accept | 100% | 1,463 | 13.1% |
+
+A simulation study at measured rates
+([`examples/sequential_study/results.md`](examples/sequential_study/results.md)) adds the
+hard cases: within half a point of the budget the 256-image rule is **wrong 41–43% of the
+time, silently**, while the sequential test stays within its 5% error bound and reports
+*undecided* — correctly, since settling those would take ~33,000 images.
+
+What this does and does not claim: on clear cases it uses about **5× fewer images than the
+full set**, and about as few as a fixed test that was sized using advance knowledge of the
+effect — the difference is that it needs no such knowledge and keeps its error guarantee at
+any stopping point. It is not magic near the budget; it is honest there. The method is
+from the statistics literature; applying it to model-optimisation acceptance is the part
+this project contributes. The guarantee assumes images arrive in random order, which
+Anneal's eval sets do.
+
+---
+
 ## Related work
 
 | | what it does | where Anneal differs |
@@ -354,6 +393,15 @@ rather than letting two decimal places imply precision that is not there.
 
 **Failures stay in the ledger** with their error text — signal for the policy, honesty for
 the reader.
+
+**The machine is checked, not trusted.** A rerun of the ResNet-18 search once reported a
+recipe at 0.36x FP32 speed that had measured 1.5x before. Nothing was wrong with the model:
+the laptop had fallen to 21% battery mid-run and battery saver had cut the CPU from 2.9 to
+1.7 GHz. Anneal now reads AC/battery state, battery saver and clock ceilings before
+measuring and warns loudly; re-times the baseline at the end of every search and marks the
+whole run latency-untrustworthy if it drifted more than 10%; and `anneal audit` times the
+original model before *and* after the candidate (A-B-A) to catch the same drift between two
+models.
 
 **Accuracy comes from real images, scored honestly.** Imagenette with a *full 1000-way*
 argmax. Restricting the softmax to the ten classes present would inflate top-1 by several
@@ -409,7 +457,7 @@ anneal compare      # re-measure the frontier on a different target
 anneal profile      # attribute runtime to operators; --against to diff two models
 anneal sensitivity  # rank layers by INT8 damage; --measured for the real sweep
 anneal export       # emit a standalone script that rebuilds a frontier point
-anneal audit        # check any optimised model (from any tool) against its original
+anneal audit        # check any optimised model (from any tool); --sequential stops early
 anneal report       # re-render from a ledger
 anneal targets      # what can actually run here
 anneal transforms   # the action space
@@ -509,8 +557,9 @@ Stated plainly, because the alternative is letting someone find them in a review
   ResNet-18 recommendation; the recipe experiment in `examples/olive_resnet18/` shows by how
   much. They are kept as they ran rather than silently replaced.
 - **Absolute latencies drift between sessions** on the laptop these ran on: FP32 ResNet-18 on
-  4 threads measured 18–30 ms across sessions. Every comparison in this README is between
-  models measured in the same session — compare the ratios, not milliseconds across tables.
+  4 threads measured 18–30 ms across sessions, and power state was not recorded for runs made
+  before the environment check existed. Every comparison in this README is between models
+  measured in the same session — compare the ratios, not milliseconds across tables.
 - **The saturation explanation is unconfirmed.** `reduce_range` fixing per-channel static
   INT8 on a Zen 2 CPU fits onnxruntime's documented non-VNNI saturation issue, but I have not
   run the same experiment on a VNNI CPU to confirm it.
