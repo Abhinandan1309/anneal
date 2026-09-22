@@ -97,6 +97,46 @@ thread; [full table](examples/hardware_lab/results/results.md)):
 This finding started as a 4-point accuracy drop on one laptop that looked like a bug in
 Anneal. It is now a statement about x86 instruction sets, checked on five CPUs.
 
+### Predicting it without the hardware, and fixing it precisely
+
+`anneal saturation` emulates the saturating 16-bit pair arithmetic of non-VNNI x86 on a
+quantized model's real int8 weights and real u8 activations, layer by layer — on any
+machine. On ResNet-18 it names one layer, the stem convolution: under full-range
+per-channel weights 18–22% of its accumulators saturate (mean error above 100% on those),
+under per-tensor about 1%, under `reduce_range` none, and provably none.
+
+```console
+$ anneal saturation resnet18-int8-perchannel.onnx
+| layer       |   K | max |w| | risky weight pairs | accumulators hit | mean rel. error |
+|-------------+-----+---------+--------------------+------------------+-----------------|
+| /conv1/Conv | 147 |     127 |             10.98% |           17.65% |          137.3% |
+1 of 21 layers saturate
+```
+
+The causal test ([`examples/saturation_causal_test.py`](examples/saturation_causal_test.py)),
+run on the saturating laptop itself, 1,024 images:
+
+| static INT8, per-channel full-range weights | accuracy change | predictions changed |
+|---|---:|---:|
+| every layer quantized | **−4.20pp** (p = 6e-5) | 17.3% |
+| every layer except the stem convolution | +1.27pp | 3.6% |
+
+One layer of twenty-one carries the entire loss. With it fixed, the laptop behaves like
+the ARM chips did (4.3% of predictions changed there). `quantize_static_int8` now takes
+`guard_saturation`, which runs this analysis on the model it has just quantized and keeps
+only the saturating layers in FP32 — on ResNet-18 it finds the stem by itself and reproduces
+the result above — and the search tries it first whenever it is running on a CPU whose INT8
+path is the saturating one.
+
+It also explains an earlier puzzle. The measured sensitivity sweep, run on this laptop,
+ranked the stem the most damaging layer to quantize while the weight-error proxy ranked it
+last. On a non-VNNI x86 CPU the stem's "sensitivity" is mostly saturation — arithmetic the
+proxy cannot see. Sensitivity is itself a property of the hardware.
+
+What is and is not established: the emulation's pairing order (input channels innermost) is
+an assumption about the kernel's data layout, and the latency cost of the guard has not yet
+been measured on AC power.
+
 ---
 
 ## A real run

@@ -12,12 +12,15 @@ on:
       target:
         description: "anneal target (cpu-1t or cpu-4t)"
         default: "cpu-1t"
+      models:
+        description: "comma-separated torchvision models"
+        default: "resnet18,mobilenet_v3_large,efficientnet_b0"
 
 jobs:
   lab:
     name: lab (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
+    timeout-minutes: 240
     strategy:
       fail-fast: false
       matrix:
@@ -54,6 +57,7 @@ jobs:
           python examples/hardware_lab/run_lab.py \
             --eval-limit "${{ inputs.eval_limit || '1024' }}" \
             --target "${{ inputs.target || 'cpu-1t' }}" \
+            --models "${{ inputs.models || 'resnet18,mobilenet_v3_large,efficientnet_b0' }}" \
             --out "lab-${{ matrix.os }}.json"
 
       - uses: actions/upload-artifact@v4

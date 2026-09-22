@@ -33,7 +33,17 @@ from anneal.core.targets import get_target
 from anneal.core.transforms import TransformContext, apply_transform
 
 HERE = Path(__file__).parent
-MODEL = HERE / "resnet18-cpu1t" / "models" / "resnet18-fp32.onnx"
+
+
+def model_path(name: str) -> Path:
+    """Where a torchvision model's FP32 export lives (exported on first use)."""
+    if name == "resnet18":  # kept at its original location, which other examples use
+        return HERE / "resnet18-cpu1t" / "models" / "resnet18-fp32.onnx"
+    return HERE / "models" / f"{name}-fp32.onnx"
+
+
+def candidates_dir(name: str) -> Path:
+    return HERE / "static_ab_candidates" if name == "resnet18" else HERE / "static_ab_candidates" / name
 
 VARIANTS = {
     "U8S8 per-channel (Anneal's old default)": {"per_channel": True, "activation_type": "uint8"},
@@ -50,11 +60,17 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--eval-limit", type=int, default=1024)
     parser.add_argument("--target", default="cpu-4t")
+    parser.add_argument("--model", default="resnet18", help="torchvision model name")
     parser.add_argument("--out", default=str(HERE / "olive_resnet18" / "static_recipe_ab.json"))
     args = parser.parse_args()
 
+    model = model_path(args.model)
+    if not model.exists():
+        from anneal.models import export_torchvision
+
+        export_torchvision(args.model, model)
     cache = Path.home() / ".anneal_cache"
-    shape = sample_shape(MODEL)
+    shape = sample_shape(model)
     evalset = load_evalset("imagenette", cache_dir=cache, batch_size=32,
                            limit=args.eval_limit, sample_shape=shape)
     calibset = load_calibset("imagenette", cache_dir=cache, batch_size=32, limit=64,
@@ -62,7 +78,11 @@ def main() -> None:
     target = get_target(args.target)
     bench = Benchmarker(target, warmup=10, runs=50)
 
-    base = ModelArtifact(path=MODEL)
+    base = ModelArtifact(path=model)
+    from anneal.core.saturation import analyse, summarise
+
+    probe = [next(iter(load_evalset("imagenette", cache_dir=cache, batch_size=8, limit=8,
+                                    sample_shape=shape).batches()))[0]]
     base_pred, labels = predict(base, target, evalset)
     base_right = base_pred == labels
     base_lat = bench.measure(base).latency_ms_p50
@@ -71,7 +91,7 @@ def main() -> None:
 
     rows = []
     for name, params in VARIANTS.items():
-        ctx = TransformContext(workdir=HERE / "static_ab_candidates", calibset=calibset,
+        ctx = TransformContext(workdir=candidates_dir(args.model), calibset=calibset,
                                calib_samples=64)
         params = {"calibrate_method": "minmax", "reduce_range": False, **params}
         cand = apply_transform("quantize_static_int8", params, base, ctx)
@@ -81,7 +101,11 @@ def main() -> None:
         c = int(np.sum(~base_right & right))
         delta, lo, hi = paired_delta_ci(b, c, n)
         lat = bench.measure(cand).latency_ms_p50
+        # The emulation is hardware-independent: every machine predicts the same thing, and
+        # only the non-VNNI x86 ones should see it happen.
+        predicted = summarise(analyse(cand.path, probe, n_positions=128))
         row = {
+            "predicted_saturation": predicted,
             "variant": name,
             "params": params,
             "accuracy": float(right.mean()),
@@ -109,7 +133,7 @@ def main() -> None:
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps({
-        "model": MODEL.name, "target": target.name, "n_eval": n,
+        "model": args.model, "target": target.name, "n_eval": n,
         "calibration": "64 Imagenette train images", "fp32_accuracy": float(base_right.mean()),
         "fp32_p50_ms": base_lat, "fp32_p50_end_ms": base_lat_end, "latency_drift": moved,
         "environment_warnings": warnings_for(snapshot()), "rows": rows,
