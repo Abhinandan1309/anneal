@@ -104,6 +104,13 @@ class OptimizationRun:
         if config.measured_ranking:
             self.ctx.extra["measured_ranking"] = list(config.measured_ranking)
         self.can_measure_sensitivity = evalset is not None or bool(config.measured_ranking)
+        # The INT8 arithmetic of the machine doing the measuring. Only meaningful for CPU
+        # targets: a GPU or NPU target has its own kernels.
+        self.int8_path = (
+            environment.cpu_features()["int8_path"]
+            if target.providers and target.providers[0] == "CPUExecutionProvider"
+            else "unknown"
+        )
         self.transforms = available_transforms()
 
         self.ledger = Ledger(
@@ -121,6 +128,7 @@ class OptimizationRun:
                     else ("eval set (overlapping)" if evalset is not None else None)
                 ),
                 "transforms_available": sorted(self.transforms),
+                "int8_path": self.int8_path,
             },
         )
         start_env = environment.snapshot()
@@ -143,6 +151,7 @@ class OptimizationRun:
                 constraints=self.config.constraints,
                 baseline_artifact=self.baseline,
                 can_measure_sensitivity=self.can_measure_sensitivity,
+                int8_path=self.int8_path,
             )
 
             proposal = self.policy.propose(state)

@@ -376,3 +376,35 @@ def test_a_directory_without_a_train_split_has_no_calibration_set(tmp_path: Path
 
     (tmp_path / "val").mkdir()
     assert load_calibset(str(tmp_path), cache_dir=tmp_path) is None
+
+
+def test_the_saturation_guard_records_what_it_excluded(tiny_onnx: Path, tmp_path: Path):
+    from anneal.core.dataset import SyntheticEvalSet
+
+    ctx = TransformContext(
+        workdir=tmp_path / "g",
+        calibset=SyntheticEvalSet(shape=(3, 16, 16), n=16, batch_size=8, seed=1),
+        calib_samples=16,
+    )
+    result = apply_transform(
+        "quantize_static_int8",
+        {"per_channel": True, "guard_saturation": True, "saturation_tolerance": 0.0},
+        ModelArtifact(path=tiny_onnx),
+        ctx,
+    )
+    assert "saturation_excluded" in result.meta
+    assert result.lineage[-1].params["guard_saturation"] is True
+    # Everything it chose to exclude really did saturate above the tolerance.
+    assert all(rate > 0.0 for rate in result.meta["saturation_rates"].values())
+
+
+def test_the_guard_is_absent_from_the_recipe_unless_asked_for(tiny_onnx: Path, tmp_path: Path):
+    from anneal.core.dataset import SyntheticEvalSet
+
+    ctx = TransformContext(
+        workdir=tmp_path / "n",
+        calibset=SyntheticEvalSet(shape=(3, 16, 16), n=16, batch_size=8, seed=1),
+        calib_samples=16,
+    )
+    result = apply_transform("quantize_static_int8", {}, ModelArtifact(path=tiny_onnx), ctx)
+    assert "guard_saturation" not in result.lineage[-1].params

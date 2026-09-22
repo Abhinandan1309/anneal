@@ -24,6 +24,11 @@ import numpy as np
 from anneal.core.artifact import ModelArtifact, TransformRecord
 from anneal.core.measure import EvalSet
 
+#: Fraction of a layer's accumulators that may be corrupted by 16-bit saturation before the
+#: saturation guard keeps that layer in FP32. On ResNet-18 the stem saturated 18-22% under
+#: full-range per-channel weights (and broke accuracy) but ~1% under per-tensor (harmless).
+SATURATION_TOLERANCE = 0.02
+
 #: ONNX op types whose weights dominate compute in a CNN/transformer.
 QUANTIZABLE_OPS = ("Conv", "Gemm", "MatMul", "ConvTranspose")
 
@@ -480,6 +485,8 @@ def quantize_static_int8(
     if activation_type not in ("uint8", "int8"):
         raise TransformError(f"activation_type must be 'uint8' or 'int8', got {activation_type!r}")
     n_calib = int(params.get("calib_samples", ctx.calib_samples))
+    guard = bool(params.get("guard_saturation", False))
+    tolerance = float(params.get("saturation_tolerance", SATURATION_TOLERANCE))
 
     methods = {
         "minmax": CalibrationMethod.MinMax,
@@ -497,26 +504,48 @@ def quantize_static_int8(
             "calibrate_method": calib_method,
             "calib_samples": n_calib,
             "activation_type": activation_type,
+            # Recorded only when on, so recipes without the guard keep their lineage keys.
+            **({"guard_saturation": True, "saturation_tolerance": tolerance} if guard else {}),
         },
     )
     out = ctx.path_for(artifact, record)
     src = _preprocessed(artifact, ctx)
 
-    reader = _EvalSetCalibrationReader(calib_source, _input_name(src), n_calib)
-    quantize_static(
-        model_input=str(src),
-        model_output=str(out),
-        calibration_data_reader=reader,
-        quant_format=QuantFormat.QDQ,
-        activation_type=QuantType.QUInt8 if activation_type == "uint8" else QuantType.QInt8,
-        weight_type=QuantType.QInt8,
-        per_channel=per_channel,
-        reduce_range=reduce_range,
-        calibrate_method=methods[calib_method],
-    )
+    def run_quantizer(exclude: list[str]) -> None:
+        quantize_static(
+            model_input=str(src),
+            model_output=str(out),
+            calibration_data_reader=_EvalSetCalibrationReader(calib_source, _input_name(src), n_calib),
+            quant_format=QuantFormat.QDQ,
+            activation_type=QuantType.QUInt8 if activation_type == "uint8" else QuantType.QInt8,
+            weight_type=QuantType.QInt8,
+            per_channel=per_channel,
+            reduce_range=reduce_range,
+            calibrate_method=methods[calib_method],
+            nodes_to_exclude=exclude,
+        )
+
+    run_quantizer([])
+    guard_meta: dict[str, Any] = {}
+    if guard:
+        # Emulate the 16-bit pair arithmetic of x86 CPUs without VNNI on this very model and
+        # keep only the layers that saturate in FP32. Everything else keeps full 8-bit weights.
+        from anneal.core.saturation import analyse
+
+        probe = [next(iter(calib_source.batches()))[0]]
+        layers = analyse(out, probe, n_positions=128)
+        saturating = {r.node: r.accumulator_rate for r in layers if r.accumulator_rate > tolerance}
+        if saturating:
+            run_quantizer(sorted(saturating))
+        guard_meta = {
+            "saturation_excluded": sorted(saturating),
+            "saturation_rates": {k: round(v, 5) for k, v in saturating.items()},
+        }
+
     return artifact.derive(
         record,
         out,
+        **guard_meta,
         calib_samples=n_calib,
         calibration_source=(
             "eval set (overlaps evaluation images; accuracy is optimistic)"
@@ -640,6 +669,18 @@ REGISTRY: dict[str, TransformSpec] = {
             "calib_samples": {
                 "type": "integer",
                 "description": "Number of calibration images to use.",
+            },
+            "guard_saturation": {
+                "type": "boolean",
+                "description": (
+                    "Emulate the saturating 16-bit arithmetic of x86 CPUs without VNNI on the "
+                    "quantized model and keep only the layers that saturate in FP32. Use it when "
+                    "the target is x86 without VNNI; elsewhere it costs speed for nothing."
+                ),
+            },
+            "saturation_tolerance": {
+                "type": "number",
+                "description": "Fraction of a layer's accumulators allowed to saturate (default 0.02).",
             },
             "activation_type": {
                 "type": "string",

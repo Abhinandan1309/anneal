@@ -313,3 +313,33 @@ def test_broken_static_int8_is_retried_with_reduce_range_and_per_tensor_first():
     assert any(p.params["per_channel"] is False for p in static)
     first_dynamic = next(i for i, p in enumerate(proposals) if p.transform == "quantize_dynamic_sensitive")
     assert all(proposals.index(p) < first_dynamic for p in static)
+
+
+def _broken_static_ledger():
+    ledger = fresh_ledger(0.90)
+    params = {
+        "per_channel": True, "reduce_range": False, "calibrate_method": "minmax",
+        "calib_samples": 64, "activation_type": "uint8",
+    }
+    ledger.add(make_trial(1, lineage=(TransformRecord("quantize_static_int8", params),),
+                          latency=20.0, accuracy=0.85))
+    return ledger
+
+
+def test_on_a_saturating_cpu_the_guard_is_tried_before_reduce_range():
+    state = state_for(_broken_static_ledger())
+    state.int8_path = "x86-avx2-16bit"
+    policy = HeuristicPolicy()
+    policy._generation = 1
+    static = [p for p in policy._react(state) if p.transform == "quantize_static_int8"]
+    assert static[0].params.get("guard_saturation") is True
+    assert any(p.params.get("reduce_range") for p in static[1:])
+
+
+def test_off_the_saturating_path_no_guard_is_proposed():
+    for path in ("x86-vnni", "arm-dotprod", "unknown"):
+        state = state_for(_broken_static_ledger())
+        state.int8_path = path
+        policy = HeuristicPolicy()
+        policy._generation = 1
+        assert not any(p.params.get("guard_saturation") for p in policy._react(state))

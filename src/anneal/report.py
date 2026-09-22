@@ -54,6 +54,8 @@ def compact_label(trial: Trial) -> str:
             flags.append(f"k={p['skip_top_k']}")
         if p.get("skip_first_last"):
             flags.append("+stem/head")
+        if p.get("guard_saturation"):
+            flags.append("sat-guard")
         if p.get("ranking") in ("measured", "proxy"):
             flags.append("meas" if p["ranking"] == "measured" else "proxy")
         if p.get("weight_type") == "uint8":

@@ -79,6 +79,9 @@ class SearchState:
     #: Whether a measured layer-sensitivity ranking can be used this run — an eval set to
     #: sweep against, or a saved sweep. The policy prefers it when it can.
     can_measure_sensitivity: bool = False
+    #: The target's INT8 arithmetic, from anneal.core.environment.cpu_features():
+    #: "x86-avx2-16bit" is the path whose 16-bit pair sums can saturate.
+    int8_path: str = "unknown"
 
     def artifact(self, index: int) -> ModelArtifact | None:
         if index == BASELINE:
@@ -260,6 +263,22 @@ class HeuristicPolicy:
                 head = trial.artifact.lineage[-1]
                 if head.name != "quantize_static_int8" or len(trial.artifact.lineage) != 1:
                     continue
+                if (
+                    state.int8_path == "x86-avx2-16bit"
+                    and not head.params.get("reduce_range")
+                    and not head.params.get("guard_saturation")
+                ):
+                    out.append(
+                        Proposal(
+                            "quantize_static_int8",
+                            {**head.params, "guard_saturation": True, "saturation_tolerance": 0.02},
+                            BASELINE,
+                            f"Trial [{trial.index}] broke accuracy on an x86 CPU without VNNI, "
+                            f"whose INT8 path sums pairs in saturating 16-bit arithmetic. Emulate "
+                            f"that arithmetic and keep only the layers that saturate in FP32, "
+                            f"leaving every other layer at full 8-bit precision.",
+                        )
+                    )
                 if head.params.get("per_channel") and not head.params.get("reduce_range"):
                     out.append(
                         Proposal(
