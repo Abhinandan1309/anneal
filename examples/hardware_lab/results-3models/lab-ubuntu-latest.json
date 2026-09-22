@@ -1,0 +1,694 @@
+{
+  "cpu": {
+    "machine": "x86_64",
+    "system": "Linux",
+    "processor": "x86_64",
+    "logical_cpus": 4,
+    "runner": "GitHub Actions 1000000128",
+    "runner_os": "Linux",
+    "runner_arch": "X64",
+    "brand": "AMD EPYC 7763 64-Core Processor",
+    "int8_features": [
+      "avx2"
+    ],
+    "has_vnni": false,
+    "has_arm_dotprod": false,
+    "int8_path": "x86-avx2-16bit"
+  },
+  "onnxruntime": "1.30.0",
+  "python": "3.12.14",
+  "studies": {
+    "resnet18": {
+      "model": "resnet18",
+      "target": "cpu-1t",
+      "n_eval": 1024,
+      "calibration": "64 Imagenette train images",
+      "fp32_accuracy": 0.67578125,
+      "fp32_p50_ms": 39.263721,
+      "fp32_p50_end_ms": 39.372534,
+      "latency_drift": 0.0027713369295794695,
+      "environment_warnings": [],
+      "rows": [
+        {
+          "predicted_saturation": {
+            "layers": 21,
+            "layers_saturating": 1,
+            "pair_rate": 6.644022632069218e-06,
+            "accumulator_rate": 0.0028293701799485863,
+            "worst_layer": "/conv1/Conv",
+            "worst_layer_accumulator_rate": 0.2149658203125,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "U8S8 per-channel (Anneal's old default)",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "uint8"
+          },
+          "accuracy": 0.6337890625,
+          "delta_pp": -4.19921875,
+          "ci95_pp": [
+            -6.217573251011455,
+            -2.180864248988546
+          ],
+          "mcnemar_p": 6.445381010320707e-05,
+          "regressions": 78,
+          "fixes": 35,
+          "changed_fraction": 0.1728515625,
+          "p50_ms": 20.723469,
+          "speedup": 1.8946500221560394
+        },
+        {
+          "predicted_saturation": {
+            "layers": 21,
+            "layers_saturating": 0,
+            "pair_rate": 0.0,
+            "accumulator_rate": 0.0,
+            "worst_layer": null,
+            "worst_layer_accumulator_rate": 0.0,
+            "saturation_possible": false,
+            "bias_saturated_channels": 0
+          },
+          "variant": "U8S8 per-channel + reduce_range",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": true,
+            "per_channel": true,
+            "activation_type": "uint8"
+          },
+          "accuracy": 0.6796875,
+          "delta_pp": 0.390625,
+          "ci95_pp": [
+            -0.42109040745183723,
+            1.2023404074518371
+          ],
+          "mcnemar_p": 0.480682373046875,
+          "regressions": 7,
+          "fixes": 11,
+          "changed_fraction": 0.0400390625,
+          "p50_ms": 20.724029,
+          "speedup": 1.8945988253538921
+        },
+        {
+          "predicted_saturation": {
+            "layers": 21,
+            "layers_saturating": 1,
+            "pair_rate": 6.64262741522082e-06,
+            "accumulator_rate": 0.0028293701799485863,
+            "worst_layer": "/conv1/Conv",
+            "worst_layer_accumulator_rate": 0.2149658203125,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "S8S8 per-channel",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "int8"
+          },
+          "accuracy": 0.6328125,
+          "delta_pp": -4.296875,
+          "ci95_pp": [
+            -6.323517194723569,
+            -2.2702328052764322
+          ],
+          "mcnemar_p": 4.609247371251198e-05,
+          "regressions": 79,
+          "fixes": 35,
+          "changed_fraction": 0.177734375,
+          "p50_ms": 34.479715,
+          "speedup": 1.1387484206293468
+        },
+        {
+          "predicted_saturation": {
+            "layers": 21,
+            "layers_saturating": 1,
+            "pair_rate": 1.3115038374937136e-07,
+            "accumulator_rate": 0.00014138817480719795,
+            "worst_layer": "/conv1/Conv",
+            "worst_layer_accumulator_rate": 0.0107421875,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "U8S8 per-tensor",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": false,
+            "activation_type": "uint8"
+          },
+          "accuracy": 0.6884765625,
+          "delta_pp": 1.26953125,
+          "ci95_pp": [
+            0.016807525508753286,
+            2.522254974491247
+          ],
+          "mcnemar_p": 0.0659940344557981,
+          "regressions": 15,
+          "fixes": 28,
+          "changed_fraction": 0.08203125,
+          "p50_ms": 20.550793,
+          "speedup": 1.910569631059979
+        },
+        {
+          "predicted_saturation": {
+            "layers": 21,
+            "layers_saturating": 1,
+            "pair_rate": 1.3115038374937136e-07,
+            "accumulator_rate": 0.00014138817480719795,
+            "worst_layer": "/conv1/Conv",
+            "worst_layer_accumulator_rate": 0.0107421875,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "S8S8 per-tensor (Olive's default)",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": false,
+            "activation_type": "int8"
+          },
+          "accuracy": 0.6904296875,
+          "delta_pp": 1.46484375,
+          "ci95_pp": [
+            0.2129199586397826,
+            2.7167675413602175
+          ],
+          "mcnemar_p": 0.03153949735315109,
+          "regressions": 14,
+          "fixes": 29,
+          "changed_fraction": 0.0810546875,
+          "p50_ms": 34.553048,
+          "speedup": 1.1363316197170217
+        }
+      ]
+    },
+    "mobilenet_v3_large": {
+      "model": "mobilenet_v3_large",
+      "target": "cpu-1t",
+      "n_eval": 1024,
+      "calibration": "64 Imagenette train images",
+      "fp32_accuracy": 0.701171875,
+      "fp32_p50_ms": 6.622157,
+      "fp32_p50_end_ms": 6.709334,
+      "latency_drift": 0.013164441737035305,
+      "environment_warnings": [],
+      "rows": [
+        {
+          "predicted_saturation": {
+            "layers": 64,
+            "layers_saturating": 19,
+            "pair_rate": 0.00014565314692095566,
+            "accumulator_rate": 0.009309587282780411,
+            "worst_layer": "/features/features.0/features.0.0/Conv",
+            "worst_layer_accumulator_rate": 0.1435546875,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "U8S8 per-channel (Anneal's old default)",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "uint8"
+          },
+          "accuracy": 0.4736328125,
+          "delta_pp": -22.75390625,
+          "ci95_pp": [
+            -25.656620990254016,
+            -19.851191509745984
+          ],
+          "mcnemar_p": 6.069477669846106e-50,
+          "regressions": 258,
+          "fixes": 25,
+          "changed_fraction": 0.4580078125,
+          "p50_ms": 6.449695,
+          "speedup": 1.0267395590024024
+        },
+        {
+          "predicted_saturation": {
+            "layers": 64,
+            "layers_saturating": 0,
+            "pair_rate": 0.0,
+            "accumulator_rate": 0.0,
+            "worst_layer": null,
+            "worst_layer_accumulator_rate": 0.0,
+            "saturation_possible": false,
+            "bias_saturated_channels": 0
+          },
+          "variant": "U8S8 per-channel + reduce_range",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": true,
+            "per_channel": true,
+            "activation_type": "uint8"
+          },
+          "accuracy": 0.5908203125,
+          "delta_pp": -11.03515625,
+          "ci95_pp": [
+            -13.383534448982806,
+            -8.686778051017194
+          ],
+          "mcnemar_p": 3.8875061815421956e-20,
+          "regressions": 138,
+          "fixes": 25,
+          "changed_fraction": 0.2763671875,
+          "p50_ms": 6.482272,
+          "speedup": 1.0215796251684595
+        },
+        {
+          "predicted_saturation": {
+            "layers": 64,
+            "layers_saturating": 19,
+            "pair_rate": 0.00014565314692095566,
+            "accumulator_rate": 0.009309587282780411,
+            "worst_layer": "/features/features.0/features.0.0/Conv",
+            "worst_layer_accumulator_rate": 0.1435546875,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "S8S8 per-channel",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "int8"
+          },
+          "accuracy": 0.580078125,
+          "delta_pp": -12.109375,
+          "ci95_pp": [
+            -14.365894567812623,
+            -9.852855432187377
+          ],
+          "mcnemar_p": 2.4078229277102385e-26,
+          "regressions": 139,
+          "fixes": 15,
+          "changed_fraction": 0.275390625,
+          "p50_ms": 16.89396,
+          "speedup": 0.391983703051268
+        },
+        {
+          "predicted_saturation": {
+            "layers": 64,
+            "layers_saturating": 1,
+            "pair_rate": 3.6953735106166605e-07,
+            "accumulator_rate": 2.4684044233807267e-05,
+            "worst_layer": "/features/features.0/features.0.0/Conv",
+            "worst_layer_accumulator_rate": 0.01953125,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "U8S8 per-tensor",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": false,
+            "activation_type": "uint8"
+          },
+          "accuracy": 0.28515625,
+          "delta_pp": -41.6015625,
+          "ci95_pp": [
+            -44.831609428569735,
+            -38.371515571430265
+          ],
+          "mcnemar_p": 1.7972085175032915e-107,
+          "regressions": 444,
+          "fixes": 18,
+          "changed_fraction": 0.6884765625,
+          "p50_ms": 6.384336,
+          "speedup": 1.0372507023439868
+        },
+        {
+          "predicted_saturation": {
+            "layers": 64,
+            "layers_saturating": 1,
+            "pair_rate": 3.6953735106166605e-07,
+            "accumulator_rate": 2.4684044233807267e-05,
+            "worst_layer": "/features/features.0/features.0.0/Conv",
+            "worst_layer_accumulator_rate": 0.01953125,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "S8S8 per-tensor (Olive's default)",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": false,
+            "activation_type": "int8"
+          },
+          "accuracy": 0.3193359375,
+          "delta_pp": -38.18359375,
+          "ci95_pp": [
+            -41.350208409357066,
+            -35.016979090642934
+          ],
+          "mcnemar_p": 3.620415958271139e-99,
+          "regressions": 407,
+          "fixes": 16,
+          "changed_fraction": 0.6513671875,
+          "p50_ms": 16.808227,
+          "speedup": 0.3939830774536779
+        }
+      ]
+    },
+    "efficientnet_b0": {
+      "model": "efficientnet_b0",
+      "target": "cpu-1t",
+      "n_eval": 1024,
+      "calibration": "64 Imagenette train images",
+      "fp32_accuracy": 0.75390625,
+      "fp32_p50_ms": 15.067947,
+      "fp32_p50_end_ms": 15.075158,
+      "latency_drift": 0.0004785655272081762,
+      "environment_warnings": [],
+      "rows": [
+        {
+          "predicted_saturation": {
+            "layers": 82,
+            "layers_saturating": 32,
+            "pair_rate": 2.419780086914668e-05,
+            "accumulator_rate": 0.0018165458281861528,
+            "worst_layer": "/features/features.3/features.3.0/block/block.2/fc1/Conv",
+            "worst_layer_accumulator_rate": 0.1875,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "U8S8 per-channel (Anneal's old default)",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "uint8"
+          },
+          "accuracy": 0.2568359375,
+          "delta_pp": -49.70703125,
+          "ci95_pp": [
+            -52.8637329925523,
+            -46.5503295074477
+          ],
+          "mcnemar_p": 2.5090471136968203e-141,
+          "regressions": 517,
+          "fixes": 8,
+          "changed_fraction": 0.7001953125,
+          "p50_ms": 11.999071,
+          "speedup": 1.255759466712048
+        },
+        {
+          "predicted_saturation": {
+            "layers": 82,
+            "layers_saturating": 0,
+            "pair_rate": 0.0,
+            "accumulator_rate": 0.0,
+            "worst_layer": null,
+            "worst_layer_accumulator_rate": 0.0,
+            "saturation_possible": false,
+            "bias_saturated_channels": 0
+          },
+          "variant": "U8S8 per-channel + reduce_range",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": true,
+            "per_channel": true,
+            "activation_type": "uint8"
+          },
+          "accuracy": 0.29296875,
+          "delta_pp": -46.09375,
+          "ci95_pp": [
+            -49.26461565466577,
+            -42.92288434533423
+          ],
+          "mcnemar_p": 3.336154995018817e-128,
+          "regressions": 482,
+          "fixes": 10,
+          "changed_fraction": 0.6591796875,
+          "p50_ms": 11.653161,
+          "speedup": 1.2930351687409107
+        },
+        {
+          "predicted_saturation": {
+            "layers": 82,
+            "layers_saturating": 32,
+            "pair_rate": 2.419780086914668e-05,
+            "accumulator_rate": 0.0018165458281861528,
+            "worst_layer": "/features/features.3/features.3.0/block/block.2/fc1/Conv",
+            "worst_layer_accumulator_rate": 0.1875,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "S8S8 per-channel",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "int8"
+          },
+          "accuracy": 0.2763671875,
+          "delta_pp": -47.75390625,
+          "ci95_pp": [
+            -50.872614857488784,
+            -44.635197642511216
+          ],
+          "mcnemar_p": 3.1192781696659534e-139,
+          "regressions": 494,
+          "fixes": 5,
+          "changed_fraction": 0.6669921875,
+          "p50_ms": 39.639287,
+          "speedup": 0.38012659006707156
+        },
+        {
+          "predicted_saturation": {
+            "layers": 82,
+            "layers_saturating": 6,
+            "pair_rate": 5.965838092505345e-07,
+            "accumulator_rate": 3.2109747509149476e-05,
+            "worst_layer": "/features/features.4/features.4.0/block/block.2/fc1/Conv",
+            "worst_layer_accumulator_rate": 0.0875,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "U8S8 per-tensor",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": false,
+            "activation_type": "uint8"
+          },
+          "accuracy": 0.0,
+          "delta_pp": -75.390625,
+          "ci95_pp": [
+            -78.02886959431142,
+            -72.75238040568858
+          ],
+          "mcnemar_p": 8.051435961996417e-233,
+          "regressions": 772,
+          "fixes": 0,
+          "changed_fraction": 1.0,
+          "p50_ms": 12.000738,
+          "speedup": 1.2555850315205614
+        },
+        {
+          "predicted_saturation": {
+            "layers": 82,
+            "layers_saturating": 6,
+            "pair_rate": 5.965838092505345e-07,
+            "accumulator_rate": 3.2109747509149476e-05,
+            "worst_layer": "/features/features.4/features.4.0/block/block.2/fc1/Conv",
+            "worst_layer_accumulator_rate": 0.0875,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "S8S8 per-tensor (Olive's default)",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": false,
+            "activation_type": "int8"
+          },
+          "accuracy": 0.0,
+          "delta_pp": -75.390625,
+          "ci95_pp": [
+            -78.02886959431142,
+            -72.75238040568858
+          ],
+          "mcnemar_p": 8.051435961996417e-233,
+          "regressions": 772,
+          "fixes": 0,
+          "changed_fraction": 1.0,
+          "p50_ms": 39.312181,
+          "speedup": 0.3832895203652018
+        }
+      ]
+    }
+  },
+  "study": {
+    "model": "resnet18",
+    "target": "cpu-1t",
+    "n_eval": 1024,
+    "calibration": "64 Imagenette train images",
+    "fp32_accuracy": 0.67578125,
+    "fp32_p50_ms": 39.263721,
+    "fp32_p50_end_ms": 39.372534,
+    "latency_drift": 0.0027713369295794695,
+    "environment_warnings": [],
+    "rows": [
+      {
+        "predicted_saturation": {
+          "layers": 21,
+          "layers_saturating": 1,
+          "pair_rate": 6.644022632069218e-06,
+          "accumulator_rate": 0.0028293701799485863,
+          "worst_layer": "/conv1/Conv",
+          "worst_layer_accumulator_rate": 0.2149658203125,
+          "saturation_possible": true,
+          "bias_saturated_channels": 0
+        },
+        "variant": "U8S8 per-channel (Anneal's old default)",
+        "params": {
+          "calibrate_method": "minmax",
+          "reduce_range": false,
+          "per_channel": true,
+          "activation_type": "uint8"
+        },
+        "accuracy": 0.6337890625,
+        "delta_pp": -4.19921875,
+        "ci95_pp": [
+          -6.217573251011455,
+          -2.180864248988546
+        ],
+        "mcnemar_p": 6.445381010320707e-05,
+        "regressions": 78,
+        "fixes": 35,
+        "changed_fraction": 0.1728515625,
+        "p50_ms": 20.723469,
+        "speedup": 1.8946500221560394
+      },
+      {
+        "predicted_saturation": {
+          "layers": 21,
+          "layers_saturating": 0,
+          "pair_rate": 0.0,
+          "accumulator_rate": 0.0,
+          "worst_layer": null,
+          "worst_layer_accumulator_rate": 0.0,
+          "saturation_possible": false,
+          "bias_saturated_channels": 0
+        },
+        "variant": "U8S8 per-channel + reduce_range",
+        "params": {
+          "calibrate_method": "minmax",
+          "reduce_range": true,
+          "per_channel": true,
+          "activation_type": "uint8"
+        },
+        "accuracy": 0.6796875,
+        "delta_pp": 0.390625,
+        "ci95_pp": [
+          -0.42109040745183723,
+          1.2023404074518371
+        ],
+        "mcnemar_p": 0.480682373046875,
+        "regressions": 7,
+        "fixes": 11,
+        "changed_fraction": 0.0400390625,
+        "p50_ms": 20.724029,
+        "speedup": 1.8945988253538921
+      },
+      {
+        "predicted_saturation": {
+          "layers": 21,
+          "layers_saturating": 1,
+          "pair_rate": 6.64262741522082e-06,
+          "accumulator_rate": 0.0028293701799485863,
+          "worst_layer": "/conv1/Conv",
+          "worst_layer_accumulator_rate": 0.2149658203125,
+          "saturation_possible": true,
+          "bias_saturated_channels": 0
+        },
+        "variant": "S8S8 per-channel",
+        "params": {
+          "calibrate_method": "minmax",
+          "reduce_range": false,
+          "per_channel": true,
+          "activation_type": "int8"
+        },
+        "accuracy": 0.6328125,
+        "delta_pp": -4.296875,
+        "ci95_pp": [
+          -6.323517194723569,
+          -2.2702328052764322
+        ],
+        "mcnemar_p": 4.609247371251198e-05,
+        "regressions": 79,
+        "fixes": 35,
+        "changed_fraction": 0.177734375,
+        "p50_ms": 34.479715,
+        "speedup": 1.1387484206293468
+      },
+      {
+        "predicted_saturation": {
+          "layers": 21,
+          "layers_saturating": 1,
+          "pair_rate": 1.3115038374937136e-07,
+          "accumulator_rate": 0.00014138817480719795,
+          "worst_layer": "/conv1/Conv",
+          "worst_layer_accumulator_rate": 0.0107421875,
+          "saturation_possible": true,
+          "bias_saturated_channels": 0
+        },
+        "variant": "U8S8 per-tensor",
+        "params": {
+          "calibrate_method": "minmax",
+          "reduce_range": false,
+          "per_channel": false,
+          "activation_type": "uint8"
+        },
+        "accuracy": 0.6884765625,
+        "delta_pp": 1.26953125,
+        "ci95_pp": [
+          0.016807525508753286,
+          2.522254974491247
+        ],
+        "mcnemar_p": 0.0659940344557981,
+        "regressions": 15,
+        "fixes": 28,
+        "changed_fraction": 0.08203125,
+        "p50_ms": 20.550793,
+        "speedup": 1.910569631059979
+      },
+      {
+        "predicted_saturation": {
+          "layers": 21,
+          "layers_saturating": 1,
+          "pair_rate": 1.3115038374937136e-07,
+          "accumulator_rate": 0.00014138817480719795,
+          "worst_layer": "/conv1/Conv",
+          "worst_layer_accumulator_rate": 0.0107421875,
+          "saturation_possible": true,
+          "bias_saturated_channels": 0
+        },
+        "variant": "S8S8 per-tensor (Olive's default)",
+        "params": {
+          "calibrate_method": "minmax",
+          "reduce_range": false,
+          "per_channel": false,
+          "activation_type": "int8"
+        },
+        "accuracy": 0.6904296875,
+        "delta_pp": 1.46484375,
+        "ci95_pp": [
+          0.2129199586397826,
+          2.7167675413602175
+        ],
+        "mcnemar_p": 0.03153949735315109,
+        "regressions": 14,
+        "fixes": 29,
+        "changed_fraction": 0.0810546875,
+        "p50_ms": 34.553048,
+        "speedup": 1.1363316197170217
+      }
+    ]
+  }
+}

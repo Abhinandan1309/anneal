@@ -168,7 +168,8 @@ def test_sequential_audit_of_a_model_against_itself_accepts_early(tiny_onnx: Pat
     assert result.sequential.decision == "accept"
     # It must actually have stopped early, and every count must refer to the images used.
     assert result.n == result.sequential.n < 2000
-    assert result.verdict()[0].startswith(("ACCEPT", "No meaningful", "SLOWER", "LATENCY"))
+    # Only the accuracy verdict is asserted: the latency line compares a model with itself,
+    # so it is pure timing noise and may read "faster", "slower" or "no meaningful speedup".
     assert any(line.startswith("ACCEPT") for line in result.verdict())
 
 

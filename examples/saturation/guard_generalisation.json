@@ -1,0 +1,60 @@
+{
+  "machine": "Ryzen 7 4800H (x86-avx2-16bit)",
+  "n_eval": 1024,
+  "results": {
+    "mobilenet_v3_large": {
+      "per-channel": {
+        "delta_pp": -22.75390625,
+        "ci95_pp": [
+          -25.656620990254016,
+          -19.851191509745984
+        ],
+        "mcnemar_p": 6.069477669846106e-50,
+        "changed": 0.4580078125,
+        "excluded": null
+      },
+      "per-channel + guard": {
+        "delta_pp": -13.0859375,
+        "ci95_pp": [
+          -15.43380526892566,
+          -10.73806973107434
+        ],
+        "mcnemar_p": 4.949592375030901e-28,
+        "changed": 0.2919921875,
+        "excluded": [
+          "/features/features.0/features.0.0/Conv",
+          "/features/features.11/block/block.0/block.0.0/Conv",
+          "/features/features.9/block/block.0/block.0.0/Conv"
+        ]
+      }
+    },
+    "efficientnet_b0": {
+      "per-channel": {
+        "delta_pp": -51.171875,
+        "ci95_pp": [
+          -54.29279117771366,
+          -48.05095882228635
+        ],
+        "mcnemar_p": 1.2749413696143955e-149,
+        "changed": 0.712890625,
+        "excluded": null
+      },
+      "per-channel + guard": {
+        "delta_pp": -51.171875,
+        "ci95_pp": [
+          -54.269224250271684,
+          -48.074525749728316
+        ],
+        "mcnemar_p": 1.411940514109135e-152,
+        "changed": 0.70703125,
+        "excluded": [
+          "/features/features.0/features.0.0/Conv",
+          "/features/features.1/features.1.0/block/block.1/fc2/Conv",
+          "/features/features.3/features.3.0/block/block.2/fc1/Conv",
+          "/features/features.3/features.3.0/block/block.2/fc2/Conv",
+          "/features/features.3/features.3.1/block/block.0/block.0.0/Conv"
+        ]
+      }
+    }
+  }
+}

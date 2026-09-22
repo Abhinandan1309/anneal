@@ -137,6 +137,47 @@ What is and is not established: the emulation's pairing order (input channels in
 an assumption about the kernel's data layout, and the latency cost of the guard has not yet
 been measured on AC power.
 
+### Does it generalise? Three models, four machines
+
+The lab was re-run on ResNet-18, MobileNetV3-Large and EfficientNet-B0
+([results](examples/hardware_lab/results-3models/results.md)). The analyser only claims to
+predict loss that happens *where 16-bit saturation is possible*, so it is scored on the
+**x86-only loss** — accuracy on non-VNNI x86 minus accuracy on ARM
+([scorecard](examples/hardware_lab/results-3models/scorecard.md)):
+
+| model | U8S8 per-channel: x86-only loss | analyser | reduce_range: x86-only loss | analyser |
+|---|---:|---|---:|---|
+| ResNet-18 | −5.3pp | predicted (stem) ✓ | +0.2pp | impossible ✓ |
+| MobileNetV3-Large | −10.5pp | predicted (stem + 2 expand convs) ✓ | +0.6pp | impossible ✓ |
+| EfficientNet-B0 | −1.1pp | predicted (stem + squeeze-excite) ✗ | +0.1pp | impossible ✓ |
+
+- **"Impossible" was right every time.** It follows from the arithmetic bound, not the
+  emulation, and `reduce_range` removed the x86-only loss on all three models.
+- **Positive predictions: right on two models, a false alarm on the third.** On
+  EfficientNet the flagged layers are mostly squeeze-excite convolutions, and keeping them
+  in FP32 changes nothing (−51.17pp either way). Its small x86 gap turns out to be a
+  Windows-vs-Linux difference — both Windows machines score −51.2pp, Linux x86 −49.7pp,
+  ARM −49.3pp — not saturation.
+- **The guard generalises where the prediction is right.** On MobileNetV3, on the laptop,
+  keeping 3 of its ~60 quantized layers in FP32 takes per-channel INT8 from −22.75pp to
+  −13.09pp — recovering about 92% of the x86-only loss
+  ([data](examples/saturation/guard_generalisation.json)). The rest is the ordinary
+  quantization damage every CPU shows.
+- **One miss:** MobileNetV3 per-tensor loses 4.4pp more on x86 than on ARM, which the
+  analyser under-predicts. That gap is unexplained.
+- **The S8S8 model is wrong and is not scored.** On ResNet-18, S8S8 per-channel breaks on
+  non-VNNI x86 like U8S8 does; on MobileNetV3 it does not, and runs 2.5x slower than FP32 —
+  evidently a different kernel for those layers.
+- **Hardware coverage caveat:** GitHub assigned an AMD EPYC to both x86 runners this time,
+  so the three-model run has no VNNI machine; the 32-bit reference is ARM alone. The Xeon
+  with VNNI appears only in the first, ResNet-18-only run.
+
+A second finding came free: **static INT8 is far more damaging to MobileNetV3 and
+EfficientNet than to ResNet-18 on every CPU** — per-tensor takes EfficientNet to 0% top-1
+everywhere — and for those two models per-channel is much the safer recipe, the opposite of
+what the non-VNNI laptop suggested for ResNet-18. The safest recipe depends on the model as
+well as the hardware.
+
 ---
 
 ## A real run

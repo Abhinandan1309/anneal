@@ -59,6 +59,9 @@ class LayerSaturation:
     #: Mean |sat - exact| / |exact| over accumulators touched by saturation.
     mean_relative_error: float = 0.0
     bias_saturated_channels: int = 0
+    #: Convolution groups; equal to the input channels for a depthwise convolution.
+    groups: int = 1
+    depthwise: bool = False
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -84,6 +87,8 @@ class LayerSaturation:
             "accumulator_rate": self.accumulator_rate,
             "mean_relative_error": self.mean_relative_error,
             "bias_saturated_channels": self.bias_saturated_channels,
+            "groups": self.groups,
+            "depthwise": self.depthwise,
             "notes": self.notes,
         }
 
@@ -279,8 +284,10 @@ def analyse(
                        "accumulators_affected": 0, "relative_error_sum": 0.0}
         notes: list[str] = []
 
+        groups, depthwise = 1, False
         if node.op_type == "Conv" and w.ndim == 4:
             patch, w4, groups = _conv_patches(a, layer, rng, n_positions)
+            depthwise = groups > 1 and w4.shape[1] == 1
             cpg, opg = w4.shape[1], w4.shape[0] // groups
             k_len = cpg * w4.shape[2] * w4.shape[3]
             risky = []
@@ -328,6 +335,8 @@ def analyse(
                 accumulators_affected=affected,
                 mean_relative_error=(stats_total["relative_error_sum"] / affected) if affected else 0.0,
                 bias_saturated_channels=bias_hits,
+                groups=int(groups),
+                depthwise=bool(depthwise),
                 notes=notes,
             )
         )
