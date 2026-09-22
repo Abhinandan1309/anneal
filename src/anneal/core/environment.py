@@ -153,3 +153,70 @@ def warnings_for(facts: dict[str, Any]) -> list[str]:
 def drift(start_ms: float, end_ms: float) -> float:
     """Relative change in a latency measured at the start and end of a run."""
     return abs(end_ms - start_ms) / start_ms if start_ms > 0 else float("nan")
+
+
+#: Instruction-set features that decide which INT8 kernels onnxruntime can use.
+INT8_FEATURES = ("avx2", "avx512f", "avx512_vnni", "avx512vnni", "avx_vnni", "avxvnni",
+                 "amx_int8", "asimddp", "dotprod", "i8mm", "sve")
+
+
+def cpu_features() -> dict[str, Any]:
+    """CPU identity and the INT8-relevant instruction-set features, best effort.
+
+    ``int8_path`` summarises what matters for accumulator saturation:
+
+    * ``"x86-avx2-16bit"`` — x86 without VNNI: u8×s8 pairs are summed in saturating 16-bit
+    * ``"x86-vnni"`` — x86 with VNNI: 32-bit accumulation
+    * ``"arm-dotprod"`` — ARM with the dot-product extension: 32-bit accumulation
+    * ``"unknown"`` — could not tell
+    """
+    import subprocess
+
+    info: dict[str, Any] = {
+        "machine": platform.machine(),
+        "system": platform.system(),
+        "processor": platform.processor(),
+        "logical_cpus": os.cpu_count(),
+        "runner": os.environ.get("RUNNER_NAME"),
+        "runner_os": os.environ.get("RUNNER_OS"),
+        "runner_arch": os.environ.get("RUNNER_ARCH"),
+    }
+    flags: set[str] = set()
+    try:
+        import cpuinfo  # py-cpuinfo, optional
+
+        ci = cpuinfo.get_cpu_info()
+        info["brand"] = ci.get("brand_raw")
+        flags |= set(ci.get("flags", []))
+    except Exception:  # noqa: BLE001
+        pass
+    if sys.platform.startswith("linux") and Path("/proc/cpuinfo").exists():
+        for line in Path("/proc/cpuinfo").read_text().splitlines():
+            if line.lower().startswith(("flags", "features")):
+                flags |= set(line.split(":", 1)[1].split())
+            if line.lower().startswith("model name") and not info.get("brand"):
+                info["brand"] = line.split(":", 1)[1].strip()
+    if sys.platform == "darwin":
+        try:
+            info["brand"] = subprocess.run(
+                ["sysctl", "-n", "machdep.cpu.brand_string"], capture_output=True, text=True
+            ).stdout.strip() or info.get("brand")
+            if subprocess.run(["sysctl", "-n", "hw.optional.arm.FEAT_DotProd"],
+                              capture_output=True, text=True).stdout.strip() == "1":
+                flags.add("dotprod")
+        except OSError:
+            pass
+    lower = {f.lower() for f in flags}
+    info["int8_features"] = sorted(f for f in lower if f in INT8_FEATURES)
+    info["has_vnni"] = bool(lower & {"avx512_vnni", "avx512vnni", "avx_vnni", "avxvnni"})
+    info["has_arm_dotprod"] = bool(lower & {"asimddp", "dotprod"})
+    machine = info["machine"].lower()
+    if info["has_arm_dotprod"]:
+        info["int8_path"] = "arm-dotprod"
+    elif info["has_vnni"]:
+        info["int8_path"] = "x86-vnni"
+    elif machine in ("amd64", "x86_64", "x64") and "avx2" in lower:
+        info["int8_path"] = "x86-avx2-16bit"
+    else:
+        info["int8_path"] = "unknown"
+    return info

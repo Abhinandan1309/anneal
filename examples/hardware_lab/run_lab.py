@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import platform
 import subprocess
 import sys
@@ -26,54 +25,7 @@ HERE = Path(__file__).resolve().parent
 EXAMPLES = HERE.parent
 MODEL = EXAMPLES / "resnet18-cpu1t" / "models" / "resnet18-fp32.onnx"
 
-#: Instruction-set features that decide which INT8 kernels onnxruntime can use.
-INT8_FEATURES = ("avx2", "avx512f", "avx512_vnni", "avx512vnni", "avx_vnni", "avxvnni",
-                 "amx_int8", "asimddp", "dotprod", "i8mm", "sve")
-
-
-def cpu_info() -> dict:
-    """Best-effort CPU identity and INT8-relevant feature flags."""
-    info: dict = {
-        "machine": platform.machine(),
-        "system": platform.system(),
-        "processor": platform.processor(),
-        "logical_cpus": os.cpu_count(),
-        "runner": os.environ.get("RUNNER_NAME"),
-        "runner_os": os.environ.get("RUNNER_OS"),
-        "runner_arch": os.environ.get("RUNNER_ARCH"),
-    }
-    flags: set[str] = set()
-    try:
-        import cpuinfo  # py-cpuinfo
-
-        ci = cpuinfo.get_cpu_info()
-        info["brand"] = ci.get("brand_raw")
-        flags |= set(ci.get("flags", []))
-    except Exception:  # noqa: BLE001
-        pass
-    if sys.platform.startswith("linux") and Path("/proc/cpuinfo").exists():
-        text = Path("/proc/cpuinfo").read_text()
-        for line in text.splitlines():
-            if line.lower().startswith(("flags", "features")):
-                flags |= set(line.split(":", 1)[1].split())
-            if line.lower().startswith("model name") and not info.get("brand"):
-                info["brand"] = line.split(":", 1)[1].strip()
-    if sys.platform == "darwin":
-        try:
-            info["brand"] = subprocess.run(
-                ["sysctl", "-n", "machdep.cpu.brand_string"], capture_output=True, text=True
-            ).stdout.strip() or info.get("brand")
-            dot = subprocess.run(["sysctl", "-n", "hw.optional.arm.FEAT_DotProd"],
-                                 capture_output=True, text=True).stdout.strip()
-            if dot == "1":
-                flags.add("dotprod")
-        except OSError:
-            pass
-    info["int8_features"] = sorted(f for f in flags if f.lower() in INT8_FEATURES)
-    lower = {f.lower() for f in flags}
-    info["has_vnni"] = bool(lower & {"avx512_vnni", "avx512vnni", "avx_vnni", "avxvnni"})
-    info["has_arm_dotprod"] = bool(lower & {"asimddp", "dotprod"})
-    return info
+from anneal.core.environment import cpu_features as cpu_info  # noqa: E402
 
 
 def ensure_model() -> None:

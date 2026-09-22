@@ -1,0 +1,91 @@
+{
+  "cpu": {
+    "machine": "AMD64",
+    "system": "Windows",
+    "processor": "AMD64 Family 23 Model 96 Stepping 1, AuthenticAMD",
+    "logical_cpus": 16,
+    "runner": null,
+    "runner_os": null,
+    "runner_arch": null,
+    "brand": "AMD Ryzen 7 4800H with Radeon Graphics",
+    "int8_features": [
+      "avx2"
+    ],
+    "has_vnni": false,
+    "has_arm_dotprod": false,
+    "int8_path": "x86-avx2-16bit"
+  },
+  "target": "cpu-1t",
+  "n_eval": 1024,
+  "fp32_accuracy": 0.67578125,
+  "fp32_p50_ms": 44.8838,
+  "fp32_p50_end_ms": 40.4293,
+  "environment_warnings": [
+    "running on battery (88%): the OS may cut CPU clocks mid-run, which distorts every latency after it. Plug in."
+  ],
+  "rows": [
+    {
+      "variant": "per-channel, full range (broken)",
+      "delta_pp": -4.19921875,
+      "ci95_pp": [
+        -6.217573251011455,
+        -2.180864248988546
+      ],
+      "mcnemar_p": 6.445381010320707e-05,
+      "changed_fraction": 0.1728515625,
+      "speedup": 1.4059490919114654,
+      "predicted_saturation": {
+        "layers": 21,
+        "layers_saturating": 1,
+        "pair_rate": 6.644022632069218e-06,
+        "accumulator_rate": 0.0028293701799485863,
+        "worst_layer": "/conv1/Conv",
+        "worst_layer_accumulator_rate": 0.2149658203125,
+        "saturation_possible": true,
+        "bias_saturated_channels": 0
+      }
+    },
+    {
+      "variant": "per-channel, full range, stem in FP32",
+      "delta_pp": 1.26953125,
+      "ci95_pp": [
+        0.3548784857654129,
+        2.1841840142345874
+      ],
+      "mcnemar_p": 0.010622024536132812,
+      "changed_fraction": 0.0361328125,
+      "speedup": 1.1979587315737357,
+      "predicted_saturation": {
+        "layers": 20,
+        "layers_saturating": 0,
+        "pair_rate": 0.0,
+        "accumulator_rate": 0.0,
+        "worst_layer": null,
+        "worst_layer_accumulator_rate": 0.0,
+        "saturation_possible": true,
+        "bias_saturated_channels": 0
+      }
+    },
+    {
+      "variant": "per-channel, reduce_range everywhere",
+      "delta_pp": 0.390625,
+      "ci95_pp": [
+        -0.42109040745183723,
+        1.2023404074518371
+      ],
+      "mcnemar_p": 0.480682373046875,
+      "changed_fraction": 0.0400390625,
+      "speedup": 1.2488397458013825,
+      "predicted_saturation": {
+        "layers": 21,
+        "layers_saturating": 0,
+        "pair_rate": 0.0,
+        "accumulator_rate": 0.0,
+        "worst_layer": null,
+        "worst_layer_accumulator_rate": 0.0,
+        "saturation_possible": false,
+        "bias_saturated_channels": 0
+      }
+    }
+  ]
+}

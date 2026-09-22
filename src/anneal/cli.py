@@ -1053,6 +1053,85 @@ def cmd_audit(args: argparse.Namespace) -> int:
     return 3 if failed else 0
 
 
+def cmd_saturation(args: argparse.Namespace) -> int:
+    """Predict 16-bit accumulator saturation on x86 CPUs without VNNI."""
+    import json
+
+    from rich.table import Table
+
+    from anneal.core.artifact import sample_shape
+    from anneal.core.dataset import load_evalset
+    from anneal.core.environment import cpu_features
+    from anneal.core.saturation import analyse, summarise
+
+    console = _console()
+    path = Path(args.model)
+    if not path.is_file():
+        console.print(f"[red]no such file:[/red] {path}")
+        return 2
+
+    evalset = load_evalset(
+        args.eval, cache_dir=Path(args.cache), batch_size=args.images, limit=args.images,
+        sample_shape=sample_shape(path),
+    )
+    probe = [next(iter(evalset.batches()))[0]]
+    console.print(
+        f"Emulating x86 AVX2 16-bit pair accumulation on [cyan]{path.name}[/cyan] "
+        f"({args.images} images, {args.positions} output positions per layer) …\n"
+    )
+    results = analyse(path, probe, n_positions=args.positions, seed=args.seed)
+    if not results:
+        console.print(
+            "[yellow]no QDQ-quantized Conv/Gemm/MatMul layers found — this analyses statically "
+            "quantized models (QuantizeLinear/DequantizeLinear pairs)[/yellow]"
+        )
+        return 1
+
+    table = Table(title="predicted saturation on x86 without VNNI", header_style="bold")
+    table.add_column("layer", overflow="fold")
+    table.add_column("K", justify="right")
+    table.add_column("max |w|", justify="right")
+    table.add_column("risky weight pairs", justify="right")
+    table.add_column("accumulators hit", justify="right")
+    table.add_column("mean rel. error", justify="right")
+    shown = [r for r in results if r.saturated_pairs or args.all]
+    for r in sorted(shown, key=lambda r: -r.accumulator_rate):
+        table.add_row(
+            r.node, str(r.reduction_len), str(r.weight_max_abs),
+            f"{r.risky_weight_pairs * 100:.2f}%",
+            f"[red]{r.accumulator_rate * 100:.2f}%[/red]" if r.accumulators_affected else "0",
+            f"{r.mean_relative_error * 100:.1f}%" if r.accumulators_affected else "—",
+        )
+    if shown:
+        console.print(table)
+    s = summarise(results)
+    here = cpu_features()
+    console.print(
+        f"\n[bold]{s['layers_saturating']} of {s['layers']} layers saturate[/bold]; "
+        f"{s['accumulator_rate'] * 100:.3f}% of sampled accumulators affected overall."
+    )
+    if not s["saturation_possible"]:
+        console.print(
+            "[green]No weight pair can reach the 16-bit limit even at maximum activation "
+            "(|w| <= 63, e.g. reduce_range): saturation is impossible for this model.[/green]"
+        )
+    for r in results:
+        for note in r.notes:
+            console.print(f"[yellow]{r.node}:[/yellow] {note}")
+    console.print(
+        f"\n[dim]This machine: {here.get('brand') or here['machine']} — INT8 path "
+        f"'{here['int8_path']}'. Saturation applies only to 'x86-avx2-16bit'; VNNI and ARM "
+        f"dot-product kernels accumulate in 32 bits. Pairing order is an assumption; see "
+        f"anneal.core.saturation.[/dim]"
+    )
+    if args.out:
+        Path(args.out).write_text(json.dumps({
+            "model": path.name, "summary": s, "layers": [r.to_dict() for r in results],
+        }, indent=2), encoding="utf-8")
+        console.print(f"[dim]written: {args.out}[/dim]")
+    return 3 if s["layers_saturating"] else 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     from anneal.core.ledger import Ledger
     from anneal.report import console_table, write_report
@@ -1229,6 +1308,20 @@ def build_parser() -> argparse.ArgumentParser:
     exp.add_argument("--out", default=None, help="where to write the script")
     exp.add_argument("--model-out", default=None, help="path the script will write the model to")
     exp.set_defaults(func=cmd_export)
+
+    sat = sub.add_parser(
+        "saturation",
+        help="predict INT8 accumulator saturation on x86 CPUs without VNNI (QDQ models)",
+    )
+    sat.add_argument("model", help="a statically quantized (QDQ) .onnx")
+    sat.add_argument("--eval", default="imagenette", help="where to draw probe images from")
+    sat.add_argument("--images", type=int, default=8, help="probe images to capture activations")
+    sat.add_argument("--positions", type=int, default=256, help="output positions sampled per layer")
+    sat.add_argument("--seed", type=int, default=0)
+    sat.add_argument("--all", action="store_true", help="list every layer, not only saturating ones")
+    sat.add_argument("--out", default=None, help="write the per-layer results as JSON")
+    sat.add_argument("--cache", default=str(DEFAULT_CACHE))
+    sat.set_defaults(func=cmd_saturation)
 
     rep = sub.add_parser("report", help="re-render a report from a ledger")
     rep.add_argument("ledger", help="path to ledger.json")
