@@ -249,8 +249,22 @@ statement about my search, not a novelty claim.
 - EfficientNet INT8 is barely faster than FP32: 1.12x without equalisation, **1.01x with it**. The 16 inserted Muls cost about 10%.
 - MobileNetV3 INT8 is *slower* than FP32 whatever the recipe (0.78–0.83x).
 
-The earlier lab measured 2–3x for these models on ARM. The equalised recipes are queued for
-the same machines, and until they run their speed there is unmeasured.
+**Across six CPUs.** The hardware lab ran the same recipes on 2,048 images per model
+([results](examples/hardware_lab/results-equalize/results.md)). This run drew two Intel
+Xeons with VNNI, which fills the gap in the three-model run. Each cell is accuracy change ·
+speed vs FP32 at 1 thread; * means McNemar p < 0.05:
+
+| EfficientNet-B0 | old default | percentile + stem | equalise + P + stem | … + reduce_range |
+|---|---|---|---|---|
+| ARM Neoverse-N2 | −49.1pp* · 2.37x | −4.8pp* · 2.33x | **−0.5pp · 2.11x** | −0.7pp · 2.11x |
+| Intel Xeon 8573C (VNNI) | −48.4pp* · 1.18x | −4.6pp* · 1.22x | **−0.7pp · 1.04x** | −0.5pp · 1.04x |
+| Intel Xeon 8370C (VNNI) | −48.7pp* · 1.14x | −4.6pp* · 1.20x | **−0.7pp · 0.99x** | −0.5pp · 1.01x |
+| AMD EPYC 7763 (no VNNI) | −50.9pp* · 1.27x | −7.0pp* · 1.30x | −3.1pp* · 1.15x | **−0.6pp · 1.18x** |
+
+- **The accuracy fix holds on every CPU.** With the right recipe for the chip, EfficientNet-B0's change is not statistically significant anywhere. Apple M1 matches ARM Neoverse to the image; its timings drifted 16% and are left out.
+- **Equalisation costs about 10% of the INT8 speedup** (2.33x → 2.11x on ARM) for the inserted gate multiplies. That is the price of +4pp.
+- **reduce_range is needed exactly where the saturation analysis says.** On the two CPUs without VNNI it takes the equalised recipe from −3.1pp to −0.6pp. Elsewhere it changes nothing.
+- **For MobileNetV3, equalise + percentile + float stem is the best recipe on all six CPUs** (−1.0 to −2.6pp, down from −11 to −25pp), at no measurable speed cost.
 
 **Predicting it without quantizing**
 ([`anneal/core/imbalance.py`](src/anneal/core/imbalance.py), `anneal imbalance`). Every
@@ -804,10 +818,10 @@ Stated plainly, because the alternative is letting someone find them in a review
   matches 16-bit saturation in the AVX2 INT8 path. I have not stepped through the kernel to
   show the overflow directly. The hardware-lab runners are shared cloud machines, whose
   exact CPU is assigned rather than chosen, with one run per machine.
-- **The equalisation results come from one laptop and emulation.** The emulated column
-  stands in for 32-bit-accumulating CPUs; it is not a measurement on one. Differences under
-  about 1.5pp on 3,925 images are within noise. The speed cost of equalisation has been
-  measured only on an x86 CPU without VNNI, where INT8 barely pays for these models anyway.
+- **The equalisation results cover two models, six cloud CPUs and one laptop,** with one run
+  per machine. Differences under about 1.5pp on 2,048–3,925 Imagenette images are within
+  noise, and Imagenette's 10 classes are easier than ImageNet-1k. The drops are not directly
+  comparable to published ImageNet numbers.
 - **`graph_optimize(level='all')` produces a non-portable artifact** — onnxruntime's NCHWc
   transformer bakes in the optimising CPU's layout and SIMD width. Anneal records this on
   the artifact and warns in the report. Use `level='extended'` if the file must travel.

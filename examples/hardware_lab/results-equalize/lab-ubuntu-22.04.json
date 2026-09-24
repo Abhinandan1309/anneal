@@ -1,0 +1,377 @@
+{
+  "cpu": {
+    "machine": "x86_64",
+    "system": "Linux",
+    "processor": "x86_64",
+    "logical_cpus": 4,
+    "runner": "GitHub Actions 1000000147",
+    "runner_os": "Linux",
+    "runner_arch": "X64",
+    "brand": "AMD EPYC 7763 64-Core Processor",
+    "int8_features": [
+      "avx2"
+    ],
+    "has_vnni": false,
+    "has_arm_dotprod": false,
+    "int8_path": "x86-avx2-16bit"
+  },
+  "onnxruntime": "1.30.0",
+  "python": "3.12.14",
+  "variant_set": "equalize",
+  "studies": {
+    "efficientnet_b0": {
+      "model": "efficientnet_b0",
+      "variant_set": "equalize",
+      "target": "cpu-1t",
+      "n_eval": 2048,
+      "calibration": "64 Imagenette train images",
+      "fp32_accuracy": 0.76171875,
+      "fp32_p50_ms": 15.119402,
+      "fp32_p50_end_ms": 15.134974,
+      "latency_drift": 0.0010299349140925405,
+      "environment_warnings": [],
+      "rows": [
+        {
+          "predicted_saturation": {
+            "layers": 82,
+            "layers_saturating": 32,
+            "pair_rate": 2.419780086914668e-05,
+            "accumulator_rate": 0.0018165458281861528,
+            "worst_layer": "/features/features.3/features.3.0/block/block.2/fc1/Conv",
+            "worst_layer_accumulator_rate": 0.1875,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "U8S8 per-channel (Anneal's old default)",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "uint8"
+          },
+          "accuracy": 0.2529296875,
+          "delta_pp": -50.87890625,
+          "ci95_pp": [
+            -53.09839727727154,
+            -48.65941522272847
+          ],
+          "mcnemar_p": 2.247358504836918e-292,
+          "regressions": 1055,
+          "fixes": 13,
+          "changed_fraction": 0.70654296875,
+          "p50_ms": 11.927906,
+          "speedup": 1.2675654888628398
+        },
+        {
+          "predicted_saturation": {
+            "layers": 81,
+            "layers_saturating": 43,
+            "pair_rate": 7.118366582877353e-05,
+            "accumulator_rate": 0.005596809998959405,
+            "worst_layer": "/features/features.4/features.4.0/block/block.2/fc2/Conv",
+            "worst_layer_accumulator_rate": 0.1984375,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "percentile + float stem",
+          "params": {
+            "calibrate_method": "percentile_asym",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "uint8",
+            "float_stem": true
+          },
+          "accuracy": 0.69140625,
+          "delta_pp": -7.03125,
+          "ci95_pp": [
+            -8.519656679169518,
+            -5.542843320830481
+          ],
+          "mcnemar_p": 1.690135094488073e-20,
+          "regressions": 198,
+          "fixes": 54,
+          "changed_fraction": 0.18505859375,
+          "p50_ms": 11.619702,
+          "speedup": 1.3011867257869434
+        },
+        {
+          "predicted_saturation": {
+            "layers": 81,
+            "layers_saturating": 46,
+            "pair_rate": 8.569526034867465e-05,
+            "accumulator_rate": 0.006570560996196048,
+            "worst_layer": "/features/features.4/features.4.0/block/block.2/fc2/Conv",
+            "worst_layer_accumulator_rate": 0.26875,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "equalize + percentile + float stem",
+          "params": {
+            "calibrate_method": "percentile_asym",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "uint8",
+            "equalize": true,
+            "float_stem": true
+          },
+          "accuracy": 0.73046875,
+          "delta_pp": -3.125,
+          "ci95_pp": [
+            -4.2328437660873455,
+            -2.0171562339126545
+          ],
+          "mcnemar_p": 3.720215400245007e-08,
+          "regressions": 100,
+          "fixes": 36,
+          "changed_fraction": 0.10546875,
+          "p50_ms": 13.137487,
+          "speedup": 1.1508595213072332
+        },
+        {
+          "predicted_saturation": {
+            "layers": 81,
+            "layers_saturating": 0,
+            "pair_rate": 0.0,
+            "accumulator_rate": 0.0,
+            "worst_layer": null,
+            "worst_layer_accumulator_rate": 0.0,
+            "saturation_possible": false,
+            "bias_saturated_channels": 0
+          },
+          "variant": "equalize + percentile + float stem + reduce_range",
+          "params": {
+            "calibrate_method": "percentile_asym",
+            "reduce_range": true,
+            "per_channel": true,
+            "activation_type": "uint8",
+            "equalize": true,
+            "float_stem": true
+          },
+          "accuracy": 0.755859375,
+          "delta_pp": -0.5859375,
+          "ci95_pp": [
+            -1.7099082132364174,
+            0.5380332132364173
+          ],
+          "mcnemar_p": 0.34911516637678086,
+          "regressions": 75,
+          "fixes": 63,
+          "changed_fraction": 0.111328125,
+          "p50_ms": 12.866896,
+          "speedup": 1.1750621128825474
+        },
+        {
+          "predicted_saturation": {
+            "layers": 81,
+            "layers_saturating": 45,
+            "pair_rate": 8.557320020785305e-05,
+            "accumulator_rate": 0.00655466302073096,
+            "worst_layer": "/features/features.4/features.4.0/block/block.2/fc2/Conv",
+            "worst_layer_accumulator_rate": 0.2520833333333333,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "equalize + percentile + float stem + float gates",
+          "params": {
+            "calibrate_method": "percentile_asym",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "uint8",
+            "equalize": true,
+            "float_stem": true,
+            "float_gates": true
+          },
+          "accuracy": 0.7333984375,
+          "delta_pp": -2.83203125,
+          "ci95_pp": [
+            -3.965850458393298,
+            -1.6982120416067017
+          ],
+          "mcnemar_p": 1.2430089403538288e-06,
+          "regressions": 100,
+          "fixes": 42,
+          "changed_fraction": 0.10791015625,
+          "p50_ms": 14.481867,
+          "speedup": 1.0440229840530921
+        }
+      ]
+    },
+    "mobilenet_v3_large": {
+      "model": "mobilenet_v3_large",
+      "variant_set": "equalize",
+      "target": "cpu-1t",
+      "n_eval": 2048,
+      "calibration": "64 Imagenette train images",
+      "fp32_accuracy": 0.7060546875,
+      "fp32_p50_ms": 6.890385,
+      "fp32_p50_end_ms": 6.911472,
+      "latency_drift": 0.003060351489793333,
+      "environment_warnings": [],
+      "rows": [
+        {
+          "predicted_saturation": {
+            "layers": 64,
+            "layers_saturating": 19,
+            "pair_rate": 0.00014565314692095566,
+            "accumulator_rate": 0.009309587282780411,
+            "worst_layer": "/features/features.0/features.0.0/Conv",
+            "worst_layer_accumulator_rate": 0.1435546875,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "U8S8 per-channel (Anneal's old default)",
+          "params": {
+            "calibrate_method": "minmax",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "uint8"
+          },
+          "accuracy": 0.45849609375,
+          "delta_pp": -24.755859375,
+          "ci95_pp": [
+            -26.86890070455869,
+            -22.64281804544131
+          ],
+          "mcnemar_p": 8.160550393564166e-108,
+          "regressions": 560,
+          "fixes": 53,
+          "changed_fraction": 0.47802734375,
+          "p50_ms": 6.720125,
+          "speedup": 1.0253358382470563
+        },
+        {
+          "predicted_saturation": {
+            "layers": 63,
+            "layers_saturating": 36,
+            "pair_rate": 9.025569001736399e-05,
+            "accumulator_rate": 0.005926724137931034,
+            "worst_layer": "/features/features.9/block/block.0/block.0.0/Conv",
+            "worst_layer_accumulator_rate": 0.02895720108695652,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "percentile + float stem",
+          "params": {
+            "calibrate_method": "percentile_asym",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "uint8",
+            "float_stem": true
+          },
+          "accuracy": 0.669921875,
+          "delta_pp": -3.61328125,
+          "ci95_pp": [
+            -4.726593575964087,
+            -2.4999689240359126
+          ],
+          "mcnemar_p": 1.8651390436733746e-10,
+          "regressions": 106,
+          "fixes": 32,
+          "changed_fraction": 0.12255859375,
+          "p50_ms": 6.514974,
+          "speedup": 1.057622793275921
+        },
+        {
+          "predicted_saturation": {
+            "layers": 63,
+            "layers_saturating": 35,
+            "pair_rate": 0.000106824590621555,
+            "accumulator_rate": 0.006829449739006644,
+            "worst_layer": "/features/features.9/block/block.0/block.0.0/Conv",
+            "worst_layer_accumulator_rate": 0.028447690217391304,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "equalize + percentile + float stem",
+          "params": {
+            "calibrate_method": "percentile_asym",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "uint8",
+            "equalize": true,
+            "float_stem": true
+          },
+          "accuracy": 0.68017578125,
+          "delta_pp": -2.587890625,
+          "ci95_pp": [
+            -3.677513543695278,
+            -1.4982677063047216
+          ],
+          "mcnemar_p": 4.153603353439939e-06,
+          "regressions": 92,
+          "fixes": 39,
+          "changed_fraction": 0.1162109375,
+          "p50_ms": 6.788192,
+          "speedup": 1.0150545240912456
+        },
+        {
+          "predicted_saturation": {
+            "layers": 63,
+            "layers_saturating": 0,
+            "pair_rate": 0.0,
+            "accumulator_rate": 0.0,
+            "worst_layer": null,
+            "worst_layer_accumulator_rate": 0.0,
+            "saturation_possible": false,
+            "bias_saturated_channels": 0
+          },
+          "variant": "equalize + percentile + float stem + reduce_range",
+          "params": {
+            "calibrate_method": "percentile_asym",
+            "reduce_range": true,
+            "per_channel": true,
+            "activation_type": "uint8",
+            "equalize": true,
+            "float_stem": true
+          },
+          "accuracy": 0.658203125,
+          "delta_pp": -4.78515625,
+          "ci95_pp": [
+            -6.030439439067246,
+            -3.5398730609327536
+          ],
+          "mcnemar_p": 3.8624310515295244e-14,
+          "regressions": 136,
+          "fixes": 38,
+          "changed_fraction": 0.15087890625,
+          "p50_ms": 6.660438,
+          "speedup": 1.0345243060591511
+        },
+        {
+          "predicted_saturation": {
+            "layers": 63,
+            "layers_saturating": 35,
+            "pair_rate": 0.00010719422588322128,
+            "accumulator_rate": 0.006851075608984499,
+            "worst_layer": "/features/features.9/block/block.0/block.0.0/Conv",
+            "worst_layer_accumulator_rate": 0.02815047554347826,
+            "saturation_possible": true,
+            "bias_saturated_channels": 0
+          },
+          "variant": "equalize + percentile + float stem + float gates",
+          "params": {
+            "calibrate_method": "percentile_asym",
+            "reduce_range": false,
+            "per_channel": true,
+            "activation_type": "uint8",
+            "equalize": true,
+            "float_stem": true,
+            "float_gates": true
+          },
+          "accuracy": 0.67626953125,
+          "delta_pp": -2.978515625,
+          "ci95_pp": [
+            -4.05781228127272,
+            -1.8992189687272805
+          ],
+          "mcnemar_p": 7.340990314237484e-08,
+          "regressions": 95,
+          "fixes": 34,
+          "changed_fraction": 0.11328125,
+          "p50_ms": 6.650768,
+          "speedup": 1.036028470696918
+        }
+      ]
+    }
+  }
+}
