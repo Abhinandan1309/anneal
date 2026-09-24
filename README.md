@@ -224,9 +224,24 @@ EfficientNet, 114 channels are mirrored. Classic cross-layer equalisation
 ([Nagel et al. 2019](https://arxiv.org/abs/1906.04721)) needs `f(s·x) = s·f(x)`, which rules
 out SiLU and Hardswish. [HPTQ](https://arxiv.org/abs/2109.09113) names that gap as the likely
 reason EfficientNet's activations quantize badly. The gate-side `1/s` removes the
-requirement at the cost of one element-wise Mul per block. I have not found this exact
-construction, or the use of negative scales, in the literature I checked. That is a
-statement about my search, not a novelty claim.
+requirement at the cost of one element-wise Mul per block.
+
+**Prior art, stated plainly.** The gate-side inverse scale is not new. [I-LLM](https://arxiv.org/abs/2405.17849)
+computes σ(x′/s) for SwiGLU in LLMs, and [MambaQuant](https://arxiv.org/abs/2501.13484) uses the
+same producer/gate/consumer structure in Mamba blocks. Both use learned or positive scales, in
+networks where the scale is absorbed elsewhere. What this adds:
+- applying the construction to CNN post-training INT8, where the depthwise conv absorbs the scale
+- HardSigmoid and Hardswish, including the fused `HardSwish` op
+- closed-form scales from measured ranges, with no gradient steps
+- **deliberately negative scales**
+
+A review of the equalisation and scale-migration literature
+(DFQ, Meller et al., AIMET, HPTQ/MCT, SmoothQuant, OS+, AWQ, OmniQuant, QuaRot, SpinQuant,
+DuQuant, FlatQuant) found no method that chooses negative equalisation scales on purpose;
+Qualcomm's CLE patent requires non-negative ones. NVIDIA's
+[Wu et al. (2020)](https://arxiv.org/abs/2004.09602) report the same collapse on full
+ImageNet (EfficientNet-B0 76.85% → 22.3% with max calibration) and a best post-training result
+of 72.06%.
 
 **Result.** Full Imagenette validation set (3,925 images), U8S8, per-channel weights.
 *Emulated* runs the QDQ graph in float, standing in for 32-bit-accumulating CPUs (ARM, VNNI).
@@ -605,6 +620,12 @@ Anneal's eval sets do.
 
 This comparison reflects those projects as I understand them; check their current docs
 before relying on it.
+
+A fuller [literature review](docs/literature_review.md) covers prior art for each Anneal
+component and what is new in it. In brief:
+- **Known:** the gate-side inverse scale (I-LLM, MambaQuant) and the x86 saturation mechanism (Intel, oneDNN, FBGEMM).
+- **Not found elsewhere:** deliberately negative equalisation scales, the accuracy cost of saturation across many CNNs, and predicting saturation layer by layer without the affected CPU.
+- **Published baselines** for EfficientNet-B0 post-training INT8 on ImageNet-1k are −3.0pp (HPTQ) and −4.8pp (NVIDIA). Anneal's numbers are on Imagenette and are not directly comparable.
 
 ---
 
