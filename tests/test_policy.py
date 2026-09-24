@@ -343,3 +343,37 @@ def test_off_the_saturating_path_no_guard_is_proposed():
         policy = HeuristicPolicy()
         policy._generation = 1
         assert not any(p.params.get("guard_saturation") for p in policy._react(state))
+
+
+def test_a_net_with_depthwise_chains_tries_equalisation_first():
+    state = state_for(_broken_static_ledger())
+    state.int8_path = "x86-avx2-16bit"
+    state.equalisable_sites = 16
+    policy = HeuristicPolicy()
+    policy._generation = 1
+    static = [p for p in policy._react(state) if p.transform == "quantize_static_int8"]
+    assert static[0].params.get("equalize") is True
+    assert {p.params.get("float_gates") for p in static[:2]} == {False, True}
+    # The CPU-specific fixes still follow.
+    assert any(p.params.get("guard_saturation") for p in static[2:])
+
+
+def test_equalisation_is_not_proposed_without_sites_or_twice():
+    state = state_for(_broken_static_ledger())
+    policy = HeuristicPolicy()
+    policy._generation = 1
+    assert not any(p.params.get("equalize") for p in policy._react(state))
+
+    ledger = fresh_ledger(0.90)
+    params = {"per_channel": True, "calib_samples": 64, "activation_type": "uint8",
+              "equalize": True, "equalize_slack": 0.1, "float_gates": False}
+    ledger.add(make_trial(1, lineage=(TransformRecord("quantize_static_int8", params),),
+                          latency=20.0, accuracy=0.85))
+    state = state_for(ledger)
+    state.equalisable_sites = 16
+    assert not any(
+        p.params.get("equalize") and p.params.get("float_gates") is False
+        and not p.params.get("guard_saturation") and not p.params.get("reduce_range")
+        and p.params.get("per_channel")
+        for p in policy._react(state)
+    )

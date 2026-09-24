@@ -82,6 +82,9 @@ class SearchState:
     #: The target's INT8 arithmetic, from anneal.core.environment.cpu_features():
     #: "x86-avx2-16bit" is the path whose 16-bit pair sums can saturate.
     int8_path: str = "unknown"
+    #: Conv -> gated activation/ReLU -> depthwise chains in the baseline that equalisation
+    #: can rebalance (anneal.core.equalize). Zero for nets without depthwise convolutions.
+    equalisable_sites: int = 0
 
     def artifact(self, index: int) -> ModelArtifact | None:
         if index == BASELINE:
@@ -263,6 +266,27 @@ class HeuristicPolicy:
                 head = trial.artifact.lineage[-1]
                 if head.name != "quantize_static_int8" or len(trial.artifact.lineage) != 1:
                     continue
+                if (
+                    state.equalisable_sites
+                    and head.params.get("per_channel")
+                    and not head.params.get("equalize")
+                ):
+                    # Tried first: unlike the guard, this failure is not specific to one CPU.
+                    for float_gates in (False, True):
+                        out.append(
+                            Proposal(
+                                "quantize_static_int8",
+                                {**head.params, "equalize": True, "equalize_slack": 0.1,
+                                 "float_gates": float_gates},
+                                BASELINE,
+                                f"Trial [{trial.index}] broke accuracy, and the model has "
+                                f"{state.equalisable_sites} conv -> activation -> depthwise "
+                                f"chains. One shared activation scale starves the small channels "
+                                f"there and the depthwise conv amplifies it, on every CPU. "
+                                f"Rescale channels exactly (float model unchanged) first"
+                                + ("; keep the gate branches in float." if float_gates else "."),
+                            )
+                        )
                 if (
                     state.int8_path == "x86-avx2-16bit"
                     and not head.params.get("reduce_range")

@@ -1,0 +1,624 @@
+{
+ "note": "512 Imagenette val images, 1 thread, ORT graph optimisation DISABLED (fake-quant, 32-bit accumulation) unless key says opt-all. acc/agree = top-1 and agreement with FP32. Per-channel (pc) variants can exceed FP32 accuracy by clipping toward calibration (Imagenette-train) ranges; use agreement for them.",
+ "files": [
+  "results_efficientnet_b0.json",
+  "results_efficientnet_b0_optypes.json",
+  "results_efficientnet_b0_perchannel.json",
+  "results_eq_efficientnet_b0_q-eq-branchfloat.json",
+  "results_eq_efficientnet_b0_q-eq.json",
+  "results_eq_mobilenet_v3_large_q-eq-branchfloat.json",
+  "results_eq_mobilenet_v3_large_q-eq.json",
+  "results_mobilenet_v3_large.STALE_relu_bug.json",
+  "results_mobilenet_v3_large.json",
+  "results_mobilenet_v3_large_perchannel.STALE_family_names.json",
+  "results_mobilenet_v3_large_perchannel.json"
+ ],
+ "results_eq_efficientnet_b0_q-eq.json": {
+  "fp32": {
+   "acc": 74.2,
+   "agree": 100.0,
+   "d_acc_pp": 8.6,
+   "d_agree_pp": 20.9
+  },
+  "qdq_as_built": {
+   "acc": 65.6,
+   "agree": 79.1,
+   "d_acc_pp": 0.0,
+   "d_agree_pp": 0.0
+  },
+  "remove[Act-after-dw]": {
+   "acc": 70.1,
+   "agree": 83.6,
+   "d_acc_pp": 4.5,
+   "d_agree_pp": 4.5
+  },
+  "remove[Act-after-expand]": {
+   "acc": 65.0,
+   "agree": 79.5,
+   "d_acc_pp": -0.6,
+   "d_agree_pp": 0.4
+  },
+  "remove[Add]": {
+   "acc": 66.2,
+   "agree": 80.5,
+   "d_acc_pp": 0.6,
+   "d_agree_pp": 1.4
+  },
+  "remove[Conv-SE]": {
+   "acc": 66.6,
+   "agree": 80.7,
+   "d_acc_pp": 1.0,
+   "d_agree_pp": 1.6
+  },
+  "remove[Conv-dw]": {
+   "acc": 69.5,
+   "agree": 84.8,
+   "d_acc_pp": 3.9,
+   "d_agree_pp": 5.7
+  },
+  "remove[Conv-expand(pre-act)]": {
+   "acc": 65.0,
+   "agree": 80.3,
+   "d_acc_pp": -0.6,
+   "d_agree_pp": 1.2
+  },
+  "remove[Conv-proj]": {
+   "acc": 66.2,
+   "agree": 80.9,
+   "d_acc_pp": 0.6,
+   "d_agree_pp": 1.8
+  },
+  "remove[GAP]": {
+   "acc": 65.2,
+   "agree": 79.1,
+   "d_acc_pp": -0.4,
+   "d_agree_pp": 0.0
+  },
+  "remove[Gate-after-dw]": {
+   "acc": 66.2,
+   "agree": 80.7,
+   "d_acc_pp": 0.6,
+   "d_agree_pp": 1.6
+  },
+  "remove[Gate-after-expand]": {
+   "acc": 66.0,
+   "agree": 81.6,
+   "d_acc_pp": 0.4,
+   "d_agree_pp": 2.5
+  },
+  "remove[GateIn(x*inv)]": {
+   "acc": 69.5,
+   "agree": 85.0,
+   "d_acc_pp": 3.9,
+   "d_agree_pp": 5.9
+  },
+  "remove[Input]": {
+   "acc": 65.6,
+   "agree": 79.1,
+   "d_acc_pp": 0.0,
+   "d_agree_pp": 0.0
+  },
+  "remove[Mul-SE(gated out)]": {
+   "acc": 67.6,
+   "agree": 81.1,
+   "d_acc_pp": 2.0,
+   "d_agree_pp": 2.0
+  },
+  "remove[SE-inner-act]": {
+   "acc": 66.2,
+   "agree": 80.7,
+   "d_acc_pp": 0.6,
+   "d_agree_pp": 1.6
+  },
+  "remove[Sigmoid-SE(gate)]": {
+   "acc": 66.4,
+   "agree": 78.7,
+   "d_acc_pp": 0.8,
+   "d_agree_pp": -0.4
+  },
+  "remove[head]": {
+   "acc": 65.6,
+   "agree": 79.5,
+   "d_acc_pp": 0.0,
+   "d_agree_pp": 0.4
+  },
+  "remove[stem]": {
+   "acc": 65.4,
+   "agree": 79.7,
+   "d_acc_pp": -0.2,
+   "d_agree_pp": 0.6
+  },
+  "remove[ALL activations]": {
+   "acc": 74.0,
+   "agree": 95.9,
+   "d_acc_pp": 8.4,
+   "d_agree_pp": 16.8
+  },
+  "float[inv constant of x*inv]": {
+   "acc": 65.8,
+   "agree": 79.9,
+   "d_acc_pp": 0.2,
+   "d_agree_pp": 0.8
+  },
+  "remove[Conv-dw+Gate-after-dw+Act-after-dw]": {
+   "acc": 70.3,
+   "agree": 85.5,
+   "d_acc_pp": 4.7,
+   "d_agree_pp": 6.4
+  },
+  "remove[GateIn(x*inv)+Conv-dw+Gate-after-dw+Act-after-dw]": {
+   "acc": 74.0,
+   "agree": 90.2,
+   "d_acc_pp": 8.4,
+   "d_agree_pp": 11.1
+  },
+  "perchannel[GateIn(x*inv)]": {
+   "acc": 69.5,
+   "agree": 85.5,
+   "d_acc_pp": 3.9,
+   "d_agree_pp": 6.4
+  },
+  "perchannel[Conv-dw]": {
+   "acc": 71.1,
+   "agree": 83.8,
+   "d_acc_pp": 5.5,
+   "d_agree_pp": 4.7
+  },
+  "perchannel[Conv-dw+Gate-after-dw+Act-after-dw]": {
+   "acc": 70.9,
+   "agree": 84.4,
+   "d_acc_pp": 5.3,
+   "d_agree_pp": 5.3
+  },
+  "perchannel[GateIn(x*inv)+Conv-dw+Gate-after-dw+Act-after-dw]": {
+   "acc": 74.8,
+   "agree": 91.4,
+   "d_acc_pp": 9.2,
+   "d_agree_pp": 12.3
+  },
+  "perchannel[ALL]": {
+   "acc": 74.0,
+   "agree": 91.8,
+   "d_acc_pp": 8.4,
+   "d_agree_pp": 12.7
+  }
+ },
+ "results_eq_efficientnet_b0_q-eq-branchfloat.json": {
+  "fp32": {
+   "acc": 74.2,
+   "agree": 100.0,
+   "d_acc_pp": 4.3,
+   "d_agree_pp": 15.0
+  },
+  "qdq_as_built": {
+   "acc": 69.9,
+   "agree": 85.0,
+   "d_acc_pp": 0.0,
+   "d_agree_pp": 0.0
+  },
+  "remove[Act-after-dw]": {
+   "acc": 72.9,
+   "agree": 85.7,
+   "d_acc_pp": 2.9,
+   "d_agree_pp": 0.8
+  },
+  "remove[Act-after-expand]": {
+   "acc": 68.8,
+   "agree": 84.2,
+   "d_acc_pp": -1.2,
+   "d_agree_pp": -0.8
+  },
+  "remove[Add]": {
+   "acc": 69.3,
+   "agree": 84.6,
+   "d_acc_pp": -0.6,
+   "d_agree_pp": -0.4
+  },
+  "remove[Conv-SE]": {
+   "acc": 70.5,
+   "agree": 84.8,
+   "d_acc_pp": 0.6,
+   "d_agree_pp": -0.2
+  },
+  "remove[Conv-dw]": {
+   "acc": 72.9,
+   "agree": 90.2,
+   "d_acc_pp": 2.9,
+   "d_agree_pp": 5.3
+  },
+  "remove[Conv-expand(pre-act)]": {
+   "acc": 69.1,
+   "agree": 86.3,
+   "d_acc_pp": -0.8,
+   "d_agree_pp": 1.4
+  },
+  "remove[Conv-proj]": {
+   "acc": 68.8,
+   "agree": 83.8,
+   "d_acc_pp": -1.2,
+   "d_agree_pp": -1.2
+  },
+  "remove[GAP]": {
+   "acc": 69.3,
+   "agree": 84.8,
+   "d_acc_pp": -0.6,
+   "d_agree_pp": -0.2
+  },
+  "remove[Gate-after-dw]": {
+   "acc": 70.9,
+   "agree": 85.5,
+   "d_acc_pp": 1.0,
+   "d_agree_pp": 0.6
+  },
+  "remove[Gate-after-expand]": {
+   "acc": 69.3,
+   "agree": 84.8,
+   "d_acc_pp": -0.6,
+   "d_agree_pp": -0.2
+  },
+  "remove[Input]": {
+   "acc": 69.1,
+   "agree": 84.6,
+   "d_acc_pp": -0.8,
+   "d_agree_pp": -0.4
+  },
+  "remove[Mul-SE(gated out)]": {
+   "acc": 70.5,
+   "agree": 85.5,
+   "d_acc_pp": 0.6,
+   "d_agree_pp": 0.6
+  },
+  "remove[SE-inner-act]": {
+   "acc": 69.1,
+   "agree": 85.9,
+   "d_acc_pp": -0.8,
+   "d_agree_pp": 1.0
+  },
+  "remove[Sigmoid-SE(gate)]": {
+   "acc": 70.3,
+   "agree": 86.3,
+   "d_acc_pp": 0.4,
+   "d_agree_pp": 1.4
+  },
+  "remove[head]": {
+   "acc": 69.9,
+   "agree": 85.0,
+   "d_acc_pp": 0.0,
+   "d_agree_pp": 0.0
+  },
+  "remove[stem]": {
+   "acc": 70.7,
+   "agree": 86.1,
+   "d_acc_pp": 0.8,
+   "d_agree_pp": 1.2
+  },
+  "remove[ALL activations]": {
+   "acc": 74.0,
+   "agree": 95.3,
+   "d_acc_pp": 4.1,
+   "d_agree_pp": 10.4
+  },
+  "remove[Conv-dw+Gate-after-dw+Act-after-dw]": {
+   "acc": 73.0,
+   "agree": 91.0,
+   "d_acc_pp": 3.1,
+   "d_agree_pp": 6.1
+  },
+  "remove[Conv-dw+Act-after-dw]": {
+   "acc": 72.9,
+   "agree": 90.8,
+   "d_acc_pp": 2.9,
+   "d_agree_pp": 5.9
+  },
+  "perchannel[Conv-dw]": {
+   "acc": 73.0,
+   "agree": 88.1,
+   "d_acc_pp": 3.1,
+   "d_agree_pp": 3.1
+  },
+  "perchannel[Act-after-dw]": {
+   "acc": 75.2,
+   "agree": 87.7,
+   "d_acc_pp": 5.3,
+   "d_agree_pp": 2.7
+  },
+  "perchannel[Conv-dw+Gate-after-dw+Act-after-dw]": {
+   "acc": 74.0,
+   "agree": 91.0,
+   "d_acc_pp": 4.1,
+   "d_agree_pp": 6.1
+  },
+  "perchannel[ALL]": {
+   "acc": 74.0,
+   "agree": 91.8,
+   "d_acc_pp": 4.1,
+   "d_agree_pp": 6.8
+  }
+ },
+ "results_eq_mobilenet_v3_large_q-eq.json": {
+  "fp32": {
+   "acc": 69.7,
+   "agree": 100.0,
+   "d_acc_pp": 4.5,
+   "d_agree_pp": 18.9
+  },
+  "qdq_as_built": {
+   "acc": 65.2,
+   "agree": 81.1,
+   "d_acc_pp": 0.0,
+   "d_agree_pp": 0.0
+  },
+  "remove[Act-after-dw]": {
+   "acc": 64.3,
+   "agree": 84.0,
+   "d_acc_pp": -1.0,
+   "d_agree_pp": 2.9
+  },
+  "remove[Act-after-expand]": {
+   "acc": 63.7,
+   "agree": 80.5,
+   "d_acc_pp": -1.6,
+   "d_agree_pp": -0.6
+  },
+  "remove[Add]": {
+   "acc": 65.6,
+   "agree": 83.4,
+   "d_acc_pp": 0.4,
+   "d_agree_pp": 2.3
+  },
+  "remove[Conv-SE]": {
+   "acc": 64.8,
+   "agree": 81.2,
+   "d_acc_pp": -0.4,
+   "d_agree_pp": 0.2
+  },
+  "remove[Conv-dw]": {
+   "acc": 66.8,
+   "agree": 88.3,
+   "d_acc_pp": 1.6,
+   "d_agree_pp": 7.2
+  },
+  "remove[Conv-expand(pre-act)]": {
+   "acc": 66.6,
+   "agree": 81.4,
+   "d_acc_pp": 1.4,
+   "d_agree_pp": 0.4
+  },
+  "remove[Conv-proj]": {
+   "acc": 66.2,
+   "agree": 82.8,
+   "d_acc_pp": 1.0,
+   "d_agree_pp": 1.8
+  },
+  "remove[GAP]": {
+   "acc": 64.8,
+   "agree": 81.8,
+   "d_acc_pp": -0.4,
+   "d_agree_pp": 0.8
+  },
+  "remove[Gate-after-dw]": {
+   "acc": 65.4,
+   "agree": 81.8,
+   "d_acc_pp": 0.2,
+   "d_agree_pp": 0.8
+  },
+  "remove[Gate-after-expand]": {
+   "acc": 65.0,
+   "agree": 81.4,
+   "d_acc_pp": -0.2,
+   "d_agree_pp": 0.4
+  },
+  "remove[GateIn(x*inv)]": {
+   "acc": 64.3,
+   "agree": 80.7,
+   "d_acc_pp": -1.0,
+   "d_agree_pp": -0.4
+  },
+  "remove[Input]": {
+   "acc": 66.4,
+   "agree": 83.6,
+   "d_acc_pp": 1.2,
+   "d_agree_pp": 2.5
+  },
+  "remove[Mul-SE(gated out)]": {
+   "acc": 64.6,
+   "agree": 80.3,
+   "d_acc_pp": -0.6,
+   "d_agree_pp": -0.8
+  },
+  "remove[SE-inner-act]": {
+   "acc": 64.8,
+   "agree": 82.0,
+   "d_acc_pp": -0.4,
+   "d_agree_pp": 1.0
+  },
+  "remove[Sigmoid-SE(gate)]": {
+   "acc": 64.8,
+   "agree": 80.9,
+   "d_acc_pp": -0.4,
+   "d_agree_pp": -0.2
+  },
+  "remove[head]": {
+   "acc": 65.0,
+   "agree": 80.9,
+   "d_acc_pp": -0.2,
+   "d_agree_pp": -0.2
+  },
+  "remove[stem]": {
+   "acc": 66.2,
+   "agree": 85.4,
+   "d_acc_pp": 1.0,
+   "d_agree_pp": 4.3
+  },
+  "remove[ALL activations]": {
+   "acc": 69.7,
+   "agree": 95.5,
+   "d_acc_pp": 4.5,
+   "d_agree_pp": 14.5
+  },
+  "float[inv constant of x*inv]": {
+   "acc": 64.6,
+   "agree": 81.4,
+   "d_acc_pp": -0.6,
+   "d_agree_pp": 0.4
+  },
+  "remove[Conv-dw+Gate-after-dw+Act-after-dw]": {
+   "acc": 65.6,
+   "agree": 86.7,
+   "d_acc_pp": 0.4,
+   "d_agree_pp": 5.7
+  },
+  "remove[GateIn(x*inv)+Conv-dw+Gate-after-dw+Act-after-dw]": {
+   "acc": 64.3,
+   "agree": 87.1,
+   "d_acc_pp": -1.0,
+   "d_agree_pp": 6.1
+  },
+  "perchannel[Conv-dw+Gate-after-dw+Act-after-dw]": {
+   "acc": 65.0,
+   "agree": 87.1,
+   "d_acc_pp": -0.2,
+   "d_agree_pp": 6.1
+  },
+  "perchannel[GateIn(x*inv)+Conv-dw+Gate-after-dw+Act-after-dw]": {
+   "acc": 66.0,
+   "agree": 88.1,
+   "d_acc_pp": 0.8,
+   "d_agree_pp": 7.0
+  },
+  "perchannel[ALL]": {
+   "acc": 72.5,
+   "agree": 86.7,
+   "d_acc_pp": 7.2,
+   "d_agree_pp": 5.7
+  }
+ },
+ "results_eq_mobilenet_v3_large_q-eq-branchfloat.json": {
+  "fp32": {
+   "acc": 69.7,
+   "agree": 100.0,
+   "d_acc_pp": 4.7,
+   "d_agree_pp": 18.2
+  },
+  "qdq_as_built": {
+   "acc": 65.0,
+   "agree": 81.8,
+   "d_acc_pp": 0.0,
+   "d_agree_pp": 0.0
+  },
+  "remove[Act-after-dw]": {
+   "acc": 65.0,
+   "agree": 83.6,
+   "d_acc_pp": 0.0,
+   "d_agree_pp": 1.8
+  },
+  "remove[Act-after-expand]": {
+   "acc": 67.4,
+   "agree": 83.0,
+   "d_acc_pp": 2.3,
+   "d_agree_pp": 1.2
+  },
+  "remove[Add]": {
+   "acc": 64.3,
+   "agree": 80.7,
+   "d_acc_pp": -0.8,
+   "d_agree_pp": -1.2
+  },
+  "remove[Conv-SE]": {
+   "acc": 65.2,
+   "agree": 83.0,
+   "d_acc_pp": 0.2,
+   "d_agree_pp": 1.2
+  },
+  "remove[Conv-dw]": {
+   "acc": 65.6,
+   "agree": 87.3,
+   "d_acc_pp": 0.6,
+   "d_agree_pp": 5.5
+  },
+  "remove[Conv-expand(pre-act)]": {
+   "acc": 63.1,
+   "agree": 81.4,
+   "d_acc_pp": -2.0,
+   "d_agree_pp": -0.4
+  },
+  "remove[Conv-proj]": {
+   "acc": 64.6,
+   "agree": 81.1,
+   "d_acc_pp": -0.4,
+   "d_agree_pp": -0.8
+  },
+  "remove[GAP]": {
+   "acc": 64.3,
+   "agree": 80.9,
+   "d_acc_pp": -0.8,
+   "d_agree_pp": -1.0
+  },
+  "remove[Input]": {
+   "acc": 64.1,
+   "agree": 80.9,
+   "d_acc_pp": -1.0,
+   "d_agree_pp": -1.0
+  },
+  "remove[Mul-SE(gated out)]": {
+   "acc": 65.0,
+   "agree": 82.4,
+   "d_acc_pp": 0.0,
+   "d_agree_pp": 0.6
+  },
+  "remove[SE-inner-act]": {
+   "acc": 65.0,
+   "agree": 82.4,
+   "d_acc_pp": 0.0,
+   "d_agree_pp": 0.6
+  },
+  "remove[Sigmoid-SE(gate)]": {
+   "acc": 65.0,
+   "agree": 82.6,
+   "d_acc_pp": 0.0,
+   "d_agree_pp": 0.8
+  },
+  "remove[head]": {
+   "acc": 64.3,
+   "agree": 81.4,
+   "d_acc_pp": -0.8,
+   "d_agree_pp": -0.4
+  },
+  "remove[stem]": {
+   "acc": 65.6,
+   "agree": 84.8,
+   "d_acc_pp": 0.6,
+   "d_agree_pp": 2.9
+  },
+  "remove[ALL activations]": {
+   "acc": 69.3,
+   "agree": 94.9,
+   "d_acc_pp": 4.3,
+   "d_agree_pp": 13.1
+  },
+  "remove[Conv-dw+Gate-after-dw+Act-after-dw]": {
+   "acc": 66.0,
+   "agree": 88.1,
+   "d_acc_pp": 1.0,
+   "d_agree_pp": 6.2
+  },
+  "perchannel[Conv-dw]": {
+   "acc": 67.0,
+   "agree": 86.9,
+   "d_acc_pp": 2.0,
+   "d_agree_pp": 5.1
+  },
+  "perchannel[Conv-dw+Gate-after-dw+Act-after-dw]": {
+   "acc": 65.2,
+   "agree": 86.9,
+   "d_acc_pp": 0.2,
+   "d_agree_pp": 5.1
+  },
+  "perchannel[ALL]": {
+   "acc": 72.5,
+   "agree": 86.9,
+   "d_acc_pp": 7.4,
+   "d_agree_pp": 5.1
+  }
+ }
+}

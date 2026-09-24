@@ -1,0 +1,91 @@
+{
+ "fp32": 0.7085350318471337,
+ "baseline (minmax)": {
+  "meta": null,
+  "fused": 0.4585987261146497,
+  "fused_agree": 0.5192356687898089,
+  "emulated": 0.596687898089172,
+  "emulated_agree": 0.7192356687898089,
+  "n": 3925
+ },
+ "P + stem": {
+  "meta": null,
+  "fused": 0.6677707006369427,
+  "fused_agree": 0.8746496815286624,
+  "emulated": 0.6856050955414013,
+  "emulated_agree": 0.8884076433121019,
+  "n": 3925
+ },
+ "EQ": {
+  "meta": {
+   "sites": 14,
+   "by_kind": {
+    "gated": 9,
+    "relu": 5
+   },
+   "channels_mirrored": 183,
+   "median_levels_before": 41.57701599605949,
+   "median_levels_after": 168.1790875860019,
+   "max_abs_logit_change": 7.748603820800781e-06
+  },
+  "fused": 0.5210191082802548,
+  "fused_agree": 0.5987261146496815,
+  "emulated": 0.664203821656051,
+  "emulated_agree": 0.8094267515923567,
+  "n": 3925
+ },
+ "EQ + P": {
+  "meta": {
+   "sites": 14,
+   "by_kind": {
+    "gated": 9,
+    "relu": 5
+   },
+   "channels_mirrored": 183,
+   "median_levels_before": 41.57701599605949,
+   "median_levels_after": 168.1790875860019,
+   "max_abs_logit_change": 7.748603820800781e-06
+  },
+  "fused": 0.5755414012738853,
+  "fused_agree": 0.7062420382165605,
+  "emulated": 0.6850955414012739,
+  "emulated_agree": 0.8899363057324841,
+  "n": 3925
+ },
+ "EQ + P + stem": {
+  "meta": {
+   "sites": 14,
+   "by_kind": {
+    "gated": 9,
+    "relu": 5
+   },
+   "channels_mirrored": 183,
+   "median_levels_before": 41.57701599605949,
+   "median_levels_after": 168.1790875860019,
+   "max_abs_logit_change": 7.748603820800781e-06
+  },
+  "fused": 0.6754140127388535,
+  "fused_agree": 0.882547770700637,
+  "emulated": 0.692484076433121,
+  "emulated_agree": 0.9031847133757962,
+  "n": 3925
+ },
+ "EQ + P + stem + reduce_range": {
+  "meta": {
+   "sites": 14,
+   "by_kind": {
+    "gated": 9,
+    "relu": 5
+   },
+   "channels_mirrored": 183,
+   "median_levels_before": 41.57701599605949,
+   "median_levels_after": 168.1790875860019,
+   "max_abs_logit_change": 7.748603820800781e-06
+  },
+  "fused": 0.660891719745223,
+  "fused_agree": 0.849171974522293,
+  "emulated": 0.6636942675159235,
+  "emulated_agree": 0.8473885350318471,
+  "n": 3925
+ }
+}

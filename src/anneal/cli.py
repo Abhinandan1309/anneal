@@ -1132,6 +1132,103 @@ def cmd_saturation(args: argparse.Namespace) -> int:
     return 3 if s["layers_saturating"] else 0
 
 
+def cmd_imbalance(args: argparse.Namespace) -> int:
+    """Predict, from the float model, which convolutions per-tensor INT8 will starve."""
+    import json
+    import tempfile
+
+    from rich.table import Table
+
+    from anneal.core.artifact import sample_shape
+    from anneal.core.dataset import load_calibset, load_evalset
+    from anneal.core.imbalance import STARVED_DB, analyse, summarise
+
+    console = _console()
+    path = Path(args.model)
+    if not path.is_file():
+        console.print(f"[red]no such file:[/red] {path}")
+        return 2
+    shape = sample_shape(path)
+    calib = load_calibset(args.eval, cache_dir=Path(args.cache), batch_size=16,
+                          limit=args.calib_samples, sample_shape=shape)
+    if calib is None:
+        calib = load_evalset(args.eval, cache_dir=Path(args.cache), batch_size=16,
+                             limit=args.calib_samples, sample_shape=shape)
+    console.print(
+        f"Predicting per-channel activation-rounding SQNR for [cyan]{path.name}[/cyan] "
+        f"from {args.calib_samples} calibration images (float model; nothing is quantized) …\n"
+    )
+    results = analyse(path, calib.calibration_batches(args.calib_samples))
+    if not results:
+        console.print("[yellow]no Conv layers with constant weights found[/yellow]")
+        return 1
+
+    def show(rows, title):
+        table = Table(title=title, header_style="bold")
+        table.add_column("layer", overflow="fold")
+        table.add_column("kind")
+        table.add_column("SQNR p10", justify="right")
+        table.add_column("median", justify="right")
+        table.add_column(f"channels < {STARVED_DB:.0f} dB", justify="right")
+        table.add_column("levels (median / min)", justify="right")
+        for r in rows:
+            table.add_row(
+                r.node, "depthwise" if r.depthwise else "dense",
+                f"[red]{r.sqnr_p10_db:.1f} dB[/red]" if r.flagged else f"{r.sqnr_p10_db:.1f} dB",
+                f"{r.sqnr_median_db:.1f} dB",
+                f"{r.starved_fraction * 100:.0f}%",
+                "—" if r.levels_median is None else f"{r.levels_median:.0f} / {r.levels_min:.1f}",
+            )
+        console.print(table)
+
+    worst = sorted(results, key=lambda r: r.sqnr_p10_db)
+    show(worst if args.all else [r for r in worst if r.flagged] or worst[:5],
+         "predicted activation-rounding SQNR at each conv output (worst first)")
+    s = summarise(results)
+    console.print(
+        f"\n[bold]{s['flagged']} of {s['layers']} convolutions flagged[/bold] "
+        f"({s['flagged_depthwise']} depthwise): at least 5% of output channels below "
+        f"{STARVED_DB:.0f} dB under a shared per-tensor activation scale."
+    )
+    report = {"model": path.name, "summary": s, "layers": [r.to_dict() for r in results]}
+
+    remaining = s["flagged"]
+    if args.equalize:
+        from anneal.core.equalize import equalise
+
+        with tempfile.TemporaryDirectory() as tmp:
+            eq_path = Path(tmp) / "equalised.onnx"
+            eq = equalise(path, eq_path, calib.calibration_batches(args.calib_samples))
+            after = analyse(eq_path, calib.calibration_batches(args.calib_samples))
+        s2 = summarise(after)
+        remaining = s2["flagged"]
+        console.print(
+            f"\nAfter equalisation ({eq.summary()['sites']} sites, "
+            f"{eq.summary()['channels_mirrored']} channels mirrored): "
+            f"[bold]{s2['flagged']} flagged[/bold]; worst p10 SQNR "
+            f"{s['worst_p10_sqnr_db']:.1f} -> {s2['worst_p10_sqnr_db']:.1f} dB."
+        )
+        still = [r for r in sorted(after, key=lambda r: r.sqnr_p10_db) if r.flagged]
+        if still:
+            show(still, "still flagged after equalisation")
+            console.print(
+                "[dim]A flagged layer equalisation cannot reach usually has an input that also "
+                "feeds a second consumer (e.g. a residual Add).[/dim]"
+            )
+        report["equalised"] = {"summary": s2, "equalisation": eq.summary(),
+                               "layers": [r.to_dict() for r in after]}
+
+    console.print(
+        "\n[dim]Models activation rounding only: not weight quantization, clipping, or the "
+        "16-bit saturation of x86 CPUs without VNNI (see `anneal saturation`). A per-layer "
+        "estimate, not an accuracy prediction — confirm with `anneal audit`.[/dim]"
+    )
+    if args.out:
+        Path(args.out).write_text(json.dumps(report, indent=2), encoding="utf-8")
+        console.print(f"[dim]written: {args.out}[/dim]")
+    return 3 if remaining else 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     from anneal.core.ledger import Ledger
     from anneal.report import console_table, write_report
@@ -1322,6 +1419,20 @@ def build_parser() -> argparse.ArgumentParser:
     sat.add_argument("--out", default=None, help="write the per-layer results as JSON")
     sat.add_argument("--cache", default=str(DEFAULT_CACHE))
     sat.set_defaults(func=cmd_saturation)
+
+    imb = sub.add_parser(
+        "imbalance",
+        help="predict which convolutions per-tensor INT8 activations will starve (float models)",
+    )
+    imb.add_argument("model", help="a float .onnx")
+    imb.add_argument("--eval", default="imagenette", help="where calibration images come from")
+    imb.add_argument("--calib-samples", type=int, default=64)
+    imb.add_argument("--equalize", action="store_true",
+                     help="also analyse an equalised copy (anneal.core.equalize) and compare")
+    imb.add_argument("--all", action="store_true", help="list every conv, not only flagged ones")
+    imb.add_argument("--out", default=None, help="write the per-layer results as JSON")
+    imb.add_argument("--cache", default=str(DEFAULT_CACHE))
+    imb.set_defaults(func=cmd_imbalance)
 
     rep = sub.add_parser("report", help="re-render a report from a ledger")
     rep.add_argument("ledger", help="path to ledger.json")

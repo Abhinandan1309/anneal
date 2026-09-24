@@ -29,6 +29,10 @@ from anneal.core.measure import EvalSet
 #: full-range per-channel weights (and broke accuracy) but ~1% under per-tensor (harmless).
 SATURATION_TOLERANCE = 0.02
 
+#: How far (as a fraction of its range) equalisation may extend the bottom of an activation
+#: tensor's quantization range. On EfficientNet-B0 anything from 0.1 to 1.0 performed alike.
+EQUALIZE_SLACK = 0.1
+
 #: ONNX op types whose weights dominate compute in a CNN/transformer.
 QUANTIZABLE_OPS = ("Conv", "Gemm", "MatMul", "ConvTranspose")
 
@@ -457,6 +461,46 @@ def load_measured_ranking(path: Path) -> list[str]:
     return order_by_measured_damage(layers)
 
 
+#: Element-wise ops that belong to a convolution's activation (the stem's SiLU, Hardswish...).
+_ACTIVATION_OPS = ("Sigmoid", "HardSigmoid", "Mul", "Relu", "Clip", "HardSwish", "Add", "Div")
+
+
+def _with_named_nodes(path: Path) -> Path:
+    """``path``, or a copy of it in which every node has a name (exclusions work by name)."""
+    import onnx
+
+    model = onnx.load(str(path))
+    if all(n.name for n in model.graph.node):
+        return path
+    from anneal.core.equalize import _name_unnamed_nodes
+
+    _name_unnamed_nodes(model)
+    named = path.with_name(path.stem + "-named.onnx")
+    onnx.save(model, str(named))
+    return named
+
+
+def stem_nodes(model_path: Path) -> list[str]:
+    """The first convolution and the activation ops that follow it, up to the next Conv.
+
+    The stem sees raw pixels and, in every net studied here, is the most quantization-
+    sensitive block (the saturating layer on ResNet-18; the starved SiLU on EfficientNet-B0).
+    Keeping it in float is cheap: it is one layer of dozens.
+    """
+    import onnx
+
+    nodes = list(onnx.load(str(model_path)).graph.node)
+    first = next((i for i, n in enumerate(nodes) if n.op_type == "Conv"), None)
+    if first is None:
+        return []
+    names = [nodes[first].name]
+    for n in nodes[first + 1:]:
+        if n.op_type not in _ACTIVATION_OPS:
+            break
+        names.append(n.name)
+    return [n for n in names if n]
+
+
 def quantize_static_int8(
     artifact: ModelArtifact, params: dict[str, Any], ctx: TransformContext
 ) -> ModelArtifact:
@@ -465,6 +509,12 @@ def quantize_static_int8(
     Defaults to U8S8 — unsigned activations, signed weights — which is the combination
     x86 VNNI kernels are built for. ``reduce_range`` trades a bit of precision for
     overflow safety on pre-VNNI AVX2 machines.
+
+    ``equalize`` first rescales channels across Conv -> SiLU/Hardswish/ReLU -> depthwise Conv
+    (see :mod:`anneal.core.equalize`) so each shared activation scale serves every channel.
+    The float model is unchanged; only per-channel weight scales absorb the rescale, so it
+    requires ``per_channel``. ``float_gates`` additionally keeps each gate branch (the
+    inserted Mul and the Sigmoid/HardSigmoid) out of quantization.
     """
     from onnxruntime.quantization import (
         CalibrationMethod,
@@ -487,11 +537,29 @@ def quantize_static_int8(
     n_calib = int(params.get("calib_samples", ctx.calib_samples))
     guard = bool(params.get("guard_saturation", False))
     tolerance = float(params.get("saturation_tolerance", SATURATION_TOLERANCE))
+    equalize = bool(params.get("equalize", False))
+    slack = float(params.get("equalize_slack", EQUALIZE_SLACK))
+    float_gates = bool(params.get("float_gates", False))
+    float_stem = bool(params.get("float_stem", False))
+    percentile = float(params.get("calib_percentile", 99.99))
+    if equalize and not per_channel:
+        raise TransformError(
+            "equalize needs per_channel weights: with one weight scale per tensor the rescale "
+            "would move quantization error into the weights instead of removing it"
+        )
+    if float_gates and not equalize:
+        raise TransformError("float_gates only applies together with equalize")
+    if not 0.0 <= slack <= 4.0:
+        raise TransformError(f"equalize_slack must be in [0, 4], got {slack}")
 
     methods = {
         "minmax": CalibrationMethod.MinMax,
         "entropy": CalibrationMethod.Entropy,
         "percentile": CalibrationMethod.Percentile,
+        # onnxruntime's percentile calibration makes each range symmetric around zero by
+        # default, which wastes half the uint8 grid on post-SiLU tensors. The asymmetric form
+        # clips outliers without that: -12.9pp vs -19.1pp on EfficientNet-B0.
+        "percentile_asym": CalibrationMethod.Percentile,
     }
     if calib_method not in methods:
         raise TransformError(f"calibrate_method must be one of {sorted(methods)}")
@@ -506,10 +574,39 @@ def quantize_static_int8(
             "activation_type": activation_type,
             # Recorded only when on, so recipes without the guard keep their lineage keys.
             **({"guard_saturation": True, "saturation_tolerance": tolerance} if guard else {}),
+            **(
+                {"equalize": True, "equalize_slack": slack, "float_gates": float_gates}
+                if equalize
+                else {}
+            ),
+            **({"float_stem": True} if float_stem else {}),
+            **({"calib_percentile": percentile} if calib_method.startswith("percentile") and "calib_percentile" in params else {}),
         },
     )
     out = ctx.path_for(artifact, record)
     src = _preprocessed(artifact, ctx)
+
+    base_exclude: list[str] = []
+    eq_meta: dict[str, Any] = {}
+    if equalize:
+        from anneal.core.equalize import equalise
+
+        eq_path = out.with_name(out.stem + "-equalised-fp32.onnx")
+        probe = next(iter(calib_source.calibration_batches(1)), None)
+        result = equalise(
+            src,
+            eq_path,
+            calib_source.calibration_batches(n_calib),
+            slack=slack,
+            check_batch=probe,
+        )
+        src = eq_path
+        if float_gates:
+            base_exclude = list(result.gate_nodes)
+        eq_meta = {
+            "equalisation": result.summary(),
+            "equalised_sites": [s.to_dict() for s in result.sites],
+        }
 
     def run_quantizer(exclude: list[str]) -> None:
         quantize_static(
@@ -523,9 +620,18 @@ def quantize_static_int8(
             reduce_range=reduce_range,
             calibrate_method=methods[calib_method],
             nodes_to_exclude=exclude,
+            extra_options=extra,
         )
 
-    run_quantizer([])
+    extra: dict[str, Any] = {}
+    if calib_method.startswith("percentile"):
+        extra["CalibPercentile"] = percentile
+    if calib_method == "percentile_asym":
+        extra["CalibTensorRangeSymmetric"] = False
+    if float_stem:
+        src = _with_named_nodes(src)
+        base_exclude = base_exclude + [n for n in stem_nodes(src) if n not in base_exclude]
+    run_quantizer(base_exclude)
     guard_meta: dict[str, Any] = {}
     if guard:
         # Emulate the 16-bit pair arithmetic of x86 CPUs without VNNI on this very model and
@@ -536,7 +642,7 @@ def quantize_static_int8(
         layers = analyse(out, probe, n_positions=128)
         saturating = {r.node: r.accumulator_rate for r in layers if r.accumulator_rate > tolerance}
         if saturating:
-            run_quantizer(sorted(saturating))
+            run_quantizer(base_exclude + sorted(saturating))
         guard_meta = {
             "saturation_excluded": sorted(saturating),
             "saturation_rates": {k: round(v, 5) for k, v in saturating.items()},
@@ -546,6 +652,7 @@ def quantize_static_int8(
         record,
         out,
         **guard_meta,
+        **eq_meta,
         calib_samples=n_calib,
         calibration_source=(
             "eval set (overlaps evaluation images; accuracy is optimistic)"
@@ -663,8 +770,12 @@ REGISTRY: dict[str, TransformSpec] = {
             "reduce_range": {"type": "boolean", "description": "7-bit weights for AVX2 safety."},
             "calibrate_method": {
                 "type": "string",
-                "enum": ["minmax", "entropy", "percentile"],
-                "description": "How activation ranges are estimated. Entropy is slower, often kinder to outliers.",
+                "enum": ["minmax", "entropy", "percentile", "percentile_asym"],
+                "description": (
+                    "How activation ranges are estimated. percentile_asym clips outliers without "
+                    "forcing a symmetric range; with equalize it was the best recipe on "
+                    "EfficientNet-B0 and MobileNetV3."
+                ),
             },
             "calib_samples": {
                 "type": "integer",
@@ -689,6 +800,37 @@ REGISTRY: dict[str, TransformSpec] = {
                     "Activation precision. uint8 with int8 weights (U8S8) is the classic x86 "
                     "pairing; int8 activations (S8S8) avoid the intermediate saturation U8S8 "
                     "can hit on CPUs without VNNI."
+                ),
+            },
+            "equalize": {
+                "type": "boolean",
+                "description": (
+                    "Before quantizing, rescale channels across Conv -> SiLU/Hardswish/ReLU -> "
+                    "depthwise Conv so one shared activation scale serves every channel. Exact in "
+                    "float; needs per_channel. The fix for EfficientNet/MobileNetV3-style nets "
+                    "whose INT8 accuracy collapses on every CPU."
+                ),
+            },
+            "equalize_slack": {
+                "type": "number",
+                "description": "How far equalisation may extend a tensor's range downward (default 0.1).",
+            },
+            "float_stem": {
+                "type": "boolean",
+                "description": (
+                    "Keep the first convolution and its activation in float. The stem sees raw "
+                    "pixels and was the most sensitive block in every net studied."
+                ),
+            },
+            "calib_percentile": {
+                "type": "number",
+                "description": "Percentile for percentile calibration (default 99.99).",
+            },
+            "float_gates": {
+                "type": "boolean",
+                "description": (
+                    "With equalize: keep each gate branch (Sigmoid/HardSigmoid and its input "
+                    "rescale) in float. More accuracy on SiLU nets; costs some speed."
                 ),
             },
         },

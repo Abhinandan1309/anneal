@@ -180,6 +180,101 @@ well as the hardware.
 
 ---
 
+## When INT8 breaks on every CPU: EfficientNet-B0 from −52pp to −1pp
+
+Saturation explains the loss that happens only on some CPUs. The larger failure in the lab
+happened on all of them: static INT8 took EfficientNet-B0 from 76.6% to 24.2% top-1 and
+MobileNetV3-Large from 70.9% to 45.9%, ARM included. This section is how Anneal found out why,
+and the fix it now ships.
+
+**Finding the cause.** Four hypotheses were tested in parallel. Each one counted only if an
+intervention that removed its cause brought accuracy back
+([data](examples/equalize/)):
+
+| hypothesis | intervention | recovered |
+|---|---|---|
+| int32 bias overflow | restore every float bias | **0pp**: refuted |
+| x86 arithmetic | run the QDQ graph in float | 3.5pp of 52: not the main cause |
+| weight quantization | per-channel weight SQNR ≥ 39 dB everywhere | not the cause |
+| **one activation scale shared by channels of very different range** | give 48 activation tensors per-channel scales | **+42pp** |
+
+The mechanism, measured channel by channel on EfficientNet's stem:
+
+- **Scale set by one outlier.** One channel of the stem conv spans a range of 169, and that sets the shared uint8 scale.
+- **A starved channel.** Channel 13 lives entirely in SiLU's negative lobe (−0.27 to −0.10), so it gets **half a quantization level**.
+- **Amplified downstream.** The depthwise conv after it has one input channel per output channel, so it cannot average the error away. Batch-norm folding has left its largest weights on exactly those small channels, so it *amplifies* the rounding by 10–24 dB.
+- **Repeated in every block.** This happens in all 16 blocks, and the logits end up at −1.6 dB SQNR.
+
+**The fix: exact equalisation across gated activations**
+([`anneal/core/equalize.py`](src/anneal/core/equalize.py)). For every
+`Conv → x·gate(x) → depthwise Conv` chain (gate = Sigmoid for SiLU, HardSigmoid for
+Hardswish), the rewrite:
+
+- scales output channel *c* of the first conv by *s_c*
+- feeds the gate *x′/s_c* through one inserted element-wise Mul
+- divides channel *c* of the depthwise conv by *s_c*
+
+The float model computes the same function (max logit change ~1e-5). Both convolutions are
+quantized per channel, so the per-channel weight scales absorb *s* exactly. Only the
+activations change, and every channel now fills the shared range.
+
+**Negative scales.** *s_c* may be negative. A channel that lives below zero is mirrored into
+the large positive side of the range, which is exact because the gate sees *x′/s = x*. On
+EfficientNet, 114 channels are mirrored. Classic cross-layer equalisation
+([Nagel et al. 2019](https://arxiv.org/abs/1906.04721)) needs `f(s·x) = s·f(x)`, which rules
+out SiLU and Hardswish. [HPTQ](https://arxiv.org/abs/2109.09113) names that gap as the likely
+reason EfficientNet's activations quantize badly. The gate-side `1/s` removes the
+requirement at the cost of one element-wise Mul per block. I have not found this exact
+construction, or the use of negative scales, in the literature I checked. That is a
+statement about my search, not a novelty claim.
+
+**Result.** Full Imagenette validation set (3,925 images), U8S8, per-channel weights.
+*Emulated* runs the QDQ graph in float, standing in for 32-bit-accumulating CPUs (ARM, VNNI).
+*Laptop* uses this x86 CPU without VNNI
+([data](examples/equalize/full_val_efficientnet_b0.json)):
+
+| recipe | EfficientNet-B0 (FP32 76.6%) emulated / laptop | MobileNetV3-L (FP32 70.9%) emulated / laptop |
+|---|---|---|
+| MinMax (the old default) | 26.5 / 24.2 | 59.7 / 45.9 |
+| percentile + float stem (best without equalisation) | 71.5 / 69.8 | 68.6 / 66.8 |
+| equalise + percentile + float stem | **75.6** / 73.8 | **69.2** / **67.5** |
+| … + reduce_range | 75.8 / **75.9** | 66.4 / 66.1 |
+
+- **EfficientNet-B0 goes from −50pp to −1pp.** Equalisation is worth +4pp over the best recipe without it (emulated), and +6pp on the laptop with `reduce_range`.
+- **MobileNetV3 barely benefits.** Asymmetric percentile calibration and a float stem do most of the work there; equalisation adds +0.6pp, which is within noise.
+- **Equalisation and saturation interact.** Filling each channel's range pushes more activations toward 255, so non-VNNI x86 saturates more. `reduce_range` makes saturation impossible, and there the laptop and emulated numbers agree.
+
+**Speed, measured honestly.** On this laptop's x86 CPU without VNNI (cpu-1t, AC power,
+[data](examples/equalize/)):
+- EfficientNet INT8 is barely faster than FP32: 1.12x without equalisation, **1.01x with it**. The 16 inserted Muls cost about 10%.
+- MobileNetV3 INT8 is *slower* than FP32 whatever the recipe (0.78–0.83x).
+
+The earlier lab measured 2–3x for these models on ARM. The equalised recipes are queued for
+the same machines, and until they run their speed there is unmeasured.
+
+**Predicting it without quantizing**
+([`anneal/core/imbalance.py`](src/anneal/core/imbalance.py), `anneal imbalance`). Every
+input channel of a conv shares one rounding step Δ, so the noise reaching output channel *o*
+is Δ²/12·‖W_o‖². From the float model and 64 calibration images, Anneal predicts each
+channel's SQNR and flags layers where at least 5% of channels fall below 10 dB. On
+a toy model, the noise model matches measured error to within 3 dB wherever a channel spans
+four or more quantization steps. Below one step, rounding produces a bias, so the number is
+only a flag.
+
+| model | flagged convs | after equalisation |
+|---|---|---|
+| ResNet-18 (quantizes fine) | 0 of 20 | — |
+| EfficientNet-B0 | 8 of 81, all depthwise (worst −2 dB) | 0 |
+| MobileNetV3-Large | 6 of 62, all depthwise | 1 (its input also feeds a residual Add, which the rewrite leaves alone) |
+
+**What is left.** On EfficientNet, the remaining ~1pp sits at the next boundary: depthwise
+conv → SiLU → squeeze-excite and project conv. Per-channel scales there recover it fully
+([data](examples/equalize/residual_localisation.json)). Equalising across it means scaling
+*input* channels of dense convs, which per-channel weight scales do not absorb exactly. That
+is a real trade-off, and it is the next step.
+
+---
+
 ## A real run
 
 ResNet-18, single-threaded CPU, 256 Imagenette images scored with a full 1000-way argmax,
@@ -593,6 +688,8 @@ anneal profile      # attribute runtime to operators; --against to diff two mode
 anneal sensitivity  # rank layers by INT8 damage; --measured for the real sweep
 anneal export       # emit a standalone script that rebuilds a frontier point
 anneal audit        # check any optimised model (from any tool); --sequential stops early
+anneal saturation   # predict 16-bit INT8 overflow on x86 without VNNI (QDQ models)
+anneal imbalance    # predict which convs per-tensor INT8 will starve; --equalize to compare
 anneal report       # re-render from a ledger
 anneal targets      # what can actually run here
 anneal transforms   # the action space
@@ -652,6 +749,9 @@ src/anneal/
     measure.py      The benchmark harness. The reason any of this is trustworthy.
     profile.py      Operator-level attribution. Why, not just how much.
     sensitivity.py  The expensive measured sweep, and the proxy's score against it.
+    saturation.py   Emulates the 16-bit pair arithmetic of x86 INT8 without VNNI.
+    equalize.py     Exact channel equalisation across gated activations (SiLU, Hardswish).
+    imbalance.py    Predicts starved channels from the float model.
     dataset.py      Imagenette, scored 1000-way. Labelled synthetic fallback.
     ledger.py       Append-only trial record + Pareto frontier.
   agent/
@@ -704,6 +804,10 @@ Stated plainly, because the alternative is letting someone find them in a review
   matches 16-bit saturation in the AVX2 INT8 path. I have not stepped through the kernel to
   show the overflow directly. The hardware-lab runners are shared cloud machines, whose
   exact CPU is assigned rather than chosen, with one run per machine.
+- **The equalisation results come from one laptop and emulation.** The emulated column
+  stands in for 32-bit-accumulating CPUs; it is not a measurement on one. Differences under
+  about 1.5pp on 3,925 images are within noise. The speed cost of equalisation has been
+  measured only on an x86 CPU without VNNI, where INT8 barely pays for these models anyway.
 - **`graph_optimize(level='all')` produces a non-portable artifact** — onnxruntime's NCHWc
   transformer bakes in the optimising CPU's layout and SIMD width. Anneal records this on
   the artifact and warns in the report. Use `level='extended'` if the file must travel.

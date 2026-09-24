@@ -19,6 +19,10 @@ SHORT = {
     "S8S8 per-channel": "S8S8 per-channel",
     "U8S8 per-tensor": "U8S8 per-tensor",
     "S8S8 per-tensor (Olive's default)": "S8S8 per-tensor",
+    "percentile + float stem": "P + stem",
+    "equalize + percentile + float stem": "EQ + P + stem",
+    "equalize + percentile + float stem + reduce_range": "EQ + P + stem + rr",
+    "equalize + percentile + float stem + float gates": "EQ + P + stem + gates",
 }
 
 

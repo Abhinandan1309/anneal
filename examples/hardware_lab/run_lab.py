@@ -33,6 +33,7 @@ def main() -> None:
     parser.add_argument("--out", default="lab-result.json")
     parser.add_argument("--models", default="resnet18",
                         help="comma-separated torchvision model names")
+    parser.add_argument("--set", default="saturation", help="recipe study: saturation or equalize")
     args = parser.parse_args()
     sys.stdout.reconfigure(errors="replace")
 
@@ -43,7 +44,7 @@ def main() -> None:
         study_out = Path(args.out).with_suffix(f".{name}.study.json")
         subprocess.run(
             [sys.executable, str(EXAMPLES / "static_recipe_ab.py"), "--model", name,
-             "--eval-limit", str(args.eval_limit), "--target", args.target,
+             "--eval-limit", str(args.eval_limit), "--target", args.target, "--set", args.set,
              "--out", str(study_out)],
             check=True,
         )
@@ -54,6 +55,7 @@ def main() -> None:
         "cpu": info,
         "onnxruntime": onnxruntime.__version__,
         "python": platform.python_version(),
+        "variant_set": args.set,
         "studies": studies,
         # Kept for results made before multi-model runs, which have a single "study".
         **({"study": studies["resnet18"]} if "resnet18" in studies else {}),

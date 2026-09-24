@@ -111,6 +111,9 @@ class OptimizationRun:
             if target.providers and target.providers[0] == "CPUExecutionProvider"
             else "unknown"
         )
+        # Conv -> SiLU/Hardswish/ReLU -> depthwise chains that static INT8 can starve and
+        # equalisation can fix; a pure graph pass, so it costs nothing to know up front.
+        self.equalisable_sites = _count_equalisable(baseline.path)
         self.transforms = available_transforms()
 
         self.ledger = Ledger(
@@ -152,6 +155,7 @@ class OptimizationRun:
                 baseline_artifact=self.baseline,
                 can_measure_sensitivity=self.can_measure_sensitivity,
                 int8_path=self.int8_path,
+                equalisable_sites=self.equalisable_sites,
             )
 
             proposal = self.policy.propose(state)
@@ -340,3 +344,14 @@ class OptimizationRun:
     def _spent(self) -> int:
         """Budget consumed: every trial after the baseline, successful or not."""
         return max(0, len(self.ledger.trials) - 1)
+
+
+def _count_equalisable(model_path: Path) -> int:
+    try:
+        import onnx
+
+        from anneal.core.equalize import find_sites
+
+        return len(find_sites(onnx.load(str(model_path))))
+    except Exception:  # an unreadable graph simply has nothing to equalise
+        return 0

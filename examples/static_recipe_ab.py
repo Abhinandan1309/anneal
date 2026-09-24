@@ -56,11 +56,30 @@ VARIANTS = {
 }
 
 
+#: The equalisation study: does the fix for the every-CPU collapse of EfficientNet-B0 and
+#: MobileNetV3 (anneal.core.equalize) hold across CPUs, and what does it cost in speed?
+_P = {"per_channel": True, "activation_type": "uint8", "calibrate_method": "percentile_asym"}
+EQUALIZE_VARIANTS = {
+    "U8S8 per-channel (Anneal's old default)": {"per_channel": True, "activation_type": "uint8"},
+    "percentile + float stem": {**_P, "float_stem": True},
+    "equalize + percentile + float stem": {**_P, "equalize": True, "float_stem": True},
+    "equalize + percentile + float stem + reduce_range": {
+        **_P, "equalize": True, "float_stem": True, "reduce_range": True,
+    },
+    "equalize + percentile + float stem + float gates": {
+        **_P, "equalize": True, "float_stem": True, "float_gates": True,
+    },
+}
+VARIANT_SETS = {"saturation": VARIANTS, "equalize": EQUALIZE_VARIANTS}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--eval-limit", type=int, default=1024)
     parser.add_argument("--target", default="cpu-4t")
     parser.add_argument("--model", default="resnet18", help="torchvision model name")
+    parser.add_argument("--set", default="saturation", choices=sorted(VARIANT_SETS),
+                        help="which recipe study to run")
     parser.add_argument("--out", default=str(HERE / "olive_resnet18" / "static_recipe_ab.json"))
     args = parser.parse_args()
 
@@ -90,7 +109,7 @@ def main() -> None:
     print(f"FP32: top-1 {base_right.mean() * 100:.2f}%  p50 {base_lat:.2f}ms  (n={n}, {target.name})")
 
     rows = []
-    for name, params in VARIANTS.items():
+    for name, params in VARIANT_SETS[args.set].items():
         ctx = TransformContext(workdir=candidates_dir(args.model), calibset=calibset,
                                calib_samples=64)
         params = {"calibrate_method": "minmax", "reduce_range": False, **params}
@@ -133,7 +152,7 @@ def main() -> None:
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps({
-        "model": args.model, "target": target.name, "n_eval": n,
+        "model": args.model, "variant_set": args.set, "target": target.name, "n_eval": n,
         "calibration": "64 Imagenette train images", "fp32_accuracy": float(base_right.mean()),
         "fp32_p50_ms": base_lat, "fp32_p50_end_ms": base_lat_end, "latency_drift": moved,
         "environment_warnings": warnings_for(snapshot()), "rows": rows,

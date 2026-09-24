@@ -1,0 +1,145 @@
+{
+ "hypothesis": "int32 bias quantization overflow/clipping causes the EfficientNet-B0 / MobileNetV3 static-INT8 loss",
+ "verdict": "refuted",
+ "ort_1_30_bias_handling": "quantize_bias_static_impl rounds b/(s_x*s_w) and clips to int32 with a warning; before that, qdq_quantizer._adjust_weight_scale_for_int32_bias (on by default) raises the weight scale of any channel whose bias would overflow, so q_bias lands at ~(2^32-1)/(2*1.0001)=2,147,268,9xx. Opt-out: extra_options QDQDisableWeightAdjustForInt32Bias=True. Keep bias float: extra_options QuantizeBias=False.",
+ "efficientnet_b0_step1_pc": {
+  "layers": 82,
+  "layers_with_near_limit_bias": 0,
+  "channels_near_limit_bias": 0,
+  "channels_clipped_bias": 0,
+  "channels_bias_rel_err_gt_1pct": 426,
+  "layers_with_adjusted_w_scale": 0,
+  "channels_adjusted_w_scale": 0,
+  "channels_all_zero_q_weights": 0,
+  "channels_all_zero_float_weights": 0,
+  "channels_w_sqnr_lt10db": 0
+ },
+ "efficientnet_b0_step1_pt": {
+  "layers": 82,
+  "layers_with_near_limit_bias": 0,
+  "channels_near_limit_bias": 0,
+  "channels_clipped_bias": 0,
+  "channels_bias_rel_err_gt_1pct": 4024,
+  "layers_with_adjusted_w_scale": 0,
+  "channels_adjusted_w_scale": 0,
+  "channels_all_zero_q_weights": 142,
+  "channels_all_zero_float_weights": 0,
+  "channels_w_sqnr_lt10db": 2534
+ },
+ "mobilenet_v3_large_step1_pc": {
+  "layers": 64,
+  "layers_with_near_limit_bias": 1,
+  "channels_near_limit_bias": 7,
+  "channels_clipped_bias": 0,
+  "channels_bias_rel_err_gt_1pct": 363,
+  "layers_with_adjusted_w_scale": 1,
+  "channels_adjusted_w_scale": 7,
+  "channels_all_zero_q_weights": 0,
+  "channels_all_zero_float_weights": 0,
+  "channels_w_sqnr_lt10db": 0
+ },
+ "efficientnet_b0_bias_max_err_over_scale": 0.49999,
+ "efficientnet_b0_accuracy": {
+  "fp32": {
+   "top1": 0.7421875,
+   "agree_fp32": 1.0,
+   "delta_vs_fp32_pp": 0.0
+  },
+  "qdq_pc": {
+   "top1": 0.224609375,
+   "agree_fp32": 0.279296875,
+   "graph_opt": "all",
+   "model": "scratch\\agents\\bias\\qdq_efficientnet_b0_pc.onnx",
+   "delta_vs_fp32_pp": -51.76
+  },
+  "qdq_pt": {
+   "top1": 0.0,
+   "agree_fp32": 0.0,
+   "graph_opt": "all",
+   "model": "scratch\\agents\\bias\\qdq_efficientnet_b0_pt.onnx",
+   "delta_vs_fp32_pp": -74.22
+  },
+  "qdq_pc_floatbias": {
+   "top1": 0.22265625,
+   "agree_fp32": 0.279296875,
+   "graph_opt": "all",
+   "model": "scratch\\agents\\bias\\qdq_efficientnet_b0_pc_floatbias.onnx",
+   "delta_vs_fp32_pp": -51.95
+  },
+  "qdq_pt_floatbias": {
+   "top1": 0.0,
+   "agree_fp32": 0.0,
+   "graph_opt": "all",
+   "model": "scratch\\agents\\bias\\qdq_efficientnet_b0_pt_floatbias.onnx",
+   "delta_vs_fp32_pp": -74.22
+  },
+  "ort_pc_QuantizeBias_False": {
+   "top1": 0.22265625,
+   "agree_fp32": 0.279296875,
+   "graph_opt": "all",
+   "model": "scratch\\agents\\bias\\ort_efficientnet_b0_pc_QuantizeBiasFalse.onnx",
+   "delta_vs_fp32_pp": -51.95
+  },
+  "ort_pc_DisableWeightAdjust": {
+   "top1": 0.224609375,
+   "agree_fp32": 0.279296875,
+   "graph_opt": "all",
+   "model": "scratch\\agents\\bias\\ort_efficientnet_b0_pc_DisableWeightAdjust.onnx",
+   "delta_vs_fp32_pp": -51.76
+  },
+  "qdq_pc_noopt": {
+   "top1": 0.259765625,
+   "agree_fp32": 0.314453125,
+   "graph_opt": "disabled",
+   "model": "scratch\\agents\\bias\\qdq_efficientnet_b0_pc.onnx",
+   "delta_vs_fp32_pp": -48.24
+  },
+  "qdq_pc_floatbias_noopt": {
+   "top1": 0.25390625,
+   "agree_fp32": 0.318359375,
+   "graph_opt": "disabled",
+   "model": "scratch\\agents\\bias\\qdq_efficientnet_b0_pc_floatbias.onnx",
+   "delta_vs_fp32_pp": -48.83
+  },
+  "_notes": {
+   "replaced_biases_pc": 82,
+   "replaced_biases_pt": 82,
+   "DisableWeightAdjust_identical_initializers_to_baseline": true
+  },
+  "_n_images": 512
+ },
+ "mobilenet_v3_large_accuracy": {
+  "fp32": {
+   "top1": 0.697265625,
+   "agree_fp32": 1.0,
+   "delta_vs_fp32_pp": 0.0
+  },
+  "qdq_pc": {
+   "top1": 0.44140625,
+   "agree_fp32": 0.5078125,
+   "graph_opt": "all",
+   "delta_vs_fp32_pp": -25.59
+  },
+  "qdq_pc_floatbias": {
+   "top1": 0.44140625,
+   "agree_fp32": 0.505859375,
+   "graph_opt": "all",
+   "delta_vs_fp32_pp": -25.59
+  },
+  "qdq_pc_noopt": {
+   "top1": 0.55859375,
+   "agree_fp32": 0.685546875,
+   "graph_opt": "disabled",
+   "delta_vs_fp32_pp": -13.87
+  },
+  "qdq_pc_floatbias_noopt": {
+   "top1": 0.56640625,
+   "agree_fp32": 0.69921875,
+   "graph_opt": "disabled",
+   "delta_vs_fp32_pp": -13.09
+  },
+  "_notes": {
+   "replaced_biases": 64
+  }
+ }
+}

@@ -15,6 +15,9 @@ on:
       models:
         description: "comma-separated torchvision models"
         default: "resnet18,mobilenet_v3_large,efficientnet_b0"
+      variant_set:
+        description: "recipe study: saturation or equalize"
+        default: "saturation"
 
 jobs:
   lab:
@@ -25,7 +28,9 @@ jobs:
       fail-fast: false
       matrix:
         # ubuntu-24.04-arm: GitHub-hosted ARM64 runner for public repositories.
-        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
+        # The CPU behind each label is assigned, not chosen; the extra x86 images raise the
+        # chance of drawing an Intel part with VNNI (every x86 runner so far was AMD EPYC).
+        os: [ubuntu-latest, ubuntu-22.04, ubuntu-24.04-arm, windows-latest, windows-2022, macos-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -58,6 +63,7 @@ jobs:
             --eval-limit "${{ inputs.eval_limit || '1024' }}" \
             --target "${{ inputs.target || 'cpu-1t' }}" \
             --models "${{ inputs.models || 'resnet18,mobilenet_v3_large,efficientnet_b0' }}" \
+            --set "${{ inputs.variant_set || 'saturation' }}" \
             --out "lab-${{ matrix.os }}.json"
 
       - uses: actions/upload-artifact@v4

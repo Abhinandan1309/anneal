@@ -1,0 +1,4576 @@
+{
+  "efficientnet_b0/fp32": {
+    "model": "efficientnet_b0",
+    "recipe": "fp32",
+    "acc": 0.7421875,
+    "n": 512
+  },
+  "efficientnet_b0/baseline_transform": {
+    "model": "efficientnet_b0",
+    "recipe": "baseline_transform",
+    "spec": {
+      "via_transform": true
+    },
+    "info": {
+      "n_calib_images": 64
+    },
+    "acc": 0.224609375,
+    "delta_pp": -51.76,
+    "agree_fp32": 0.279296875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\transform\\quantize-static-int8-activation-type-uint8-calib-samples-64--9254b6a0a6.onnx",
+    "quantize_s": 11.2,
+    "total_s": 20.8
+  },
+  "efficientnet_b0/baseline": {
+    "model": "efficientnet_b0",
+    "recipe": "baseline",
+    "spec": {},
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.224609375,
+    "delta_pp": -51.76,
+    "agree_fp32": 0.279296875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\baseline.onnx",
+    "quantize_s": 12.0,
+    "total_s": 22.9,
+    "acc_ref": 0.259765625,
+    "delta_ref_pp": -48.24,
+    "agree_ref_fp32": 0.314453125
+  },
+  "efficientnet_b0/per_tensor": {
+    "model": "efficientnet_b0",
+    "recipe": "per_tensor",
+    "spec": {
+      "per_channel": false
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.0,
+    "delta_pp": -74.22,
+    "agree_fp32": 0.0,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\per_tensor.onnx",
+    "quantize_s": 17.5,
+    "total_s": 32.0,
+    "acc_ref": 0.0,
+    "delta_ref_pp": -74.22,
+    "agree_ref_fp32": 0.0
+  },
+  "efficientnet_b0/calib256": {
+    "model": "efficientnet_b0",
+    "recipe": "calib256",
+    "spec": {
+      "n_calib": 256
+    },
+    "info": {
+      "n_calib_images": 256,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.283203125,
+    "delta_pp": -45.9,
+    "agree_fp32": 0.345703125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\calib256.onnx",
+    "quantize_s": 31.7,
+    "total_s": 42.7,
+    "acc_ref": 0.3359375,
+    "delta_ref_pp": -40.62,
+    "agree_ref_fp32": 0.38671875
+  },
+  "efficientnet_b0/moving_average": {
+    "model": "efficientnet_b0",
+    "recipe": "moving_average",
+    "spec": {
+      "extra": {
+        "CalibMovingAverage": true
+      }
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibMovingAverage": true
+      }
+    },
+    "acc": 0.421875,
+    "delta_pp": -32.03,
+    "agree_fp32": 0.5,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\moving_average.onnx",
+    "quantize_s": 14.2,
+    "total_s": 27.2,
+    "acc_ref": 0.458984375,
+    "delta_ref_pp": -28.32,
+    "agree_ref_fp32": 0.54296875
+  },
+  "efficientnet_b0/ops_conv_gemm": {
+    "model": "efficientnet_b0",
+    "recipe": "ops_conv_gemm",
+    "spec": {
+      "ops": [
+        "Conv",
+        "Gemm"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.275390625,
+    "delta_pp": -46.68,
+    "agree_fp32": 0.3203125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 157,
+      "DQ": 321,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Add": 9,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 156,
+      "n_ops_float": 83,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Add": 9,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 91,
+      "Q_zero_point_types": {
+        "UINT8": 157
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\ops_conv_gemm.onnx",
+    "quantize_s": 9.8,
+    "total_s": 27.9,
+    "acc_ref": 0.306640625,
+    "delta_ref_pp": -43.55,
+    "agree_ref_fp32": 0.361328125
+  },
+  "efficientnet_b0/ops_conv_gemm_add": {
+    "model": "efficientnet_b0",
+    "recipe": "ops_conv_gemm_add",
+    "spec": {
+      "ops": [
+        "Conv",
+        "Gemm",
+        "Add"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.275390625,
+    "delta_pp": -46.68,
+    "agree_fp32": 0.3203125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 157,
+      "DQ": 321,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Add": 9,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 156,
+      "n_ops_float": 83,
+      "Q_zero_point_types": {
+        "UINT8": 157
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\ops_conv_gemm_add.onnx",
+    "quantize_s": 8.0,
+    "total_s": 27.9
+  },
+  "efficientnet_b0/ops_conv_gemm_add_gap": {
+    "model": "efficientnet_b0",
+    "recipe": "ops_conv_gemm_add_gap",
+    "spec": {
+      "ops": [
+        "Conv",
+        "Gemm",
+        "Add",
+        "GlobalAveragePool"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.26953125,
+    "delta_pp": -47.27,
+    "agree_fp32": 0.33203125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 175,
+      "DQ": 339,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 174,
+      "n_ops_float": 65,
+      "Q_zero_point_types": {
+        "UINT8": 175
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\ops_conv_gemm_add_gap.onnx",
+    "quantize_s": 8.5,
+    "total_s": 35.8
+  },
+  "efficientnet_b0/ops_all_but_sigmoid": {
+    "model": "efficientnet_b0",
+    "recipe": "ops_all_but_sigmoid",
+    "spec": {
+      "ops": [
+        "Conv",
+        "Gemm",
+        "Add",
+        "GlobalAveragePool",
+        "Mul"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.224609375,
+    "delta_pp": -51.76,
+    "agree_fp32": 0.279296875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\ops_all_but_sigmoid.onnx",
+    "quantize_s": 14.2,
+    "total_s": 25.3
+  },
+  "efficientnet_b0/ops_all_but_mul": {
+    "model": "efficientnet_b0",
+    "recipe": "ops_all_but_mul",
+    "spec": {
+      "ops": [
+        "Conv",
+        "Gemm",
+        "Add",
+        "GlobalAveragePool",
+        "Sigmoid"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.224609375,
+    "delta_pp": -51.76,
+    "agree_fp32": 0.279296875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\ops_all_but_mul.onnx",
+    "quantize_s": 12.3,
+    "total_s": 22.6
+  },
+  "efficientnet_b0/act_symmetric": {
+    "model": "efficientnet_b0",
+    "recipe": "act_symmetric",
+    "spec": {
+      "extra": {
+        "ActivationSymmetric": true
+      }
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "ActivationSymmetric": true
+      }
+    },
+    "acc": 0.0,
+    "delta_pp": -74.22,
+    "agree_fp32": 0.001953125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\act_symmetric.onnx",
+    "quantize_s": 11.8,
+    "total_s": 22.2,
+    "acc_ref": 0.0,
+    "delta_ref_pp": -74.22,
+    "agree_ref_fp32": 0.001953125
+  },
+  "efficientnet_b0/act_restricted_asym": {
+    "model": "efficientnet_b0",
+    "recipe": "act_restricted_asym",
+    "spec": {
+      "extra": {
+        "ActivationRestrictedAsymmetric": true
+      }
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "ActivationRestrictedAsymmetric": true
+      }
+    },
+    "acc": 0.0,
+    "delta_pp": -74.22,
+    "agree_fp32": 0.001953125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\act_restricted_asym.onnx",
+    "quantize_s": 12.9,
+    "total_s": 24.6
+  },
+  "efficientnet_b0/weight_asym": {
+    "model": "efficientnet_b0",
+    "recipe": "weight_asym",
+    "spec": {
+      "extra": {
+        "WeightSymmetric": false
+      }
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "WeightSymmetric": false
+      }
+    },
+    "acc": 0.224609375,
+    "delta_pp": -51.76,
+    "agree_fp32": 0.279296875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\weight_asym.onnx",
+    "quantize_s": 14.1,
+    "total_s": 26.1
+  },
+  "efficientnet_b0/no_bias_weight_adjust": {
+    "model": "efficientnet_b0",
+    "recipe": "no_bias_weight_adjust",
+    "spec": {
+      "extra": {
+        "QDQDisableWeightAdjustForInt32Bias": true
+      }
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "QDQDisableWeightAdjustForInt32Bias": true
+      }
+    },
+    "acc": 0.224609375,
+    "delta_pp": -51.76,
+    "agree_fp32": 0.279296875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\no_bias_weight_adjust.onnx",
+    "quantize_s": 14.1,
+    "total_s": 26.4
+  },
+  "efficientnet_b0/keep_removable_acts": {
+    "model": "efficientnet_b0",
+    "recipe": "keep_removable_acts",
+    "spec": {
+      "extra": {
+        "QDQKeepRemovableActivations": true
+      }
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "QDQKeepRemovableActivations": true
+      }
+    },
+    "acc": 0.224609375,
+    "delta_pp": -51.76,
+    "agree_fp32": 0.279296875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\keep_removable_acts.onnx",
+    "quantize_s": 14.4,
+    "total_s": 25.6
+  },
+  "efficientnet_b0/dedicated_qdq_pair": {
+    "model": "efficientnet_b0",
+    "recipe": "dedicated_qdq_pair",
+    "spec": {
+      "extra": {
+        "DedicatedQDQPair": true
+      }
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "DedicatedQDQPair": true
+      }
+    },
+    "acc": 0.224609375,
+    "delta_pp": -51.76,
+    "agree_fp32": 0.279296875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 314,
+      "DQ": 478,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "Q_zero_point_types": {
+        "UINT8": 314
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\dedicated_qdq_pair.onnx",
+    "quantize_s": 12.1,
+    "total_s": 22.5
+  },
+  "efficientnet_b0/reduce_range": {
+    "model": "efficientnet_b0",
+    "recipe": "reduce_range",
+    "spec": {
+      "reduce_range": true
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.271484375,
+    "delta_pp": -47.07,
+    "agree_fp32": 0.32421875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\reduce_range.onnx",
+    "quantize_s": 12.0,
+    "total_s": 24.2,
+    "acc_ref": 0.27734375,
+    "delta_ref_pp": -46.48,
+    "agree_ref_fp32": 0.3359375
+  },
+  "efficientnet_b0/s8s8": {
+    "model": "efficientnet_b0",
+    "recipe": "s8s8",
+    "spec": {
+      "act": "int8"
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.267578125,
+    "delta_pp": -47.46,
+    "agree_fp32": 0.328125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "INT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\s8s8.onnx",
+    "quantize_s": 14.3,
+    "total_s": 67.7,
+    "acc_ref": 0.259765625,
+    "delta_ref_pp": -48.24,
+    "agree_ref_fp32": 0.314453125
+  },
+  "efficientnet_b0/exclude_features0_2": {
+    "model": "efficientnet_b0",
+    "recipe": "exclude_features0_2",
+    "spec": {
+      "exclude_blocks": [
+        "/features/features.0/",
+        "/features/features.1/",
+        "/features/features.2/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 43,
+      "extra_options": {}
+    },
+    "acc": 0.5859375,
+    "delta_pp": -15.62,
+    "agree_fp32": 0.7109375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 197,
+      "DQ": 331,
+      "ops_with_quantized_inputs": {
+        "Conv": 66,
+        "Sigmoid": 53,
+        "Mul": 53,
+        "GlobalAveragePool": 14,
+        "Add": 8,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 196,
+      "n_ops_float": 43,
+      "int8_sandwich_ops": {
+        "Conv": 66,
+        "Sigmoid": 53,
+        "Mul": 53,
+        "GlobalAveragePool": 14,
+        "Add": 8,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 196,
+      "Q_zero_point_types": {
+        "UINT8": 197
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\exclude_features0_2.onnx",
+    "quantize_s": 13.2,
+    "total_s": 28.5,
+    "acc_ref": 0.62890625,
+    "delta_ref_pp": -11.33,
+    "agree_ref_fp32": 0.763671875
+  },
+  "efficientnet_b0/exclude_features1_2": {
+    "model": "efficientnet_b0",
+    "recipe": "exclude_features1_2",
+    "spec": {
+      "exclude_blocks": [
+        "/features/features.1/",
+        "/features/features.2/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 40,
+      "extra_options": {}
+    },
+    "acc": 0.26953125,
+    "delta_pp": -47.27,
+    "agree_fp32": 0.322265625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 201,
+      "DQ": 337,
+      "ops_with_quantized_inputs": {
+        "Conv": 67,
+        "Sigmoid": 54,
+        "Mul": 54,
+        "GlobalAveragePool": 14,
+        "Add": 8,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 199,
+      "n_ops_float": 40,
+      "Q_zero_point_types": {
+        "UINT8": 201
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\exclude_features1_2.onnx",
+    "quantize_s": 13.0,
+    "total_s": 28.2
+  },
+  "efficientnet_b0/u16_features0_2": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_features0_2",
+    "spec": {
+      "u16_blocks": [
+        "/features/features.0/",
+        "/features/features.1/",
+        "/features/features.2/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "44 tensors->uint16"
+      }
+    },
+    "acc": 0.603515625,
+    "delta_pp": -13.87,
+    "agree_fp32": 0.740234375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Sigmoid": 53,
+        "Mul": 53,
+        "Conv": 65,
+        "GlobalAveragePool": 14,
+        "Add": 8,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 195,
+      "Q_zero_point_types": {
+        "UINT16": 44,
+        "UINT8": 196
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_features0_2.onnx",
+    "quantize_s": 17.3,
+    "total_s": 50.8,
+    "acc_ref": 0.63671875,
+    "delta_ref_pp": -10.55,
+    "agree_ref_fp32": 0.767578125
+  },
+  "efficientnet_b0/u16_act_all_REFERENCE": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_act_all_REFERENCE",
+    "spec": {
+      "act": "uint16"
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "UseQDQContribOps": false
+      }
+    },
+    "acc": 0.740234375,
+    "delta_pp": -0.2,
+    "agree_fp32": 0.955078125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {},
+      "n_int8_sandwich": 0,
+      "Q_zero_point_types": {
+        "UINT16": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_act_all_REFERENCE.onnx",
+    "quantize_s": 15.7,
+    "total_s": 73.5,
+    "acc_ref": 0.740234375,
+    "delta_ref_pp": -0.2,
+    "agree_ref_fp32": 0.955078125
+  },
+  "efficientnet_b0/percentile_99.999": {
+    "model": "efficientnet_b0",
+    "recipe": "percentile_99.999",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.999
+      },
+      "chunk": 8
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.999,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.564453125,
+    "delta_pp": -17.77,
+    "agree_fp32": 0.68359375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\percentile_99.999.onnx",
+    "quantize_s": 38.2,
+    "total_s": 52.3,
+    "acc_ref": 0.603515625,
+    "delta_ref_pp": -13.87,
+    "agree_ref_fp32": 0.728515625
+  },
+  "efficientnet_b0/percentile_99.99": {
+    "model": "efficientnet_b0",
+    "recipe": "percentile_99.99",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99
+      },
+      "chunk": 8
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.55078125,
+    "delta_pp": -19.14,
+    "agree_fp32": 0.64453125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\percentile_99.99.onnx",
+    "quantize_s": 41.8,
+    "total_s": 54.5,
+    "acc_ref": 0.6171875,
+    "delta_ref_pp": -12.5,
+    "agree_ref_fp32": 0.7421875
+  },
+  "efficientnet_b0/percentile_99.999_asym": {
+    "model": "efficientnet_b0",
+    "recipe": "percentile_99.999_asym",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.999,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.999,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.521484375,
+    "delta_pp": -22.07,
+    "agree_fp32": 0.611328125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\percentile_99.999_asym.onnx",
+    "quantize_s": 38.1,
+    "total_s": 49.4
+  },
+  "efficientnet_b0/percentile_99.99_asym": {
+    "model": "efficientnet_b0",
+    "recipe": "percentile_99.99_asym",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.61328125,
+    "delta_pp": -12.89,
+    "agree_fp32": 0.73046875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\percentile_99.99_asym.onnx",
+    "quantize_s": 37.6,
+    "total_s": 48.3,
+    "acc_ref": 0.671875,
+    "delta_ref_pp": -7.03,
+    "agree_ref_fp32": 0.810546875
+  },
+  "efficientnet_b0/entropy": {
+    "model": "efficientnet_b0",
+    "recipe": "entropy",
+    "spec": {
+      "method": "entropy",
+      "chunk": 8
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.396484375,
+    "delta_pp": -34.57,
+    "agree_fp32": 0.46484375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\entropy.onnx",
+    "quantize_s": 38.9,
+    "total_s": 50.0,
+    "acc_ref": 0.423828125,
+    "delta_ref_pp": -31.84,
+    "agree_ref_fp32": 0.5078125
+  },
+  "efficientnet_b0/w16_REFERENCE": {
+    "model": "efficientnet_b0",
+    "recipe": "w16_REFERENCE",
+    "spec": {
+      "weight": "int16"
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "UseQDQContribOps": false
+      }
+    },
+    "acc": 0.2578125,
+    "delta_pp": -48.44,
+    "agree_fp32": 0.322265625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\w16_REFERENCE.onnx",
+    "quantize_s": 20.8,
+    "total_s": 50.2
+  },
+  "efficientnet_b0/u16_silu_preact_all": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_silu_preact_all",
+    "spec": {
+      "u16_preact": null
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "65 tensor overrides"
+      }
+    },
+    "acc": 0.513671875,
+    "delta_pp": -22.85,
+    "agree_fp32": 0.61328125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "GlobalAveragePool": 17,
+        "Mul": 16,
+        "Conv": 16,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 60,
+      "Q_zero_point_types": {
+        "UINT8": 175,
+        "UINT16": 65
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_silu_preact_all.onnx",
+    "quantize_s": 30.1,
+    "total_s": 84.4
+  },
+  "efficientnet_b0/u16_silu_preact_features0_2": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_silu_preact_features0_2",
+    "spec": {
+      "u16_preact": [
+        "/features/features.0/",
+        "/features/features.1/",
+        "/features/features.2/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "12 tensor overrides"
+      }
+    },
+    "acc": 0.41015625,
+    "delta_pp": -33.2,
+    "agree_fp32": 0.4765625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "GlobalAveragePool": 17,
+        "Mul": 56,
+        "Conv": 69,
+        "Add": 9,
+        "Sigmoid": 53,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 206,
+      "Q_zero_point_types": {
+        "UINT8": 228,
+        "UINT16": 12
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_silu_preact_features0_2.onnx",
+    "quantize_s": 18.8,
+    "total_s": 46.4
+  },
+  "efficientnet_b0/exclude_features0": {
+    "model": "efficientnet_b0",
+    "recipe": "exclude_features0",
+    "spec": {
+      "exclude_blocks": [
+        "/features/features.0/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 3,
+      "extra_options": {}
+    },
+    "acc": 0.37890625,
+    "delta_pp": -36.33,
+    "agree_fp32": 0.46875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 237,
+      "DQ": 399,
+      "ops_with_quantized_inputs": {
+        "Conv": 80,
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 236,
+      "n_ops_float": 3,
+      "int8_sandwich_ops": {
+        "Conv": 80,
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 236,
+      "Q_zero_point_types": {
+        "UINT8": 237
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\exclude_features0.onnx",
+    "quantize_s": 13.7,
+    "total_s": 25.7
+  },
+  "efficientnet_b0/conv_gemm_float_out": {
+    "model": "efficientnet_b0",
+    "recipe": "conv_gemm_float_out",
+    "spec": {
+      "ops": [
+        "Conv",
+        "Gemm"
+      ],
+      "extra": {
+        "OpTypesToExcludeOutputQuantization": [
+          "Conv"
+        ]
+      }
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "OpTypesToExcludeOutputQuantization": [
+          "Conv"
+        ]
+      }
+    },
+    "acc": 0.517578125,
+    "delta_pp": -22.46,
+    "agree_fp32": 0.619140625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 83,
+      "DQ": 247,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 82,
+      "n_ops_float": 157,
+      "int8_sandwich_ops": {
+        "Conv": 7,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 8,
+      "Q_zero_point_types": {
+        "UINT8": 83
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\conv_gemm_float_out.onnx",
+    "quantize_s": 10.8,
+    "total_s": 44.4
+  },
+  "efficientnet_b0/clip_silu_preact_neg6": {
+    "model": "efficientnet_b0",
+    "recipe": "clip_silu_preact_neg6",
+    "spec": {
+      "preact_rmin": -6.0
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "65 tensor overrides"
+      }
+    },
+    "acc": 0.298828125,
+    "delta_pp": -44.34,
+    "agree_fp32": 0.32421875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\clip_silu_preact_neg6.onnx",
+    "quantize_s": 11.7,
+    "total_s": 21.6
+  },
+  "efficientnet_b0/percentile_99.9_asym": {
+    "model": "efficientnet_b0",
+    "recipe": "percentile_99.9_asym",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.9,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.9,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.607421875,
+    "delta_pp": -13.48,
+    "agree_fp32": 0.712890625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\percentile_99.9_asym.onnx",
+    "quantize_s": 33.9,
+    "total_s": 44.7
+  },
+  "efficientnet_b0/percentile_99.95_asym": {
+    "model": "efficientnet_b0",
+    "recipe": "percentile_99.95_asym",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.95,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.95,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.61328125,
+    "delta_pp": -12.89,
+    "agree_fp32": 0.74609375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\percentile_99.95_asym.onnx",
+    "quantize_s": 35.7,
+    "total_s": 45.8
+  },
+  "efficientnet_b0/u16_features0_only": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_features0_only",
+    "spec": {
+      "u16_blocks": [
+        "/features/features.0/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "4 tensor overrides"
+      }
+    },
+    "acc": 0.51953125,
+    "delta_pp": -22.27,
+    "agree_fp32": 0.6328125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Conv": 79,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 235,
+      "Q_zero_point_types": {
+        "UINT16": 4,
+        "UINT8": 236
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_features0_only.onnx",
+    "quantize_s": 14.5,
+    "total_s": 27.5
+  },
+  "efficientnet_b0/u16_features1_only": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_features1_only",
+    "spec": {
+      "u16_blocks": [
+        "/features/features.1/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "12 tensor overrides"
+      }
+    },
+    "acc": 0.322265625,
+    "delta_pp": -41.99,
+    "agree_fp32": 0.375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 76,
+        "Sigmoid": 62,
+        "Mul": 61,
+        "GlobalAveragePool": 16,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 226,
+      "Q_zero_point_types": {
+        "UINT8": 228,
+        "UINT16": 12
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_features1_only.onnx",
+    "quantize_s": 18.1,
+    "total_s": 35.3
+  },
+  "efficientnet_b0/u16_features2_only": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_features2_only",
+    "spec": {
+      "u16_blocks": [
+        "/features/features.2/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "30 tensor overrides"
+      }
+    },
+    "acc": 0.275390625,
+    "delta_pp": -46.68,
+    "agree_fp32": 0.3203125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 69,
+        "Sigmoid": 57,
+        "Mul": 57,
+        "GlobalAveragePool": 15,
+        "Add": 8,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 208,
+      "Q_zero_point_types": {
+        "UINT8": 210,
+        "UINT16": 30
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_features2_only.onnx",
+    "quantize_s": 14.0,
+    "total_s": 37.6
+  },
+  "efficientnet_b0/u16_features3_only": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_features3_only",
+    "spec": {
+      "u16_blocks": [
+        "/features/features.3/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "30 tensor overrides"
+      }
+    },
+    "acc": 0.244140625,
+    "delta_pp": -49.8,
+    "agree_fp32": 0.314453125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 70,
+        "Sigmoid": 57,
+        "Mul": 57,
+        "GlobalAveragePool": 15,
+        "Add": 7,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 208,
+      "Q_zero_point_types": {
+        "UINT8": 210,
+        "UINT16": 30
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_features3_only.onnx",
+    "quantize_s": 14.4,
+    "total_s": 30.4
+  },
+  "efficientnet_b0/u16_features4_only": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_features4_only",
+    "spec": {
+      "u16_blocks": [
+        "/features/features.4/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "45 tensor overrides"
+      }
+    },
+    "acc": 0.2421875,
+    "delta_pp": -50.0,
+    "agree_fp32": 0.3046875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 65,
+        "Sigmoid": 53,
+        "Mul": 53,
+        "GlobalAveragePool": 14,
+        "Add": 6,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 193,
+      "Q_zero_point_types": {
+        "UINT8": 195,
+        "UINT16": 45
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_features4_only.onnx",
+    "quantize_s": 14.6,
+    "total_s": 30.3
+  },
+  "efficientnet_b0/u16_features5_only": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_features5_only",
+    "spec": {
+      "u16_blocks": [
+        "/features/features.5/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "45 tensor overrides"
+      }
+    },
+    "acc": 0.22265625,
+    "delta_pp": -51.95,
+    "agree_fp32": 0.27734375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 65,
+        "Sigmoid": 53,
+        "Mul": 53,
+        "GlobalAveragePool": 14,
+        "Add": 6,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 193,
+      "Q_zero_point_types": {
+        "UINT8": 195,
+        "UINT16": 45
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_features5_only.onnx",
+    "quantize_s": 14.6,
+    "total_s": 29.2
+  },
+  "efficientnet_b0/u16_features6_only": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_features6_only",
+    "spec": {
+      "u16_blocks": [
+        "/features/features.6/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "60 tensor overrides"
+      }
+    },
+    "acc": 0.30859375,
+    "delta_pp": -43.36,
+    "agree_fp32": 0.357421875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 60,
+        "Sigmoid": 49,
+        "Mul": 49,
+        "GlobalAveragePool": 13,
+        "Add": 5,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 178,
+      "Q_zero_point_types": {
+        "UINT8": 180,
+        "UINT16": 60
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_features6_only.onnx",
+    "quantize_s": 13.7,
+    "total_s": 32.1
+  },
+  "efficientnet_b0/u16_features7_only": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_features7_only",
+    "spec": {
+      "u16_blocks": [
+        "/features/features.7/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "15 tensor overrides"
+      }
+    },
+    "acc": 0.25,
+    "delta_pp": -49.22,
+    "agree_fp32": 0.3046875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 75,
+        "Sigmoid": 61,
+        "Mul": 61,
+        "GlobalAveragePool": 16,
+        "Add": 8,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 223,
+      "Q_zero_point_types": {
+        "UINT8": 225,
+        "UINT16": 15
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_features7_only.onnx",
+    "quantize_s": 26.7,
+    "total_s": 41.5
+  },
+  "efficientnet_b0/u16_features8_only": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_features8_only",
+    "spec": {
+      "u16_blocks": [
+        "/features/features.8/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "4 tensor overrides"
+      }
+    },
+    "acc": 0.22265625,
+    "delta_pp": -51.95,
+    "agree_fp32": 0.275390625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 79,
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 16,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 234,
+      "Q_zero_point_types": {
+        "UINT8": 236,
+        "UINT16": 4
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_features8_only.onnx",
+    "quantize_s": 15.5,
+    "total_s": 26.6
+  },
+  "efficientnet_b0/u16_input_only": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_input_only",
+    "spec": {
+      "u16_tensors": [
+        "input"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "1 tensor overrides"
+      }
+    },
+    "acc": 0.240234375,
+    "delta_pp": -50.2,
+    "agree_fp32": 0.3046875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Sigmoid": 65,
+        "Mul": 65,
+        "Conv": 80,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 238,
+      "Q_zero_point_types": {
+        "UINT16": 1,
+        "UINT8": 239
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_input_only.onnx",
+    "quantize_s": 15.8,
+    "total_s": 28.3
+  },
+  "efficientnet_b0/u16_stem_preact_only": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_stem_preact_only",
+    "spec": {
+      "u16_tensors": [
+        "/features/features.0/features.0.0/Conv_output_0"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "1 tensor overrides"
+      }
+    },
+    "acc": 0.361328125,
+    "delta_pp": -38.09,
+    "agree_fp32": 0.43359375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 80,
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 236,
+      "Q_zero_point_types": {
+        "UINT8": 239,
+        "UINT16": 1
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_stem_preact_only.onnx",
+    "quantize_s": 14.4,
+    "total_s": 25.4
+  },
+  "efficientnet_b0/u16_stem_silu_out_only": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_stem_silu_out_only",
+    "spec": {
+      "u16_tensors": [
+        "/features/features.0/features.0.2/Mul_output_0"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "1 tensor overrides"
+      }
+    },
+    "acc": 0.328125,
+    "delta_pp": -41.41,
+    "agree_fp32": 0.37890625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 80,
+        "Sigmoid": 65,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 237,
+      "Q_zero_point_types": {
+        "UINT8": 239,
+        "UINT16": 1
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_stem_silu_out_only.onnx",
+    "quantize_s": 13.5,
+    "total_s": 26.3
+  },
+  "efficientnet_b0/u16_stem_preact_and_out": {
+    "model": "efficientnet_b0",
+    "recipe": "u16_stem_preact_and_out",
+    "spec": {
+      "u16_tensors": [
+        "/features/features.0/features.0.0/Conv_output_0",
+        "/features/features.0/features.0.2/Mul_output_0"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "TensorQuantOverrides": "2 tensor overrides"
+      }
+    },
+    "acc": 0.53125,
+    "delta_pp": -21.09,
+    "agree_fp32": 0.626953125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Conv": 79,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 235,
+      "Q_zero_point_types": {
+        "UINT8": 238,
+        "UINT16": 2
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\u16_stem_preact_and_out.onnx",
+    "quantize_s": 30.1,
+    "total_s": 44.2
+  },
+  "efficientnet_b0/P9999a+u16_features0": {
+    "model": "efficientnet_b0",
+    "recipe": "P9999a+u16_features0",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "u16_blocks": [
+        "/features/features.0/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1,
+        "TensorQuantOverrides": "4 tensor overrides"
+      }
+    },
+    "acc": 0.701171875,
+    "delta_pp": -4.1,
+    "agree_fp32": 0.84375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Conv": 79,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 235,
+      "Q_zero_point_types": {
+        "UINT16": 4,
+        "UINT8": 236
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9999a+u16_features0.onnx",
+    "quantize_s": 38.7,
+    "total_s": 51.7,
+    "acc_ref": 0.7265625,
+    "delta_ref_pp": -1.56,
+    "agree_ref_fp32": 0.89453125
+  },
+  "efficientnet_b0/P9999a+exclude_features0": {
+    "model": "efficientnet_b0",
+    "recipe": "P9999a+exclude_features0",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "exclude_blocks": [
+        "/features/features.0/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 3,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.673828125,
+    "delta_pp": -6.84,
+    "agree_fp32": 0.8046875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 237,
+      "DQ": 399,
+      "ops_with_quantized_inputs": {
+        "Conv": 80,
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 236,
+      "n_ops_float": 3,
+      "int8_sandwich_ops": {
+        "Conv": 80,
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 236,
+      "Q_zero_point_types": {
+        "UINT8": 237
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9999a+exclude_features0.onnx",
+    "quantize_s": 42.4,
+    "total_s": 56.2,
+    "acc_ref": 0.712890625,
+    "delta_ref_pp": -2.93,
+    "agree_ref_fp32": 0.859375
+  },
+  "efficientnet_b0/P9999a+u16_features0_2": {
+    "model": "efficientnet_b0",
+    "recipe": "P9999a+u16_features0_2",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "u16_blocks": [
+        "/features/features.0/",
+        "/features/features.1/",
+        "/features/features.2/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1,
+        "TensorQuantOverrides": "44 tensor overrides"
+      }
+    },
+    "acc": 0.693359375,
+    "delta_pp": -4.88,
+    "agree_fp32": 0.87890625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Sigmoid": 53,
+        "Mul": 53,
+        "Conv": 65,
+        "GlobalAveragePool": 14,
+        "Add": 8,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 195,
+      "Q_zero_point_types": {
+        "UINT16": 44,
+        "UINT8": 196
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9999a+u16_features0_2.onnx",
+    "quantize_s": 42.1,
+    "total_s": 71.2
+  },
+  "efficientnet_b0/P9999a+exclude_features0_2": {
+    "model": "efficientnet_b0",
+    "recipe": "P9999a+exclude_features0_2",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "exclude_blocks": [
+        "/features/features.0/",
+        "/features/features.1/",
+        "/features/features.2/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 43,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.697265625,
+    "delta_pp": -4.49,
+    "agree_fp32": 0.888671875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 197,
+      "DQ": 331,
+      "ops_with_quantized_inputs": {
+        "Conv": 66,
+        "Sigmoid": 53,
+        "Mul": 53,
+        "GlobalAveragePool": 14,
+        "Add": 8,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 196,
+      "n_ops_float": 43,
+      "int8_sandwich_ops": {
+        "Conv": 66,
+        "Sigmoid": 53,
+        "Mul": 53,
+        "GlobalAveragePool": 14,
+        "Add": 8,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 196,
+      "Q_zero_point_types": {
+        "UINT8": 197
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9999a+exclude_features0_2.onnx",
+    "quantize_s": 37.8,
+    "total_s": 52.5,
+    "acc_ref": 0.7265625,
+    "delta_ref_pp": -1.56,
+    "agree_ref_fp32": 0.919921875
+  },
+  "efficientnet_b0/P9999a+calib256": {
+    "model": "efficientnet_b0",
+    "recipe": "P9999a+calib256",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "n_calib": 256
+    },
+    "info": {
+      "n_calib_images": 256,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.6015625,
+    "delta_pp": -14.06,
+    "agree_fp32": 0.72265625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9999a+calib256.onnx",
+    "quantize_s": 245.0,
+    "total_s": 257.4
+  },
+  "efficientnet_b0/P9999a+ops_conv_gemm": {
+    "model": "efficientnet_b0",
+    "recipe": "P9999a+ops_conv_gemm",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "ops": [
+        "Conv",
+        "Gemm"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.609375,
+    "delta_pp": -13.28,
+    "agree_fp32": 0.73046875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 157,
+      "DQ": 321,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Add": 9,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 156,
+      "n_ops_float": 83,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Add": 9,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 91,
+      "Q_zero_point_types": {
+        "UINT8": 157
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9999a+ops_conv_gemm.onnx",
+    "quantize_s": 33.6,
+    "total_s": 94.2
+  },
+  "efficientnet_b0/P9999a+s8s8": {
+    "model": "efficientnet_b0",
+    "recipe": "P9999a+s8s8",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "act": "int8"
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.67578125,
+    "delta_pp": -6.64,
+    "agree_fp32": 0.810546875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "INT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9999a+s8s8.onnx",
+    "quantize_s": 104.8,
+    "total_s": 170.9,
+    "acc_ref": 0.671875,
+    "delta_ref_pp": -7.03,
+    "agree_ref_fp32": 0.810546875
+  },
+  "efficientnet_b0/MA+u16_features0": {
+    "model": "efficientnet_b0",
+    "recipe": "MA+u16_features0",
+    "spec": {
+      "extra": {
+        "CalibMovingAverage": true
+      },
+      "u16_blocks": [
+        "/features/features.0/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibMovingAverage": true,
+        "TensorQuantOverrides": "4 tensor overrides"
+      }
+    },
+    "acc": 0.59765625,
+    "delta_pp": -14.45,
+    "agree_fp32": 0.71875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Conv": 79,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 235,
+      "Q_zero_point_types": {
+        "UINT16": 4,
+        "UINT8": 236
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\MA+u16_features0.onnx",
+    "quantize_s": 24.9,
+    "total_s": 52.6
+  },
+  "efficientnet_b0/MA+calib256": {
+    "model": "efficientnet_b0",
+    "recipe": "MA+calib256",
+    "spec": {
+      "extra": {
+        "CalibMovingAverage": true
+      },
+      "n_calib": 256
+    },
+    "info": {
+      "n_calib_images": 256,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibMovingAverage": true
+      }
+    },
+    "acc": 0.3671875,
+    "delta_pp": -37.5,
+    "agree_fp32": 0.44140625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\MA+calib256.onnx",
+    "quantize_s": 55.6,
+    "total_s": 71.7
+  },
+  "efficientnet_b0/guard_saturation": {
+    "model": "efficientnet_b0",
+    "recipe": "guard_saturation",
+    "spec": {
+      "guard": true
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {},
+      "guard_excluded": [
+        "/features/features.0/features.0.0/Conv",
+        "/features/features.1/features.1.0/block/block.1/fc2/Conv",
+        "/features/features.3/features.3.0/block/block.2/fc1/Conv",
+        "/features/features.3/features.3.0/block/block.2/fc2/Conv",
+        "/features/features.3/features.3.1/block/block.0/block.0.0/Conv"
+      ]
+    },
+    "acc": 0.2265625,
+    "delta_pp": -51.56,
+    "agree_fp32": 0.28515625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 239,
+      "DQ": 393,
+      "ops_with_quantized_inputs": {
+        "Sigmoid": 65,
+        "Mul": 65,
+        "Conv": 76,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 234,
+      "n_ops_float": 5,
+      "int8_sandwich_ops": {
+        "Sigmoid": 65,
+        "Mul": 65,
+        "Conv": 76,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 234,
+      "Q_zero_point_types": {
+        "UINT8": 239
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\guard_saturation.onnx",
+    "quantize_s": 41.7,
+    "total_s": 57.4,
+    "acc_ref": 0.244140625,
+    "delta_ref_pp": -49.8,
+    "agree_ref_fp32": 0.29296875
+  },
+  "efficientnet_b0/P9999a+s8s8+u16_features0": {
+    "model": "efficientnet_b0",
+    "recipe": "P9999a+s8s8+u16_features0",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "act": "int8",
+      "u16_blocks": [
+        "/features/features.0/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1,
+        "TensorQuantOverrides": "4 tensor overrides"
+      }
+    },
+    "acc": 0.73046875,
+    "delta_pp": -1.17,
+    "agree_fp32": 0.890625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Conv": 79,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 235,
+      "Q_zero_point_types": {
+        "UINT16": 4,
+        "INT8": 236
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9999a+s8s8+u16_features0.onnx",
+    "quantize_s": 44.7,
+    "total_s": 91.7,
+    "acc_ref": 0.7265625,
+    "delta_ref_pp": -1.56,
+    "agree_ref_fp32": 0.89453125
+  },
+  "efficientnet_b0/P9999a+s8s8+exclude_features0": {
+    "model": "efficientnet_b0",
+    "recipe": "P9999a+s8s8+exclude_features0",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "act": "int8",
+      "exclude_blocks": [
+        "/features/features.0/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 3,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.71875,
+    "delta_pp": -2.34,
+    "agree_fp32": 0.869140625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 237,
+      "DQ": 399,
+      "ops_with_quantized_inputs": {
+        "Conv": 80,
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 236,
+      "n_ops_float": 3,
+      "int8_sandwich_ops": {
+        "Conv": 80,
+        "Sigmoid": 64,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 236,
+      "Q_zero_point_types": {
+        "INT8": 237
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9999a+s8s8+exclude_features0.onnx",
+    "quantize_s": 28.5,
+    "total_s": 58.4,
+    "acc_ref": 0.712890625,
+    "delta_ref_pp": -2.93,
+    "agree_ref_fp32": 0.859375
+  },
+  "efficientnet_b0/P9995a+s8s8": {
+    "model": "efficientnet_b0",
+    "recipe": "P9995a+s8s8",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.95,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "act": "int8"
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.95,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.658203125,
+    "delta_pp": -8.4,
+    "agree_fp32": 0.80859375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "INT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9995a+s8s8.onnx",
+    "quantize_s": 20.9,
+    "total_s": 52.1
+  },
+  "efficientnet_b0/P9999a+reduce_range": {
+    "model": "efficientnet_b0",
+    "recipe": "P9999a+reduce_range",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "reduce_range": true
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.66796875,
+    "delta_pp": -7.42,
+    "agree_fp32": 0.779296875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 239,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Sigmoid": 65,
+        "Mul": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 239,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9999a+reduce_range.onnx",
+    "quantize_s": 24.8,
+    "total_s": 34.7
+  },
+  "efficientnet_b0/P9999a+guard": {
+    "model": "efficientnet_b0",
+    "recipe": "P9999a+guard",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "guard": true
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      },
+      "guard_excluded": [
+        "/features/features.0/features.0.0/Conv",
+        "/features/features.1/features.1.0/block/block.1/fc2/Conv",
+        "/features/features.2/features.2.0/block/block.2/fc2/Conv",
+        "/features/features.2/features.2.1/block/block.2/fc2/Conv",
+        "/features/features.3/features.3.0/block/block.2/fc2/Conv",
+        "/features/features.3/features.3.1/block/block.0/block.0.0/Conv",
+        "/features/features.4/features.4.0/block/block.0/block.0.0/Conv",
+        "/features/features.4/features.4.0/block/block.2/fc2/Conv"
+      ]
+    },
+    "acc": 0.654296875,
+    "delta_pp": -8.79,
+    "agree_fp32": 0.787109375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 239,
+      "DQ": 387,
+      "ops_with_quantized_inputs": {
+        "Sigmoid": 65,
+        "Mul": 65,
+        "Conv": 73,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 231,
+      "n_ops_float": 8,
+      "int8_sandwich_ops": {
+        "Sigmoid": 65,
+        "Mul": 65,
+        "Conv": 73,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 231,
+      "Q_zero_point_types": {
+        "UINT8": 239
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9999a+guard.onnx",
+    "quantize_s": 50.5,
+    "total_s": 58.2,
+    "acc_ref": 0.677734375,
+    "delta_ref_pp": -6.45,
+    "agree_ref_fp32": 0.80078125
+  },
+  "efficientnet_b0/P9999a+s8s8+exclude_features0_2": {
+    "model": "efficientnet_b0",
+    "recipe": "P9999a+s8s8+exclude_features0_2",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "act": "int8",
+      "exclude_blocks": [
+        "/features/features.0/",
+        "/features/features.1/",
+        "/features/features.2/"
+      ]
+    },
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 43,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.72265625,
+    "delta_pp": -1.95,
+    "agree_fp32": 0.916015625,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 197,
+      "DQ": 331,
+      "ops_with_quantized_inputs": {
+        "Conv": 66,
+        "Sigmoid": 53,
+        "Mul": 53,
+        "GlobalAveragePool": 14,
+        "Add": 8,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 196,
+      "n_ops_float": 43,
+      "int8_sandwich_ops": {
+        "Conv": 66,
+        "Sigmoid": 53,
+        "Mul": 53,
+        "GlobalAveragePool": 14,
+        "Add": 8,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 196,
+      "Q_zero_point_types": {
+        "INT8": 197
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\P9999a+s8s8+exclude_features0_2.onnx",
+    "quantize_s": 19.4,
+    "total_s": 40.6
+  },
+  "mobilenet_v3_large/fp32": {
+    "model": "mobilenet_v3_large",
+    "recipe": "fp32",
+    "acc": 0.697265625,
+    "n": 512
+  },
+  "mobilenet_v3_large/fp32_eq": {
+    "model": "mobilenet_v3_large",
+    "recipe": "fp32_eq",
+    "acc": 0.697265625,
+    "agree_fp32": 1.0,
+    "n": 512,
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-eq-named.onnx"
+  },
+  "mobilenet_v3_large/baseline": {
+    "model": "mobilenet_v3_large",
+    "recipe": "baseline",
+    "spec": {},
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-fp32-preproc.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.44140625,
+    "delta_pp": -25.59,
+    "agree_fp32": 0.5078125,
+    "fp32_acc": 0.697265625,
+    "n": 512,
+    "census": {
+      "Q": 143,
+      "DQ": 271,
+      "ops_with_quantized_inputs": {
+        "Conv": 62,
+        "HardSigmoid": 29,
+        "Mul": 29,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_ops_quantized": 142,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 62,
+        "HardSigmoid": 29,
+        "Mul": 29,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_int8_sandwich": 142,
+      "Q_zero_point_types": {
+        "UINT8": 143
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\baseline.onnx",
+    "quantize_s": 5.3,
+    "total_s": 10.4,
+    "acc_ref": 0.55859375,
+    "delta_ref_pp": -13.87,
+    "agree_ref_fp32": 0.685546875
+  },
+  "mobilenet_v3_large/percentile_99.99_asym": {
+    "model": "mobilenet_v3_large",
+    "recipe": "percentile_99.99_asym",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-fp32-preproc.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.5703125,
+    "delta_pp": -12.7,
+    "agree_fp32": 0.705078125,
+    "fp32_acc": 0.697265625,
+    "n": 512,
+    "census": {
+      "Q": 143,
+      "DQ": 271,
+      "ops_with_quantized_inputs": {
+        "Conv": 62,
+        "HardSigmoid": 29,
+        "Mul": 29,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_ops_quantized": 142,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 62,
+        "HardSigmoid": 29,
+        "Mul": 29,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_int8_sandwich": 142,
+      "Q_zero_point_types": {
+        "UINT8": 143
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\percentile_99.99_asym.onnx",
+    "quantize_s": 12.1,
+    "total_s": 17.1,
+    "acc_ref": 0.666015625,
+    "delta_ref_pp": -3.12,
+    "agree_ref_fp32": 0.880859375
+  },
+  "mobilenet_v3_large/EQ_minmax": {
+    "model": "mobilenet_v3_large",
+    "recipe": "EQ_minmax",
+    "spec": {
+      "src": "eq"
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-eq-named.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.517578125,
+    "delta_pp": -17.97,
+    "agree_fp32": 0.619140625,
+    "fp32_acc": 0.697265625,
+    "n": 512,
+    "census": {
+      "Q": 152,
+      "DQ": 289,
+      "ops_with_quantized_inputs": {
+        "Conv": 62,
+        "HardSigmoid": 29,
+        "Mul": 38,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_ops_quantized": 151,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 62,
+        "HardSigmoid": 29,
+        "Mul": 38,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_int8_sandwich": 151,
+      "Q_zero_point_types": {
+        "UINT8": 152
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\EQ_minmax.onnx",
+    "quantize_s": 6.6,
+    "total_s": 13.6,
+    "acc_ref": 0.65234375,
+    "delta_ref_pp": -4.49,
+    "agree_ref_fp32": 0.810546875
+  },
+  "mobilenet_v3_large/EQ_minmax+exgates": {
+    "model": "mobilenet_v3_large",
+    "recipe": "EQ_minmax+exgates",
+    "spec": {
+      "src": "eq",
+      "exclude_eq_gates": true
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-eq-named.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 18,
+      "extra_options": {}
+    },
+    "acc": 0.517578125,
+    "delta_pp": -17.97,
+    "agree_fp32": 0.595703125,
+    "fp32_acc": 0.697265625,
+    "n": 512,
+    "census": {
+      "Q": 143,
+      "DQ": 271,
+      "ops_with_quantized_inputs": {
+        "Conv": 62,
+        "HardSigmoid": 20,
+        "Mul": 29,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_ops_quantized": 133,
+      "n_ops_float": 18,
+      "int8_sandwich_ops": {
+        "Conv": 62,
+        "HardSigmoid": 20,
+        "Mul": 29,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_int8_sandwich": 133,
+      "Q_zero_point_types": {
+        "UINT8": 143
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\EQ_minmax+exgates.onnx",
+    "quantize_s": 7.8,
+    "total_s": 14.9,
+    "acc_ref": 0.646484375,
+    "delta_ref_pp": -5.08,
+    "agree_ref_fp32": 0.81640625
+  },
+  "mobilenet_v3_large/EQ+P9999a": {
+    "model": "mobilenet_v3_large",
+    "recipe": "EQ+P9999a",
+    "spec": {
+      "src": "eq",
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-eq-named.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.564453125,
+    "delta_pp": -13.28,
+    "agree_fp32": 0.703125,
+    "fp32_acc": 0.697265625,
+    "n": 512,
+    "census": {
+      "Q": 152,
+      "DQ": 289,
+      "ops_with_quantized_inputs": {
+        "Conv": 62,
+        "HardSigmoid": 29,
+        "Mul": 38,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_ops_quantized": 151,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 62,
+        "HardSigmoid": 29,
+        "Mul": 38,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_int8_sandwich": 151,
+      "Q_zero_point_types": {
+        "UINT8": 152
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\EQ+P9999a.onnx",
+    "quantize_s": 17.0,
+    "total_s": 26.1,
+    "acc_ref": 0.67578125,
+    "delta_ref_pp": -2.15,
+    "agree_ref_fp32": 0.888671875
+  },
+  "mobilenet_v3_large/EQ+P9999a+exstem": {
+    "model": "mobilenet_v3_large",
+    "recipe": "EQ+P9999a+exstem",
+    "spec": {
+      "src": "eq",
+      "exclude_stem": true,
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-eq-named.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 3,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.6796875,
+    "delta_pp": -1.76,
+    "agree_fp32": 0.900390625,
+    "fp32_acc": 0.697265625,
+    "n": 512,
+    "census": {
+      "Q": 149,
+      "DQ": 284,
+      "ops_with_quantized_inputs": {
+        "Conv": 61,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "HardSigmoid": 28,
+        "Mul": 37,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_ops_quantized": 148,
+      "n_ops_float": 3,
+      "int8_sandwich_ops": {
+        "Conv": 61,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "HardSigmoid": 28,
+        "Mul": 37,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_int8_sandwich": 148,
+      "Q_zero_point_types": {
+        "UINT8": 149
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\EQ+P9999a+exstem.onnx",
+    "quantize_s": 25.1,
+    "total_s": 35.7,
+    "acc_ref": 0.685546875,
+    "delta_ref_pp": -1.17,
+    "agree_ref_fp32": 0.90625
+  },
+  "mobilenet_v3_large/EQ+P9999a+exgates": {
+    "model": "mobilenet_v3_large",
+    "recipe": "EQ+P9999a+exgates",
+    "spec": {
+      "src": "eq",
+      "exclude_eq_gates": true,
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-eq-named.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 18,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.576171875,
+    "delta_pp": -12.11,
+    "agree_fp32": 0.72265625,
+    "fp32_acc": 0.697265625,
+    "n": 512,
+    "census": {
+      "Q": 143,
+      "DQ": 271,
+      "ops_with_quantized_inputs": {
+        "Conv": 62,
+        "HardSigmoid": 20,
+        "Mul": 29,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_ops_quantized": 133,
+      "n_ops_float": 18,
+      "int8_sandwich_ops": {
+        "Conv": 62,
+        "HardSigmoid": 20,
+        "Mul": 29,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_int8_sandwich": 133,
+      "Q_zero_point_types": {
+        "UINT8": 143
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\EQ+P9999a+exgates.onnx",
+    "quantize_s": 33.6,
+    "total_s": 45.8,
+    "acc_ref": 0.671875,
+    "delta_ref_pp": -2.54,
+    "agree_ref_fp32": 0.888671875
+  },
+  "mobilenet_v3_large/EQ+P9999a+exstem+exgates": {
+    "model": "mobilenet_v3_large",
+    "recipe": "EQ+P9999a+exstem+exgates",
+    "spec": {
+      "src": "eq",
+      "exclude_stem": true,
+      "exclude_eq_gates": true,
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-eq-named.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 21,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.677734375,
+    "delta_pp": -1.95,
+    "agree_fp32": 0.896484375,
+    "fp32_acc": 0.697265625,
+    "n": 512,
+    "census": {
+      "Q": 140,
+      "DQ": 266,
+      "ops_with_quantized_inputs": {
+        "Conv": 61,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "HardSigmoid": 19,
+        "Mul": 28,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_ops_quantized": 130,
+      "n_ops_float": 21,
+      "int8_sandwich_ops": {
+        "Conv": 61,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "HardSigmoid": 19,
+        "Mul": 28,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_int8_sandwich": 130,
+      "Q_zero_point_types": {
+        "UINT8": 140
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\EQ+P9999a+exstem+exgates.onnx",
+    "quantize_s": 41.2,
+    "total_s": 52.6,
+    "acc_ref": 0.69140625,
+    "delta_ref_pp": -0.59,
+    "agree_ref_fp32": 0.9140625
+  },
+  "mobilenet_v3_large/P9999a+exclude_features0": {
+    "model": "mobilenet_v3_large",
+    "recipe": "P9999a+exclude_features0",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "exclude_blocks": [
+        "/features/features.0/"
+      ]
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-fp32-preproc.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 1,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.65625,
+    "delta_pp": -4.1,
+    "agree_fp32": 0.865234375,
+    "fp32_acc": 0.697265625,
+    "n": 512,
+    "census": {
+      "Q": 142,
+      "DQ": 268,
+      "ops_with_quantized_inputs": {
+        "HardSigmoid": 29,
+        "Mul": 29,
+        "Conv": 61,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_ops_quantized": 141,
+      "n_ops_float": 1,
+      "int8_sandwich_ops": {
+        "HardSigmoid": 29,
+        "Mul": 29,
+        "Conv": 61,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_int8_sandwich": 141,
+      "Q_zero_point_types": {
+        "UINT8": 142
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\P9999a+exclude_features0.onnx",
+    "quantize_s": 21.4,
+    "total_s": 30.7,
+    "acc_ref": 0.671875,
+    "delta_ref_pp": -2.54,
+    "agree_ref_fp32": 0.890625
+  },
+  "mobilenet_v3_large/P9999a+u16_features0": {
+    "model": "mobilenet_v3_large",
+    "recipe": "P9999a+u16_features0",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "u16_blocks": [
+        "/features/features.0/"
+      ]
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-fp32-preproc.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1,
+        "TensorQuantOverrides": "2 tensor overrides"
+      }
+    },
+    "acc": 0.673828125,
+    "delta_pp": -2.34,
+    "agree_fp32": 0.896484375,
+    "fp32_acc": 0.697265625,
+    "n": 512,
+    "census": {
+      "Q": 143,
+      "DQ": 271,
+      "ops_with_quantized_inputs": {
+        "Conv": 62,
+        "HardSigmoid": 29,
+        "Mul": 29,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_ops_quantized": 142,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 61,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "HardSigmoid": 28,
+        "Mul": 28,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_int8_sandwich": 139,
+      "Q_zero_point_types": {
+        "UINT16": 2,
+        "UINT8": 141
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\P9999a+u16_features0.onnx",
+    "quantize_s": 25.6,
+    "total_s": 33.9,
+    "acc_ref": 0.671875,
+    "delta_ref_pp": -2.54,
+    "agree_ref_fp32": 0.896484375
+  },
+  "mobilenet_v3_large/P9999a+s8s8+u16_features0": {
+    "model": "mobilenet_v3_large",
+    "recipe": "P9999a+s8s8+u16_features0",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "act": "int8",
+      "u16_blocks": [
+        "/features/features.0/"
+      ]
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-fp32-preproc.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1,
+        "TensorQuantOverrides": "2 tensor overrides"
+      }
+    },
+    "acc": 0.67578125,
+    "delta_pp": -2.15,
+    "agree_fp32": 0.8984375,
+    "fp32_acc": 0.697265625,
+    "n": 512,
+    "census": {
+      "Q": 143,
+      "DQ": 271,
+      "ops_with_quantized_inputs": {
+        "Conv": 62,
+        "HardSigmoid": 29,
+        "Mul": 29,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_ops_quantized": 142,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 61,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "HardSigmoid": 28,
+        "Mul": 28,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_int8_sandwich": 139,
+      "Q_zero_point_types": {
+        "UINT16": 2,
+        "INT8": 141
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\P9999a+s8s8+u16_features0.onnx",
+    "quantize_s": 22.3,
+    "total_s": 43.9,
+    "acc_ref": 0.671875,
+    "delta_ref_pp": -2.54,
+    "agree_ref_fp32": 0.896484375
+  },
+  "mobilenet_v3_large/P9999a+s8s8+exclude_features0": {
+    "model": "mobilenet_v3_large",
+    "recipe": "P9999a+s8s8+exclude_features0",
+    "spec": {
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8,
+      "act": "int8",
+      "exclude_blocks": [
+        "/features/features.0/"
+      ]
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\mobilenet_v3_large-fp32-preproc.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 1,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.677734375,
+    "delta_pp": -1.95,
+    "agree_fp32": 0.904296875,
+    "fp32_acc": 0.697265625,
+    "n": 512,
+    "census": {
+      "Q": 142,
+      "DQ": 268,
+      "ops_with_quantized_inputs": {
+        "HardSigmoid": 29,
+        "Mul": 29,
+        "Conv": 61,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_ops_quantized": 141,
+      "n_ops_float": 1,
+      "int8_sandwich_ops": {
+        "HardSigmoid": 29,
+        "Mul": 29,
+        "Conv": 61,
+        "Add": 10,
+        "GlobalAveragePool": 9,
+        "Flatten": 1,
+        "Gemm": 2
+      },
+      "n_int8_sandwich": 141,
+      "Q_zero_point_types": {
+        "INT8": 142
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\mobilenet_v3_large\\P9999a+s8s8+exclude_features0.onnx",
+    "quantize_s": 16.2,
+    "total_s": 32.6,
+    "acc_ref": 0.671875,
+    "delta_ref_pp": -2.54,
+    "agree_ref_fp32": 0.890625
+  },
+  "efficientnet_b0/fp32_eq": {
+    "model": "efficientnet_b0",
+    "recipe": "fp32_eq",
+    "acc": 0.7421875,
+    "agree_fp32": 1.0,
+    "n": 512,
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\efficientnet_b0-eq-named.onnx"
+  },
+  "efficientnet_b0/EQ_minmax": {
+    "model": "efficientnet_b0",
+    "recipe": "EQ_minmax",
+    "spec": {
+      "src": "eq"
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\efficientnet_b0-eq-named.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 0,
+      "extra_options": {}
+    },
+    "acc": 0.587890625,
+    "delta_pp": -15.43,
+    "agree_fp32": 0.73046875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 256,
+      "DQ": 436,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Mul": 81,
+        "Sigmoid": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 255,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Mul": 81,
+        "Sigmoid": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 255,
+      "Q_zero_point_types": {
+        "UINT8": 256
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\EQ_minmax.onnx",
+    "quantize_s": 16.3,
+    "total_s": 29.3,
+    "acc_ref": 0.65625,
+    "delta_ref_pp": -8.59,
+    "agree_ref_fp32": 0.791015625
+  },
+  "efficientnet_b0/EQ_minmax+exgates": {
+    "model": "efficientnet_b0",
+    "recipe": "EQ_minmax+exgates",
+    "spec": {
+      "src": "eq",
+      "exclude_eq_gates": true
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\efficientnet_b0-eq-named.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": null,
+      "n_excluded_nodes": 32,
+      "extra_options": {}
+    },
+    "acc": 0.638671875,
+    "delta_pp": -10.35,
+    "agree_fp32": 0.79296875,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Mul": 65,
+        "Sigmoid": 49,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 223,
+      "n_ops_float": 32,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Mul": 65,
+        "Sigmoid": 49,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 223,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\EQ_minmax+exgates.onnx",
+    "quantize_s": 13.8,
+    "total_s": 32.5,
+    "acc_ref": 0.69921875,
+    "delta_ref_pp": -4.3,
+    "agree_ref_fp32": 0.849609375
+  },
+  "efficientnet_b0/EQ+P9999a": {
+    "model": "efficientnet_b0",
+    "recipe": "EQ+P9999a",
+    "spec": {
+      "src": "eq",
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\efficientnet_b0-eq-named.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 0,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.689453125,
+    "delta_pp": -5.27,
+    "agree_fp32": 0.828125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 256,
+      "DQ": 436,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Mul": 81,
+        "Sigmoid": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 255,
+      "n_ops_float": 0,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Mul": 81,
+        "Sigmoid": 65,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 255,
+      "Q_zero_point_types": {
+        "UINT8": 256
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\EQ+P9999a.onnx",
+    "quantize_s": 38.6,
+    "total_s": 49.1,
+    "acc_ref": 0.73046875,
+    "delta_ref_pp": -1.17,
+    "agree_ref_fp32": 0.884765625
+  },
+  "efficientnet_b0/EQ+P9999a+exstem": {
+    "model": "efficientnet_b0",
+    "recipe": "EQ+P9999a+exstem",
+    "spec": {
+      "src": "eq",
+      "exclude_stem": true,
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\efficientnet_b0-eq-named.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 4,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.716796875,
+    "delta_pp": -2.54,
+    "agree_fp32": 0.880859375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 252,
+      "DQ": 429,
+      "ops_with_quantized_inputs": {
+        "Conv": 80,
+        "Sigmoid": 64,
+        "Mul": 79,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 251,
+      "n_ops_float": 4,
+      "int8_sandwich_ops": {
+        "Conv": 80,
+        "Sigmoid": 64,
+        "Mul": 79,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 251,
+      "Q_zero_point_types": {
+        "UINT8": 252
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\EQ+P9999a+exstem.onnx",
+    "quantize_s": 35.6,
+    "total_s": 48.7,
+    "acc_ref": 0.734375,
+    "delta_ref_pp": -0.78,
+    "agree_ref_fp32": 0.927734375
+  },
+  "efficientnet_b0/EQ+P9999a+exgates": {
+    "model": "efficientnet_b0",
+    "recipe": "EQ+P9999a+exgates",
+    "spec": {
+      "src": "eq",
+      "exclude_eq_gates": true,
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\efficientnet_b0-eq-named.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 32,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.69140625,
+    "delta_pp": -5.08,
+    "agree_fp32": 0.8359375,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 240,
+      "DQ": 404,
+      "ops_with_quantized_inputs": {
+        "Conv": 81,
+        "Mul": 65,
+        "Sigmoid": 49,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 223,
+      "n_ops_float": 32,
+      "int8_sandwich_ops": {
+        "Conv": 81,
+        "Mul": 65,
+        "Sigmoid": 49,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 223,
+      "Q_zero_point_types": {
+        "UINT8": 240
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\EQ+P9999a+exgates.onnx",
+    "quantize_s": 36.1,
+    "total_s": 51.0,
+    "acc_ref": 0.740234375,
+    "delta_ref_pp": -0.2,
+    "agree_ref_fp32": 0.9140625
+  },
+  "efficientnet_b0/EQ+P9999a+exstem+exgates": {
+    "model": "efficientnet_b0",
+    "recipe": "EQ+P9999a+exstem+exgates",
+    "spec": {
+      "src": "eq",
+      "exclude_stem": true,
+      "exclude_eq_gates": true,
+      "method": "percentile",
+      "extra": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false
+      },
+      "chunk": 8
+    },
+    "quantized_from": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\efficientnet_b0-eq-named.onnx",
+    "info": {
+      "n_calib_images": 64,
+      "calib_chunk": 8,
+      "n_excluded_nodes": 34,
+      "extra_options": {
+        "CalibPercentile": 99.99,
+        "CalibTensorRangeSymmetric": false,
+        "CalibStridedMinMax": 1
+      }
+    },
+    "acc": 0.716796875,
+    "delta_pp": -2.54,
+    "agree_fp32": 0.8828125,
+    "fp32_acc": 0.7421875,
+    "n": 512,
+    "census": {
+      "Q": 237,
+      "DQ": 399,
+      "ops_with_quantized_inputs": {
+        "Conv": 80,
+        "Sigmoid": 49,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_ops_quantized": 221,
+      "n_ops_float": 34,
+      "int8_sandwich_ops": {
+        "Conv": 80,
+        "Sigmoid": 49,
+        "Mul": 64,
+        "GlobalAveragePool": 17,
+        "Add": 9,
+        "Flatten": 1,
+        "Gemm": 1
+      },
+      "n_int8_sandwich": 221,
+      "Q_zero_point_types": {
+        "UINT8": 237
+      }
+    },
+    "path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\agents\\recipes\\work\\efficientnet_b0\\EQ+P9999a+exstem+exgates.onnx",
+    "quantize_s": 34.9,
+    "total_s": 56.7,
+    "acc_ref": 0.73046875,
+    "delta_ref_pp": -1.17,
+    "agree_ref_fp32": 0.91015625
+  }
+}

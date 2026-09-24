@@ -1,0 +1,253 @@
+{
+ "float": {
+  "acc": 0.7421875,
+  "acc_basic": 0.7421875,
+  "n": 512
+ },
+ "qdq_baseline": {
+  "acc": 0.224609375,
+  "acc_basic": 0.259765625,
+  "n": 512
+ },
+ "float_dwin_b1": {
+  "acc": 0.32421875,
+  "acc_basic": 0.34375,
+  "n": 512
+ },
+ "float_stemsilu_b1": {
+  "acc": 0.54296875,
+  "acc_basic": 0.54296875,
+  "n": 512
+ },
+ "pc_dwin_b1": {
+  "acc_basic": 0.3359375,
+  "n": 512,
+  "acc": null
+ },
+ "pc_silu_b1": {
+  "acc_basic": 0.546875,
+  "n": 512,
+  "acc": null
+ },
+ "float_stemconv_b1": {
+  "acc": 0.3671875,
+  "acc_basic": 0.390625,
+  "n": 512
+ },
+ "float_stemsig_b1": {
+  "acc": 0.2421875,
+  "acc_basic": 0.24609375,
+  "n": 512
+ },
+ "float_stemconv_mul_b1": {
+  "acc": 0.5234375,
+  "acc_basic": 0.54296875,
+  "n": 512
+ },
+ "float_dwin_all": {
+  "acc": 0.427734375,
+  "acc_basic": 0.439453125,
+  "n": 512
+ },
+ "float_silu_all": {
+  "acc": 0.69140625,
+  "acc_basic": 0.693359375,
+  "n": 512
+ },
+ "float_siluconv_mul_all": {
+  "acc": 0.681640625,
+  "acc_basic": 0.6796875,
+  "n": 512
+ },
+ "pc_dwin_all": {
+  "acc_basic": 0.423828125,
+  "n": 512,
+  "acc": null
+ },
+ "pc_silu_all": {
+  "acc_basic": 0.68359375,
+  "n": 512,
+  "acc": null
+ },
+ "pc_dwin_all_but_b1": {
+  "acc_basic": 0.34765625,
+  "n": 512,
+  "acc": null
+ },
+ "pc_stem_ch13_only": {
+  "acc": null,
+  "acc_basic": 0.35546875,
+  "n": 512
+ },
+ "pc_stem_ch12_13_only": {
+  "acc": null,
+  "acc_basic": 0.341796875,
+  "n": 512
+ },
+ "pc_stem_9_small_channels": {
+  "acc": null,
+  "acc_basic": 0.3671875,
+  "n": 512,
+  "channels": [
+   6,
+   9,
+   10,
+   12,
+   13,
+   17,
+   21,
+   22,
+   24
+  ]
+ },
+ "propagated_sqnr_db": {
+  "qdq_baseline": {
+   "#3 features.1 dw out": 6.995616507570994,
+   "#13 features.1 project out": 0.24425211363187624,
+   "#17 features.2.0 dw out": 1.2503938661882816,
+   "features.4.0 dw out": 7.223922318237301,
+   "features.7.0 dw out": 4.916026171702735,
+   "logits": -1.5781252057739537
+  },
+  "float_dwin_b1": {
+   "#3 features.1 dw out": 16.71891041608219,
+   "#13 features.1 project out": 3.199461588579424,
+   "#17 features.2.0 dw out": 5.63702168542722,
+   "features.4.0 dw out": 7.863252529265676,
+   "features.7.0 dw out": 5.562897271363533,
+   "logits": -0.931414798021386
+  },
+  "float_stemsilu_b1": {
+   "#3 features.1 dw out": 39.16970343566811,
+   "#13 features.1 project out": 15.302811359685546,
+   "#17 features.2.0 dw out": 10.35964580241119,
+   "features.4.0 dw out": 10.746599550329988,
+   "features.7.0 dw out": 7.720025619843053,
+   "logits": 1.8968209329656331
+  },
+  "pc_silu_b1": {
+   "#3 features.1 dw out": 33.03165997255578,
+   "#13 features.1 project out": 14.950501843843792,
+   "#17 features.2.0 dw out": 10.242419719515672,
+   "features.4.0 dw out": 10.714537776915996,
+   "features.7.0 dw out": 7.761050130002612,
+   "logits": 1.8556281767493545
+  },
+  "float_silu_all": {
+   "#3 features.1 dw out": 39.16970343566811,
+   "#13 features.1 project out": 15.302811359685546,
+   "#17 features.2.0 dw out": 19.147506339173418,
+   "features.4.0 dw out": 16.10751228645045,
+   "features.7.0 dw out": 13.455264818188628,
+   "logits": 6.799045197237307
+  },
+  "pc_silu_all": {
+   "#3 features.1 dw out": 33.03165997255578,
+   "#13 features.1 project out": 14.950501843843792,
+   "#17 features.2.0 dw out": 18.591573444032086,
+   "features.4.0 dw out": 15.893425588723657,
+   "features.7.0 dw out": 13.091495491796701,
+   "logits": 6.101165329250303
+  }
+ },
+ "summary": {
+  "mechanism": "Per-tensor uint8 activation scales on the expand-conv output (SiLU input) and SiLU output (depthwise input) are set by one or two outlier channels (stem: ch3, range 169 at conv out / 82 at SiLU out). Most channels get 20-40 levels, and 9/32 get fewer than 6 (ch13 lives entirely in the SiLU negative lobe [-0.27,-0.10] and gets 0.5 levels: every value becomes 0 or -0.348). A depthwise conv cannot average error over channels, and its BN-folded weights are largest on exactly those small channels (ch13 sum|w|=325 vs median ~3), so the rounding error is amplified about 26 dB in features.1 and 10-24 dB in every one of the 16 depthwise convs. Weight quantization (42.7 dB), bias quantization (51.5 dB), Sigmoid output quantization (+1.8pp when removed) and a DC or negative-lobe bias (0.6% of error energy) are ruled out.",
+  "key_numbers_block1": {
+   "stem_conv_out": {
+    "scale": 0.71943,
+    "zp": 132,
+    "tensor_range": [
+     -87.2,
+     81.9
+    ],
+    "ch3_range": 169.1,
+    "median_ch_levels": 21.2,
+    "ch13_range": [
+     -3.59,
+     -1.53
+    ],
+    "ch13_levels": 2.9
+   },
+   "stem_silu_out_dw_input": {
+    "scale": 0.34755,
+    "zp": 1,
+    "tensor_range": [
+     -0.28,
+     81.9
+    ],
+    "median_ch_levels": 28.8,
+    "ch13_range": [
+     -0.272,
+     -0.097
+    ],
+    "ch13_levels": 0.5,
+    "ch13_sqnr_db": 3.3,
+    "channels_below_6_levels": [
+     6,
+     9,
+     10,
+     12,
+     13,
+     17,
+     21,
+     22,
+     24
+    ]
+   },
+   "dw1_weights_ch13": {
+    "w_absmax": 76.1,
+    "w_abssum": 324.7,
+    "w_scale_int8": 0.599,
+    "median_other_w_abssum": 3.0
+   },
+   "dw1_bias_ch13": {
+    "bias": -1.31,
+    "bias_scale": 0.208,
+    "bias_q": -6
+   },
+   "dw1_out": {
+    "scale": 0.48034,
+    "zp": 146,
+    "sqnr_db": 7.0,
+    "ch13_sqnr_db": -7.7,
+    "ch13_share_of_error_energy": 0.886,
+    "sqnr_weights_only": 42.7,
+    "sqnr_bias_only": 51.5,
+    "sqnr_input_rounding_only": 7.8
+   }
+  },
+  "causal_pp_vs_qdq_at_ORT_ENABLE_ALL": {
+   "float": 51.8,
+   "qdq_baseline": 0.0,
+   "float_dwin_b1": 10.0,
+   "float_stemsilu_b1": 31.8,
+   "float_stemconv_b1": 14.3,
+   "float_stemsig_b1": 1.8,
+   "float_stemconv_mul_b1": 29.9,
+   "float_dwin_all": 20.3,
+   "float_silu_all": 46.7,
+   "float_siluconv_mul_all": 45.7
+  },
+  "causal_pp_vs_qdq_unfused_basic": {
+   "float": 48.2,
+   "qdq_baseline": 0.0,
+   "float_dwin_b1": 8.4,
+   "float_stemsilu_b1": 28.3,
+   "pc_dwin_b1": 7.6,
+   "pc_silu_b1": 28.7,
+   "float_stemconv_b1": 13.1,
+   "float_stemsig_b1": -1.4,
+   "float_stemconv_mul_b1": 28.3,
+   "float_dwin_all": 18.0,
+   "float_silu_all": 43.4,
+   "float_siluconv_mul_all": 42.0,
+   "pc_dwin_all": 16.4,
+   "pc_silu_all": 42.4,
+   "pc_dwin_all_but_b1": 8.8,
+   "pc_stem_ch13_only": 9.6,
+   "pc_stem_ch12_13_only": 8.2,
+   "pc_stem_9_small_channels": 10.7
+  },
+  "note": "pc_* variants use per-channel (axis=1) activation Q/DQ. ORT 1.30 at ENABLE_ALL fuses them into QLinearMul and fails ('Scale and Zero-point must be a scalar'), so they are scored at ORT_ENABLE_BASIC (unfused QDQ simulation) against the unfused baseline (26.0%). 512 Imagenette val images, 1 thread."
+ }
+}
