@@ -1,0 +1,46 @@
+{
+ "fp32_ms": [
+  16.5187,
+  16.8187,
+  17.3198
+ ],
+ "environment_warnings": [],
+ "rows": {
+  "equalise + percentile + float stem + reduce_range": {
+   "p50_ms": [
+    16.1608,
+    15.9748,
+    16.4404
+   ],
+   "speedup": 1.040709618335726,
+   "delta_pp": -0.48828125
+  },
+  "equalise + percentile + float stem": {
+   "p50_ms": [
+    16.1448,
+    15.9665,
+    16.2883
+   ],
+   "speedup": 1.0417409940042615,
+   "delta_pp": -2.63671875
+  },
+  "equalise + percentile + float stem + guard": {
+   "p50_ms": [
+    16.4625,
+    16.5043,
+    16.0729
+   ],
+   "speedup": 1.0216370539104025,
+   "delta_pp": -1.66015625
+  },
+  "onnxruntime default": {
+   "p50_ms": [
+    14.873,
+    14.984,
+    15.3076
+   ],
+   "speedup": 1.122443940202883,
+   "delta_pp": -51.171875
+  }
+ }
+}

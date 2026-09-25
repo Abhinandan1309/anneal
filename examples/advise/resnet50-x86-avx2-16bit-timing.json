@@ -1,0 +1,37 @@
+{
+ "fp32_ms": [
+  81.9003,
+  81.6496,
+  80.5403
+ ],
+ "environment_warnings": [],
+ "rows": {
+  "percentile + float stem + reduce_range": {
+   "p50_ms": [
+    77.2299,
+    78.9768,
+    77.4659
+   ],
+   "speedup": 1.0540069888815595,
+   "delta_pp": -0.09765625
+  },
+  "percentile + float stem": {
+   "p50_ms": [
+    78.05,
+    78.8788,
+    77.0862
+   ],
+   "speedup": 1.046119154388213,
+   "delta_pp": -0.390625
+  },
+  "onnxruntime default": {
+   "p50_ms": [
+    73.664,
+    72.5012,
+    72.0714
+   ],
+   "speedup": 1.1261827390443193,
+   "delta_pp": -13.0859375
+  }
+ }
+}

@@ -346,7 +346,19 @@ Verified on 512–1,024 images ([data](examples/advise/)):
 The rules are learned from eleven models. **One was corrected against the lab data before
 shipping:** `reduce_range` is advised on non-VNNI x86 for SiLU networks, where it removed
 EfficientNet's saturation, but not for Hardswish networks, where it cost MobileNetV3 2pp.
-The speeds these runs recorded were measured on battery and are not reported.
+
+**Speed on the CPU that was advised for** (this laptop: AC power, cpu-1t, three interleaved
+rounds, [script](examples/advise/retime.py)):
+
+| model | advised recipe | onnxruntime default |
+|---|---|---|
+| EfficientNet-B0 | **1.04x**, −0.49pp | 1.12x, −51.2pp |
+| ResNet-50 | **1.05x**, −0.10pp | 1.13x, −13.1pp |
+
+On x86 without VNNI, the recipes that keep accuracy are only about 5% faster than FP32. The
+default is faster because it quantizes the stem, and that is exactly what breaks it. So the
+advisor says that on this kind of CPU INT8 may not be worth deploying at all. The same
+recipes ran 2–4x faster on ARM in the lab.
 
 **What is left.** On EfficientNet, the remaining ~1pp sits at the next boundary: depthwise
 conv → SiLU → squeeze-excite and project conv. Per-channel scales there recover it fully
