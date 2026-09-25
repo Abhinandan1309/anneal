@@ -4,6 +4,18 @@ This file is committed **before** the device runs it describes, so its predictio
 adjusted to fit the data. Results go in a separate file that links back here; any prediction
 that fails is reported as a finding.
 
+## Amendment: narrowed before any result (committed before the runs)
+
+The full grid below would need about 300 cloud jobs. It was cut, before any device result
+beyond a pipeline check existed, to the runs that can change a conclusion (about 50 jobs):
+
+- **Models:** EfficientNet-B0 (under test) and ResNet-50 (control). MobileNetV3 is dropped; it cannot change a conclusion either way.
+- **Devices:** Galaxy S24 (modern phone NPU), SA8775P ADP (automotive), Pixel 8 (non-Qualcomm silicon). One NPU generation plus two contrasts suffices for a method-level effect, so the five-generation sweep of Q1 is dropped, and so is the IoT board of Q4.
+- **Runtime:** TFLite on all three. QNN on the Galaxy S24 is kept for EfficientNet-B0 only (Q2).
+- **Variants:** EfficientNet-B0 runs `fp32`, `hub int8` and `hub int8 + equalised` on every device, plus `anneal recipe` on the Galaxy S24 only. ResNet-50 runs `fp32` and `hub int8` only.
+- **Predictions 1–4 stand unchanged.** Prediction 5 (MobileNetV3) is withdrawn with its model.
+
+
 ## Why
 
 Every INT8 result in this repository so far ran on server and laptop CPUs through
