@@ -256,6 +256,128 @@ class SyntheticEvalSet(EvalSet):
             seen += x.shape[0]
 
 
+# ---------------------------------------------------------------------------
+# ImageNet-1k validation (Hugging Face parquet export)
+# ---------------------------------------------------------------------------
+
+#: Every CALIB_STRIDE-th validation image (1,000 of 50,000) is held out for calibration and
+#: never scored. There is no ImageNet train split here, and calibrating on scored images
+#: would flatter every quantized model.
+IMAGENET_CALIB_STRIDE = 50
+
+
+def imagenet_parquet_dir(cache_dir: Path) -> Path:
+    """Where `anneal` expects the validation parquet files.
+
+    They come from the gated Hugging Face dataset ``ILSVRC/imagenet-1k`` (accept its licence
+    on the website, then ``hf auth login``); download with::
+
+        from huggingface_hub import snapshot_download
+        snapshot_download("ILSVRC/imagenet-1k", repo_type="dataset",
+                          allow_patterns=["data/validation-*.parquet"],
+                          local_dir=cache_dir / "imagenet-1k")
+    """
+    root = Path(cache_dir) / "imagenet-1k" / "data"
+    if not sorted(root.glob("validation-*.parquet")):
+        raise FileNotFoundError(
+            f"no ImageNet validation parquet files under {root}. They are licensed: accept the "
+            f"terms at https://huggingface.co/datasets/ILSVRC/imagenet-1k, run `hf auth login`, "
+            f"then download data/validation-*.parquet into {root.parent}."
+        )
+    return root
+
+
+class ImageNetEvalSet(EvalSet):
+    """The ImageNet-1k validation set, streamed from parquet, scored 1000-way.
+
+    ``split="val"`` is the 49,000 images not held out; ``split="calib"`` is the 1,000 that
+    are. The files are shuffled, so a ``limit`` takes a class-balanced prefix.
+    """
+
+    name = "imagenet"
+    synthetic = False
+    caching = False
+
+    def __init__(
+        self,
+        root: Path,
+        *,
+        split: str = "val",
+        batch_size: int = 32,
+        limit: int | None = None,
+        image_size: int = 224,
+        resize: int = 256,
+        workers: int = 4,
+    ) -> None:
+        import pyarrow.parquet as pq
+
+        if split not in ("val", "calib"):
+            raise ValueError(f"split must be 'val' or 'calib', got {split!r}")
+        self.split = split
+        self.batch_size = batch_size
+        self.image_size = image_size
+        self.resize = resize
+        self.workers = workers
+        self.files = sorted(Path(root).glob("validation-*.parquet"))
+        # Index (file, row group, row) without touching the image bytes.
+        self.index: list[tuple[int, int, int]] = []
+        g = 0
+        for fi, f in enumerate(self.files):
+            meta = pq.ParquetFile(f).metadata
+            for rg in range(meta.num_row_groups):
+                for r in range(meta.row_group(rg).num_rows):
+                    held_out = g % IMAGENET_CALIB_STRIDE == 0
+                    if held_out == (split == "calib"):
+                        self.index.append((fi, rg, r))
+                    g += 1
+        if limit is not None:
+            self.index = self.index[:limit]
+
+    def __len__(self) -> int:
+        return len(self.index)
+
+    def _decode(self, blob: bytes) -> np.ndarray:
+        import io
+
+        return preprocess_image(io.BytesIO(blob), self.image_size, self.resize)
+
+    def _rows(self) -> Iterator[tuple[bytes, int]]:
+        import pyarrow.parquet as pq
+
+        wanted: dict[tuple[int, int], list[int]] = {}
+        for fi, rg, r in self.index:
+            wanted.setdefault((fi, rg), []).append(r)
+        for (fi, rg), rows in wanted.items():
+            table = pq.ParquetFile(self.files[fi]).read_row_group(rg, columns=["image", "label"])
+            images = table.column("image").to_pylist()
+            labels = table.column("label").to_pylist()
+            for r in rows:
+                yield images[r]["bytes"], int(labels[r])
+
+    def batches(self) -> Iterator[tuple[np.ndarray, np.ndarray]]:
+        from concurrent.futures import ThreadPoolExecutor
+
+        with ThreadPoolExecutor(max_workers=self.workers) as pool:
+            chunk: list[tuple[bytes, int]] = []
+            for item in self._rows():
+                chunk.append(item)
+                if len(chunk) == self.batch_size:
+                    x = np.stack(list(pool.map(self._decode, [b for b, _ in chunk])))
+                    yield x.astype(np.float32), np.array([l for _, l in chunk], dtype=np.int64)
+                    chunk = []
+            if chunk:
+                x = np.stack(list(pool.map(self._decode, [b for b, _ in chunk])))
+                yield x.astype(np.float32), np.array([l for _, l in chunk], dtype=np.int64)
+
+    def calibration_batches(self, limit: int) -> Iterator[np.ndarray]:
+        seen = 0
+        for x, _ in self.batches():
+            if seen >= limit:
+                return
+            yield x
+            seen += x.shape[0]
+
+
 def load_evalset(
     spec: str,
     *,
@@ -289,6 +411,11 @@ def load_evalset(
             image_size=image_size,
             resize=round(image_size * 256 / 224),
         )
+    if spec == "imagenet":
+        return ImageNetEvalSet(
+            imagenet_parquet_dir(Path(cache_dir)), split="val", batch_size=batch_size,
+            limit=limit, image_size=image_size, resize=round(image_size * 256 / 224),
+        )
     path = Path(spec)
     if path.is_dir():
         return ImagenetteEvalSet(
@@ -299,7 +426,7 @@ def load_evalset(
             resize=round(image_size * 256 / 224),
         )
     raise ValueError(
-        f"unrecognised eval set {spec!r}; expected 'synthetic', 'imagenette[:160|:320]', "
+        f"unrecognised eval set {spec!r}; expected 'synthetic', 'imagenet', 'imagenette[:160|:320]', "
         f"or a path to an Imagenette-layout directory"
     )
 
@@ -328,6 +455,11 @@ def load_calibset(
             batch_size=batch_size,
             n=limit,
             seed=1,
+        )
+    if spec == "imagenet":
+        return ImageNetEvalSet(
+            imagenet_parquet_dir(Path(cache_dir)), split="calib", batch_size=batch_size,
+            limit=limit, image_size=image_size, resize=resize,
         )
     if spec.startswith("imagenette"):
         variant = spec.split(":", 1)[1] if ":" in spec else "160"

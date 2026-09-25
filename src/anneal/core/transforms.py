@@ -548,6 +548,7 @@ def quantize_static_int8(
     guard = bool(params.get("guard_saturation", False))
     tolerance = float(params.get("saturation_tolerance", SATURATION_TOLERANCE))
     equalize = bool(params.get("equalize", False))
+    equalize_dense = bool(params.get("equalize_dense", False))
     slack = float(params.get("equalize_slack", EQUALIZE_SLACK))
     float_gates = bool(params.get("float_gates", False))
     float_stem = bool(params.get("float_stem", False))
@@ -560,8 +561,10 @@ def quantize_static_int8(
             "equalize needs per_channel weights: with one weight scale per tensor the rescale "
             "would move quantization error into the weights instead of removing it"
         )
-    if float_gates and not equalize:
-        raise TransformError("float_gates only applies together with equalize")
+    if float_gates and not (equalize or equalize_dense):
+        raise TransformError("float_gates only applies together with equalize or equalize_dense")
+    if equalize_dense and not per_channel:
+        raise TransformError("equalize_dense needs per_channel weights")
     if not 0.0 <= slack <= 4.0:
         raise TransformError(f"equalize_slack must be in [0, 4], got {slack}")
 
@@ -593,6 +596,8 @@ def quantize_static_int8(
                 else {}
             ),
             **({"float_stem": True} if float_stem else {}),
+            **({"equalize_dense": True, "equalize_slack": slack, "float_gates": float_gates}
+               if equalize_dense else {}),
             **({"quantize_ops": quantize_ops} if quantize_ops != "default" else {}),
             **({"calib_percentile": percentile} if calib_method.startswith("percentile") and "calib_percentile" in params else {}),
         },
@@ -620,6 +625,20 @@ def quantize_static_int8(
         eq_meta = {
             "equalisation": result.summary(),
             "equalised_sites": [s.to_dict() for s in result.sites],
+        }
+    if equalize_dense:
+        from anneal.core.equalize_dense import equalise_dense
+
+        dense_path = out.with_name(out.stem + "-equalised-dense-fp32.onnx")
+        batches = list(calib_source.calibration_batches(n_calib))
+        dense_sites, dense_gates, change = equalise_dense(src, dense_path, batches, slack=slack)
+        src = dense_path
+        if float_gates:
+            base_exclude = base_exclude + dense_gates
+        eq_meta["dense_equalisation"] = {
+            "sites_rewritten": len(dense_sites),
+            "max_abs_logit_change": change,
+            "sites": [d.to_dict() for d in dense_sites],
         }
 
     def run_quantizer(exclude: list[str]) -> None:
@@ -849,6 +868,15 @@ REGISTRY: dict[str, TransformSpec] = {
             "calib_percentile": {
                 "type": "number",
                 "description": "Percentile for percentile calibration (default 99.99).",
+            },
+            "equalize_dense": {
+                "type": "boolean",
+                "description": (
+                    "Also equalise gated activations into dense consumers (ConvNeXt's GELU -> "
+                    "Linear, EfficientNetV2's Fused-MBConv, squeeze-excite MLPs), choosing the "
+                    "strength per site by simulated INT8 error; sites where it would not help "
+                    "are left alone."
+                ),
             },
             "float_gates": {
                 "type": "boolean",

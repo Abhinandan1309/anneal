@@ -39,6 +39,15 @@ TRANSFORMER_RECIPES = {
     "minmax (default)": {"per_channel": True},
     "minmax, compute ops only": {"per_channel": True, "quantize_ops": "compute"},
 }
+_EQ = {"per_channel": True, "equalize": True, **P, "float_stem": True, "reduce_range": True}
+DENSE_RECIPES = {
+    "minmax (default)": {"per_channel": True},
+    "percentile + float stem + reduce_range": {"per_channel": True, **P, "float_stem": True, "reduce_range": True},
+    "... + dense equalisation": {"per_channel": True, **P, "float_stem": True, "reduce_range": True,
+                                 "equalize_dense": True},
+    "equalize + percentile + float stem + reduce_range": _EQ,
+    "... + dense equalisation ": {**_EQ, "equalize_dense": True},
+}
 RECIPES = {
     "minmax (default)": {"per_channel": True},
     "percentile + float stem": {"per_channel": True, **P, "float_stem": True},
@@ -88,7 +97,7 @@ def run_one(name: str, eval_limit: int, threads: int, out_dir: Path, recipes: st
     shape = sample_shape(path)
     cache = Path.home() / ".anneal_cache"
     ev = load_evalset("imagenette", cache_dir=cache, batch_size=32, limit=eval_limit, sample_shape=shape)
-    calib = load_calibset("imagenette", cache_dir=cache, batch_size=32, limit=64, sample_shape=shape)
+    calib = load_calibset("imagenette", cache_dir=cache, batch_size=8, limit=64, sample_shape=shape)  # small batches: same statistics, less memory
     work = ROOT / "scratch" / "zoo" / name
     ctx = TransformContext(workdir=work, calibset=calib)
     result: dict = {"model": name, **describe(path)}
@@ -109,7 +118,8 @@ def run_one(name: str, eval_limit: int, threads: int, out_dir: Path, recipes: st
           f"{result['equalisable_sites']} equalisable sites | imbalance flagged {before['flagged']} -> {after['flagged']}",
           flush=True)
     rows = {}
-    for label, params in (TRANSFORMER_RECIPES if recipes == "transformer" else RECIPES).items():
+    sets = {"transformer": TRANSFORMER_RECIPES, "dense": DENSE_RECIPES, "cnn": RECIPES}
+    for label, params in sets[recipes].items():
         t = time.time()
         try:
             art = apply_transform("quantize_static_int8", {"activation_type": "uint8", **params},
@@ -142,7 +152,7 @@ def main() -> None:
     ap.add_argument("--eval-limit", type=int, default=1024)
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--out", default=str(HERE / "results"))
-    ap.add_argument("--recipes", default="cnn", choices=["cnn", "transformer"])
+    ap.add_argument("--recipes", default="cnn", choices=["cnn", "transformer", "dense"])
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
     for name in [m.strip() for m in args.models.split(",") if m.strip()]:
