@@ -47,6 +47,29 @@ def nhwc(x: np.ndarray) -> np.ndarray:
     return np.ascontiguousarray(np.transpose(x, (0, 2, 3, 1)))
 
 
+def static_batch(path: Path, work: Path) -> Path:
+    """A batch-1, simplified copy. The dynamic batch axis otherwise leaves shape arithmetic
+    (Shape -> ConstantOfShape) that becomes TFLite FILL ops, which INT8 cannot quantize."""
+    import onnx
+    from onnxsim import simplify
+
+    model = onnx.load(str(path))
+    dim = model.graph.input[0].type.tensor_type.shape.dim[0]
+    dim.ClearField("dim_param")
+    dim.dim_value = 1
+    for out in model.graph.output:
+        d = out.type.tensor_type.shape.dim
+        if len(d):
+            d[0].ClearField("dim_param")
+            d[0].dim_value = 1
+    simplified, ok = simplify(model)
+    if not ok:
+        raise RuntimeError(f"onnxsim could not validate the simplified {path.name}")
+    dst = work / f"{path.stem}-b1.onnx"
+    onnx.save(simplified, str(dst))
+    return dst
+
+
 def convert(models: list[str], out: Path) -> None:
     import onnx
 
@@ -70,7 +93,7 @@ def convert(models: list[str], out: Path) -> None:
         result = equalise(src, eq, [calib_images[i:i + 8] for i in range(0, 64, 8)])
         print(f"{name}: {len(result.sites)} equalised sites", flush=True)
         input_name = onnx.load(str(src)).graph.input[0].name
-        for variant, onnx_file in (("", src), ("-equalised", eq)):
+        for variant, onnx_file in (("", static_batch(src, work)), ("-equalised", static_batch(eq, work))):
             tf_dir = work / f"tf{variant}"
             if tf_dir.exists():
                 shutil.rmtree(tf_dir)
