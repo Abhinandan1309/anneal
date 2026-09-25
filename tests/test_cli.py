@@ -26,7 +26,7 @@ def test_every_subcommand_is_registered():
     parser = build_parser()
     action = next(a for a in parser._actions if a.dest == "command")
     assert set(action.choices) == {
-        "run", "targets", "transforms", "sensitivity", "audit", "saturation", "imbalance",
+        "run", "targets", "transforms", "sensitivity", "audit", "saturation", "imbalance", "advise",
         "profile", "compare", "validate", "export", "report",
     }
 

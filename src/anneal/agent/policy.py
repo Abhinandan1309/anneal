@@ -85,6 +85,10 @@ class SearchState:
     #: Conv -> gated activation/ReLU -> depthwise chains in the baseline that equalisation
     #: can rebalance (anneal.core.equalize). Zero for nets without depthwise convolutions.
     equalisable_sites: int = 0
+    #: The static INT8 recipe anneal.core.advise recommends for this model and CPU, with its
+    #: rationale; None when no advice could be formed.
+    advised_recipe: dict[str, Any] | None = None
+    advised_rationale: str = ""
 
     def artifact(self, index: int) -> ModelArtifact | None:
         if index == BASELINE:
@@ -177,7 +181,7 @@ class HeuristicPolicy:
         gen = self._generation
         self._generation += 1
         if gen == 0:
-            self._queue.extend(self._probe())
+            self._queue.extend(self._probe(state))
             return True
         if gen == 1:
             self._queue.extend(self._react(state))
@@ -192,9 +196,17 @@ class HeuristicPolicy:
 
     # ----- generations ----------------------------------------------------
 
-    def _probe(self) -> list[Proposal]:
-        """One representative from each family, all applied to the baseline."""
-        return [
+    def _probe(self, state: SearchState | None = None) -> list[Proposal]:
+        """One representative from each family, all applied to the baseline.
+
+        The plain static recipe stays as a control; the advised one, when there is advice,
+        is what the evidence says should work for this architecture on this CPU.
+        """
+        advised = []
+        if state is not None and state.advised_recipe:
+            advised.append(Proposal("quantize_static_int8", dict(state.advised_recipe), BASELINE,
+                                    "Advised recipe: " + state.advised_rationale))
+        return advised + [
             Proposal(
                 "graph_optimize",
                 {"level": "all"},

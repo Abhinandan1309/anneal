@@ -1,0 +1,136 @@
+{
+  "model": "resnet50-fp32.onnx",
+  "local_int8_path": "x86-avx2-16bit",
+  "advice": {
+    "profile": {
+      "convs": 53,
+      "depthwise": 0,
+      "matmuls": 1,
+      "layernorms": 0,
+      "gated_sites": 0,
+      "relu_sites": 0,
+      "activations": {
+        "ReLU": 49
+      },
+      "family": "cnn"
+    },
+    "int8_path": "x86-avx2-16bit",
+    "recommended": {
+      "label": "percentile + float stem + reduce_range",
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 64,
+        "calibrate_method": "percentile_asym",
+        "float_stem": true,
+        "reduce_range": true
+      },
+      "why": "Asymmetric percentile calibration and a float stem; 7-bit weights so full-range per-channel weights cannot saturate this CPU's 16-bit pair sums."
+    },
+    "alternatives": [
+      {
+        "label": "percentile + float stem",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "percentile_asym",
+          "float_stem": true
+        },
+        "why": "Without reduce_range: the float stem alone removed ResNet-50's saturation."
+      },
+      {
+        "label": "onnxruntime default",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "minmax"
+        },
+        "why": "Control: fine on 32-bit hardware, 8-18pp worse on non-VNNI x86."
+      }
+    ],
+    "confidence": "high",
+    "evidence": [
+      "ResNet-50, MobileNetV2, RegNetY, ShuffleNetV2, MnasNet (1,024 images): default -8 to -18pp on non-VNNI x86, ~0 emulated; this recipe within ~2.6pp on the laptop.",
+      "ResNet-18 on five CPUs: the loss appears only on x86 without VNNI; the stem is the saturating layer."
+    ],
+    "caveats": []
+  },
+  "verification": {
+    "mode": "fused",
+    "n": 1024,
+    "fp32_accuracy": 0.7861328125,
+    "fp32_p50_ms": 79.5196,
+    "best": "percentile + float stem + reduce_range",
+    "notes": [],
+    "rows": [
+      {
+        "accuracy": 0.78515625,
+        "delta_pp": -0.09765625,
+        "ci95_pp": [
+          -1.2619196507205097,
+          1.0666071507205097
+        ],
+        "mcnemar_p": 1.0,
+        "agreement": 0.9375,
+        "p50_ms": 83.9866,
+        "speedup": 0.9468129439696332,
+        "path": "scratch\\advise\\resnet50\\quantize-static-int8-activation-type-uint8-calib-samples-64--cb9e682ec3.onnx",
+        "error": null,
+        "label": "percentile + float stem + reduce_range",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "percentile_asym",
+          "float_stem": true,
+          "reduce_range": true
+        }
+      },
+      {
+        "accuracy": 0.7822265625,
+        "delta_pp": -0.390625,
+        "ci95_pp": [
+          -1.5064491543001757,
+          0.7251991543001756
+        ],
+        "mcnemar_p": 0.6075913612730801,
+        "agreement": 0.94921875,
+        "p50_ms": 217.2683,
+        "speedup": 0.365997248563182,
+        "path": "scratch\\advise\\resnet50\\quantize-static-int8-activation-type-uint8-calib-samples-64--12aaed67ba.onnx",
+        "error": null,
+        "label": "percentile + float stem",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "percentile_asym",
+          "float_stem": true
+        }
+      },
+      {
+        "accuracy": 0.6552734375,
+        "delta_pp": -13.0859375,
+        "ci95_pp": [
+          -15.584979338613591,
+          -10.586895661386407
+        ],
+        "mcnemar_p": 1.9918316452142278e-24,
+        "agreement": 0.7294921875,
+        "p50_ms": 207.5471,
+        "speedup": 0.3831400197834612,
+        "path": "scratch\\advise\\resnet50\\quantize-static-int8-activation-type-uint8-calib-samples-64--9254b6a0a6.onnx",
+        "error": null,
+        "label": "onnxruntime default",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "minmax"
+        }
+      }
+    ]
+  }
+}

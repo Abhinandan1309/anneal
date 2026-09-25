@@ -1229,6 +1229,103 @@ def cmd_imbalance(args: argparse.Namespace) -> int:
     return 3 if remaining else 0
 
 
+def cmd_advise(args: argparse.Namespace) -> int:
+    """Recommend a static INT8 recipe for this model and CPU, and optionally measure it."""
+    import json
+
+    from rich.table import Table
+
+    from anneal.core.advise import advise, verify
+    from anneal.core.environment import cpu_features
+
+    console = _console()
+    path = Path(args.model)
+    if not path.is_file():
+        console.print(f"[red]no such file:[/red] {path}")
+        return 2
+    local = cpu_features()["int8_path"]
+    target_path = local if args.int8_path == "auto" else args.int8_path
+    advice = advise(path, target_path)
+    p = advice.profile
+
+    console.print(f"[bold]{path.name}[/bold]: family [cyan]{p.family}[/cyan] - {p.convs} conv "
+                  f"({p.depthwise} depthwise), {p.matmuls} matmul/gemm, {p.layernorms} layernorm; "
+                  f"activations {p.activations or '-'}; {p.gated_sites} gated + {p.relu_sites} ReLU "
+                  f"equalisable chains")
+    console.print(f"INT8 path: [cyan]{target_path}[/cyan]"
+                  + (" (this machine)" if args.int8_path == "auto" else f" (this machine: {local})"))
+    console.print()
+    console.print(f"[bold green]Recommended:[/bold green] {advice.recommended.label}  "
+                  f"[dim](confidence: {advice.confidence})[/dim]")
+    console.print(f"  {advice.recommended.why}")
+    console.print(f"  params: {json.dumps(advice.recommended.params)}")
+    for e in advice.evidence:
+        console.print(f"  [dim]evidence: {e}[/dim]")
+    for c in advice.caveats:
+        console.print(f"  [yellow]caveat:[/yellow] {c}")
+    if advice.alternatives:
+        console.print()
+        console.print("[bold]Alternatives[/bold]")
+        for alt in advice.alternatives:
+            console.print(f"  - {alt.label}: {alt.why}")
+
+    report = {"model": path.name, "local_int8_path": local, "advice": advice.to_dict()}
+    code = 0
+    if args.verify:
+        from anneal.core.artifact import sample_shape
+        from anneal.core.dataset import load_calibset, load_evalset
+        from anneal.core.targets import get_target
+
+        shape = sample_shape(path)
+        evalset = load_evalset(args.eval, cache_dir=Path(args.cache), batch_size=32,
+                               limit=args.eval_limit, sample_shape=shape)
+        calibset = load_calibset(args.eval, cache_dir=Path(args.cache), batch_size=32,
+                                 limit=64, sample_shape=shape) or evalset
+        console.print()
+        if args.time:
+            from anneal.core.environment import snapshot, warnings_for
+
+            for warning in warnings_for(snapshot()):
+                console.print(f"[bold red]environment:[/bold red] {warning} Speeds below are not reliable.")
+        console.print(f"Verifying on {len(evalset)} images …")
+        result = verify(advice, path, evalset, calibset, Path(args.workdir), local_path=local,
+                        time_target=get_target(args.target) if args.time else None)
+        table = Table(title=f"measured ({result.mode}; FP32 {result.fp32_accuracy * 100:.2f}% on {result.n})",
+                      header_style="bold")
+        for col in ("recipe", "top-1", "change", "95% CI", "McNemar p", "agrees with FP32"):
+            table.add_column(col, justify="left" if col == "recipe" else "right")
+        if args.time and result.mode == "fused":
+            table.add_column("speed vs FP32", justify="right")
+        for r in result.rows:
+            mark = " *" if r.candidate.label == result.best else ""
+            if r.error:
+                table.add_row(r.candidate.label, f"[red]{r.error[:60]}[/red]", "", "", "", "")
+                continue
+            cells = [r.candidate.label + mark, f"{r.accuracy * 100:.2f}%", f"{r.delta_pp:+.2f}pp",
+                     f"[{r.ci95_pp[0]:+.2f}, {r.ci95_pp[1]:+.2f}]", f"{r.mcnemar_p:.2g}",
+                     f"{r.agreement * 100:.1f}%"]
+            if args.time and result.mode == "fused":
+                cells.append(f"{r.speedup:.2f}x" if r.speedup else "-")
+            table.add_row(*cells)
+        console.print(table)
+        for n in result.notes:
+            console.print(f"[yellow]note:[/yellow] {n}")
+        console.print(f"[bold]Best measured:[/bold] {result.best}  (* in the table)")
+        report["verification"] = result.to_dict()
+        if result.advice_contradicted:
+            console.print(f"[yellow]The measurement contradicts the advice (McNemar p = "
+                          f"{result.best_vs_recommended_p:.2g}); trust the measurement.[/yellow]")
+            code = 3
+        elif result.best != advice.recommended.label:
+            console.print(f"[dim]The recommended recipe and the best measured one are not "
+                          f"distinguishable on these images (McNemar p = "
+                          f"{result.best_vs_recommended_p:.2g}).[/dim]")
+    if args.out:
+        Path(args.out).write_text(json.dumps(report, indent=2), encoding="utf-8")
+        console.print(f"[dim]written: {args.out}[/dim]")
+    return code
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     from anneal.core.ledger import Ledger
     from anneal.report import console_table, write_report
@@ -1433,6 +1530,25 @@ def build_parser() -> argparse.ArgumentParser:
     imb.add_argument("--out", default=None, help="write the per-layer results as JSON")
     imb.add_argument("--cache", default=str(DEFAULT_CACHE))
     imb.set_defaults(func=cmd_imbalance)
+
+    adv = sub.add_parser(
+        "advise",
+        help="recommend a static INT8 recipe for this model and CPU; --verify measures it",
+    )
+    adv.add_argument("model", help="a float .onnx")
+    adv.add_argument("--int8-path", default="auto",
+                     choices=["auto", "x86-avx2-16bit", "x86-vnni", "arm-dotprod", "unknown"],
+                     help="the deployment CPU's INT8 arithmetic (default: this machine's)")
+    adv.add_argument("--verify", action="store_true",
+                     help="build the recommended recipe, its alternatives and the default, and score them")
+    adv.add_argument("--eval", default="imagenette")
+    adv.add_argument("--eval-limit", type=int, default=1024)
+    adv.add_argument("--time", action="store_true", help="also time each candidate (only when verifying on the target CPU)")
+    adv.add_argument("--target", default="cpu-1t", help="target used by --time")
+    adv.add_argument("--workdir", default="runs/advise")
+    adv.add_argument("--out", default=None, help="write the advice (and verification) as JSON")
+    adv.add_argument("--cache", default=str(DEFAULT_CACHE))
+    adv.set_defaults(func=cmd_advise)
 
     rep = sub.add_parser("report", help="re-render a report from a ledger")
     rep.add_argument("ledger", help="path to ledger.json")

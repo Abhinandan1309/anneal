@@ -1,0 +1,107 @@
+{
+  "model": "vit_b_16-fp32.onnx",
+  "local_int8_path": "x86-avx2-16bit",
+  "advice": {
+    "profile": {
+      "convs": 1,
+      "depthwise": 0,
+      "matmuls": 73,
+      "layernorms": 25,
+      "gated_sites": 0,
+      "relu_sites": 0,
+      "activations": {
+        "GELU": 12
+      },
+      "family": "transformer"
+    },
+    "int8_path": "x86-vnni",
+    "recommended": {
+      "label": "compute ops only",
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 64,
+        "calibrate_method": "minmax",
+        "quantize_ops": "compute"
+      },
+      "why": "Quantize only the matrix products; leave LayerNorm, residual adds and softmax in float, so the residual stream's outlier channels never meet an 8-bit scale."
+    },
+    "alternatives": [
+      {
+        "label": "onnxruntime default",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "minmax"
+        },
+        "why": "Control: quantizes LayerNorm inputs too."
+      }
+    ],
+    "confidence": "medium",
+    "evidence": [
+      "ViT-B/16, 512 images: default -8.0pp fused / -8.4pp emulated; compute-only +0.6 / +0.2.",
+      "Floating only the 25 LayerNorm inputs recovered ~5pp (causal ablation).",
+      "Swin-T: compute-only -2.5 / +0.2, within noise at 512 images.",
+      "No x86 saturation seen on transformer MatMuls (fused and emulated agree within noise)."
+    ],
+    "caveats": [
+      "Evidence is two models on 512 images each."
+    ]
+  },
+  "verification": {
+    "mode": "emulated",
+    "n": 512,
+    "fp32_accuracy": 0.83203125,
+    "fp32_p50_ms": null,
+    "best": "compute ops only",
+    "notes": [
+      "Target x86-vnni accumulates in 32 bits; scored by running the QDQ graph in float on this x86-avx2-16bit machine."
+    ],
+    "rows": [
+      {
+        "accuracy": 0.833984375,
+        "delta_pp": 0.1953125,
+        "ci95_pp": [
+          -1.1848339090910929,
+          1.575458909091093
+        ],
+        "mcnemar_p": 1.0,
+        "agreement": 0.96484375,
+        "p50_ms": null,
+        "speedup": null,
+        "path": "scratch\\advise\\vit\\quantize-static-int8-activation-type-uint8-calib-samples-64--1f4878e049.onnx",
+        "error": null,
+        "label": "compute ops only",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "minmax",
+          "quantize_ops": "compute"
+        }
+      },
+      {
+        "accuracy": 0.748046875,
+        "delta_pp": -8.3984375,
+        "ci95_pp": [
+          -11.142663073327896,
+          -5.654211926672104
+        ],
+        "mcnemar_p": 1.822834494458192e-09,
+        "agreement": 0.84375,
+        "p50_ms": null,
+        "speedup": null,
+        "path": "scratch\\advise\\vit\\quantize-static-int8-activation-type-uint8-calib-samples-64--9254b6a0a6.onnx",
+        "error": null,
+        "label": "onnxruntime default",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "minmax"
+        }
+      }
+    ]
+  }
+}

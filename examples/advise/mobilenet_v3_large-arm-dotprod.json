@@ -1,0 +1,142 @@
+{
+  "model": "mobilenet_v3_large-fp32.onnx",
+  "local_int8_path": "x86-avx2-16bit",
+  "advice": {
+    "profile": {
+      "convs": 62,
+      "depthwise": 15,
+      "matmuls": 2,
+      "layernorms": 0,
+      "gated_sites": 9,
+      "relu_sites": 5,
+      "activations": {
+        "Hardswish": 29,
+        "ReLU": 19
+      },
+      "family": "gated-depthwise"
+    },
+    "int8_path": "arm-dotprod",
+    "recommended": {
+      "label": "equalise + percentile + float stem",
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 64,
+        "calibrate_method": "percentile_asym",
+        "float_stem": true,
+        "equalize": true
+      },
+      "why": "Equalise the SiLU/Hardswish -> depthwise chains exactly, calibrate by asymmetric percentile, keep the stem in float."
+    },
+    "alternatives": [
+      {
+        "label": "percentile + float stem",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "percentile_asym",
+          "float_stem": true
+        },
+        "why": "Without equalisation: faster (no gate multiplies), a few pp less accurate on EfficientNet."
+      },
+      {
+        "label": "onnxruntime default",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "minmax"
+        },
+        "why": "Control: per-tensor activation scales collapse this family."
+      }
+    ],
+    "confidence": "high",
+    "evidence": [
+      "EfficientNet-B0 on six CPUs, 2,048 images: default -48 to -51pp everywhere; this recipe -0.5 to -0.7pp (not significant); with reduce_range -0.6pp on non-VNNI x86.",
+      "MobileNetV3-Large, same six CPUs: -11 to -25pp -> -1.0 to -2.6pp.",
+      "Cost: about 10% of the INT8 speedup for the gate multiplies (2.33x -> 2.11x on ARM)."
+    ],
+    "caveats": [
+      "9 gated chains will be equalised. EfficientNet-B1 kept ~7pp after this recipe; verify."
+    ]
+  },
+  "verification": {
+    "mode": "emulated",
+    "n": 1024,
+    "fp32_accuracy": 0.701171875,
+    "fp32_p50_ms": null,
+    "best": "percentile + float stem",
+    "notes": [
+      "Target arm-dotprod accumulates in 32 bits; scored by running the QDQ graph in float on this x86-avx2-16bit machine."
+    ],
+    "rows": [
+      {
+        "accuracy": 0.6806640625,
+        "delta_pp": -2.05078125,
+        "ci95_pp": [
+          -3.3847240201346143,
+          -0.716838479865386
+        ],
+        "mcnemar_p": 0.003801654409748778,
+        "agreement": 0.8974609375,
+        "p50_ms": null,
+        "speedup": null,
+        "path": "scratch\\advise\\mnv3\\quantize-static-int8-activation-type-uint8-calib-samples-64--79527d52c0.onnx",
+        "error": null,
+        "label": "equalise + percentile + float stem",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "percentile_asym",
+          "float_stem": true,
+          "equalize": true
+        }
+      },
+      {
+        "accuracy": 0.6826171875,
+        "delta_pp": -1.85546875,
+        "ci95_pp": [
+          -3.0757862122712,
+          -0.6351512877287999
+        ],
+        "mcnemar_p": 0.00432400493446039,
+        "agreement": 0.892578125,
+        "p50_ms": null,
+        "speedup": null,
+        "path": "scratch\\advise\\mnv3\\quantize-static-int8-activation-type-uint8-calib-samples-64--12aaed67ba.onnx",
+        "error": null,
+        "label": "percentile + float stem",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "percentile_asym",
+          "float_stem": true
+        }
+      },
+      {
+        "accuracy": 0.5771484375,
+        "delta_pp": -12.40234375,
+        "ci95_pp": [
+          -14.677173198212449,
+          -10.127514301787551
+        ],
+        "mcnemar_p": 4.0661593097130405e-27,
+        "agreement": 0.7216796875,
+        "p50_ms": null,
+        "speedup": null,
+        "path": "scratch\\advise\\mnv3\\quantize-static-int8-activation-type-uint8-calib-samples-64--9254b6a0a6.onnx",
+        "error": null,
+        "label": "onnxruntime default",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "minmax"
+        }
+      }
+    ]
+  }
+}

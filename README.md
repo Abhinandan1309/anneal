@@ -313,6 +313,41 @@ change vs FP32 in pp, fused on this non-VNNI laptop / emulated 32-bit):
 - **Transformers fail somewhere else.** onnxruntime's default op list also quantizes LayerNormalization, whose input is ViT's residual stream. That stream grows to [−42, 34], with outlier channels about 9× the median width, so one 8-bit scale starves half the channels. `quantize_ops="compute"` quantizes only the matrix products' inputs and weights. Leaving the residual stream in float was shown causally to recover the loss. Saturation does not affect transformer MatMuls here: fused and emulated agree within noise.
 - **ConvNeXt is open.** The ViT fix does not carry over. A prototype of gate-side equalisation into the dense fc2 layer went from −3.7 to −1.0pp. That is at the noise limit, and it costs fc2 weight precision.
 
+**Choosing the recipe automatically: `anneal advise`**
+([`anneal/core/advise.py`](src/anneal/core/advise.py)). The findings above reduce to two
+questions:
+- **Which family is the network?** Transformer, ConvNeXt, SiLU/Hardswish into depthwise, or plain CNN. This can be read from the ONNX graph.
+- **Does the target CPU sum INT8 pairs in 16 bits?** This comes from `cpu_features()`, or you name it.
+
+`anneal advise` answers both and returns a recipe with the measured evidence behind it, a
+confidence level and alternatives. `--verify` then builds the recommendation, its
+alternatives and onnxruntime's default, and scores each against FP32 with paired
+statistics. It uses this CPU's real kernels when they match the target, and float emulation
+when the target accumulates in 32 bits. A recommendation counts as contradicted only when a
+better recipe beats it significantly (McNemar p < 0.05). `anneal run` tries the advised
+recipe first and keeps onnxruntime's plain recipe as a control.
+
+```console
+$ anneal advise efficientnet_b0.onnx --verify
+efficientnet_b0-fp32.onnx: family gated-depthwise - 81 conv (16 depthwise), ...
+INT8 path: x86-avx2-16bit (this machine)
+Recommended: equalise + percentile + float stem + reduce_range  (confidence: high)
+```
+
+Verified on 512–1,024 images ([data](examples/advise/)):
+
+| model, advised for | recommended | measured | onnxruntime default |
+|---|---|---|---|
+| EfficientNet-B0, x86 without VNNI (real kernels) | EQ + P + stem + reduce_range | **−0.49pp** (p = 0.66), the best of four | −51.2pp |
+| ResNet-50, x86 without VNNI (real kernels) | P + stem + reduce_range | **−0.10pp** (p = 1), the best | −13.1pp |
+| ViT-B/16, x86 with VNNI (emulated) | quantize only matmuls | **+0.20pp** (p = 1), the best | −8.4pp |
+| MobileNetV3, ARM (emulated) | EQ + P + stem, −2.05pp | P + stem measured −1.86pp; the 0.19pp gap is noise | −12.4pp |
+
+The rules are learned from eleven models. **One was corrected against the lab data before
+shipping:** `reduce_range` is advised on non-VNNI x86 for SiLU networks, where it removed
+EfficientNet's saturation, but not for Hardswish networks, where it cost MobileNetV3 2pp.
+The speeds these runs recorded were measured on battery and are not reported.
+
 **What is left.** On EfficientNet, the remaining ~1pp sits at the next boundary: depthwise
 conv → SiLU → squeeze-excite and project conv. Per-channel scales there recover it fully
 ([data](examples/equalize/residual_localisation.json)). Equalising across it means scaling
@@ -742,6 +777,7 @@ anneal export       # emit a standalone script that rebuilds a frontier point
 anneal audit        # check any optimised model (from any tool); --sequential stops early
 anneal saturation   # predict 16-bit INT8 overflow on x86 without VNNI (QDQ models)
 anneal imbalance    # predict which convs per-tensor INT8 will starve; --equalize to compare
+anneal advise       # recommend a static INT8 recipe for this model and CPU; --verify measures it
 anneal report       # re-render from a ledger
 anneal targets      # what can actually run here
 anneal transforms   # the action space
@@ -804,6 +840,7 @@ src/anneal/
     saturation.py   Emulates the 16-bit pair arithmetic of x86 INT8 without VNNI.
     equalize.py     Exact channel equalisation across gated activations (SiLU, Hardswish).
     imbalance.py    Predicts starved channels from the float model.
+    advise.py       Recipe advisor: architecture family x INT8 path -> recipe, with evidence.
     dataset.py      Imagenette, scored 1000-way. Labelled synthetic fallback.
     ledger.py       Append-only trial record + Pareto frontier.
   agent/

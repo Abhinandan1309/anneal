@@ -1,0 +1,180 @@
+{
+  "model": "efficientnet_b0-fp32.onnx",
+  "local_int8_path": "x86-avx2-16bit",
+  "advice": {
+    "profile": {
+      "convs": 81,
+      "depthwise": 16,
+      "matmuls": 1,
+      "layernorms": 0,
+      "gated_sites": 16,
+      "relu_sites": 0,
+      "activations": {
+        "SiLU (Sigmoid*x)": 49
+      },
+      "family": "gated-depthwise"
+    },
+    "int8_path": "x86-avx2-16bit",
+    "recommended": {
+      "label": "equalise + percentile + float stem + reduce_range",
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 64,
+        "calibrate_method": "percentile_asym",
+        "float_stem": true,
+        "equalize": true,
+        "reduce_range": true
+      },
+      "why": "Equalise the SiLU/Hardswish -> depthwise chains exactly, calibrate by asymmetric percentile, keep the stem in float; 7-bit weights because equalised channels fill their range and saturate the 16-bit pair sums of this CPU."
+    },
+    "alternatives": [
+      {
+        "label": "equalise + percentile + float stem",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "percentile_asym",
+          "float_stem": true,
+          "equalize": true
+        },
+        "why": "Without reduce_range: best for MobileNetV3 even on non-VNNI x86 in the lab."
+      },
+      {
+        "label": "equalise + percentile + float stem + guard",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "percentile_asym",
+          "float_stem": true,
+          "equalize": true,
+          "guard_saturation": true
+        },
+        "why": "Keep only the saturating layers in FP32 instead of shrinking every weight."
+      },
+      {
+        "label": "onnxruntime default",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "minmax"
+        },
+        "why": "Control: per-tensor activation scales collapse this family."
+      }
+    ],
+    "confidence": "high",
+    "evidence": [
+      "EfficientNet-B0 on six CPUs, 2,048 images: default -48 to -51pp everywhere; this recipe -0.5 to -0.7pp (not significant); with reduce_range -0.6pp on non-VNNI x86.",
+      "MobileNetV3-Large, same six CPUs: -11 to -25pp -> -1.0 to -2.6pp.",
+      "Cost: about 10% of the INT8 speedup for the gate multiplies (2.33x -> 2.11x on ARM)."
+    ],
+    "caveats": [
+      "16 gated chains will be equalised. EfficientNet-B1 kept ~7pp after this recipe; verify."
+    ]
+  },
+  "verification": {
+    "mode": "fused",
+    "n": 1024,
+    "fp32_accuracy": 0.75390625,
+    "fp32_p50_ms": 17.6083,
+    "best": "equalise + percentile + float stem + reduce_range",
+    "notes": [],
+    "rows": [
+      {
+        "accuracy": 0.7490234375,
+        "delta_pp": -0.48828125,
+        "ci95_pp": [
+          -2.2106778690931175,
+          1.2341153690931175
+        ],
+        "mcnemar_p": 0.6569924675863579,
+        "agreement": 0.8837890625,
+        "p50_ms": 17.6494,
+        "speedup": 0.9976713089396807,
+        "path": "scratch\\advise\\efficientnet_b0\\quantize-static-int8-activation-type-uint8-calib-samples-64--059da100a2.onnx",
+        "error": null,
+        "label": "equalise + percentile + float stem + reduce_range",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "percentile_asym",
+          "float_stem": true,
+          "equalize": true,
+          "reduce_range": true
+        }
+      },
+      {
+        "accuracy": 0.7275390625,
+        "delta_pp": -2.63671875,
+        "ci95_pp": [
+          -4.218435030065438,
+          -1.0550024699345621
+        ],
+        "mcnemar_p": 0.0015503169494868645,
+        "agreement": 0.8876953125,
+        "p50_ms": 16.4968,
+        "speedup": 1.0673767033606518,
+        "path": "scratch\\advise\\efficientnet_b0\\quantize-static-int8-activation-type-uint8-calib-samples-64--79527d52c0.onnx",
+        "error": null,
+        "label": "equalise + percentile + float stem",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "percentile_asym",
+          "float_stem": true,
+          "equalize": true
+        }
+      },
+      {
+        "accuracy": 0.7373046875,
+        "delta_pp": -1.66015625,
+        "ci95_pp": [
+          -3.175989505381772,
+          -0.14432299461822826
+        ],
+        "mcnemar_p": 0.04295654552438921,
+        "agreement": 0.9013671875,
+        "p50_ms": 16.987,
+        "speedup": 1.0365750279625596,
+        "path": "scratch\\advise\\efficientnet_b0\\quantize-static-int8-activation-type-uint8-calib-samples-64--2096b19e1e.onnx",
+        "error": null,
+        "label": "equalise + percentile + float stem + guard",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "percentile_asym",
+          "float_stem": true,
+          "equalize": true,
+          "guard_saturation": true
+        }
+      },
+      {
+        "accuracy": 0.2421875,
+        "delta_pp": -51.171875,
+        "ci95_pp": [
+          -54.29279117771366,
+          -48.05095882228635
+        ],
+        "mcnemar_p": 1.2749413696143955e-149,
+        "agreement": 0.287109375,
+        "p50_ms": 15.7491,
+        "speedup": 1.1180511902267432,
+        "path": "scratch\\advise\\efficientnet_b0\\quantize-static-int8-activation-type-uint8-calib-samples-64--9254b6a0a6.onnx",
+        "error": null,
+        "label": "onnxruntime default",
+        "params": {
+          "per_channel": true,
+          "activation_type": "uint8",
+          "calib_samples": 64,
+          "calibrate_method": "minmax"
+        }
+      }
+    ]
+  }
+}

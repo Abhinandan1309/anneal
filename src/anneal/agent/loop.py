@@ -114,6 +114,7 @@ class OptimizationRun:
         # Conv -> SiLU/Hardswish/ReLU -> depthwise chains that static INT8 can starve and
         # equalisation can fix; a pure graph pass, so it costs nothing to know up front.
         self.equalisable_sites = _count_equalisable(baseline.path)
+        self.advice = _advice_for(baseline.path, self.int8_path)
         self.transforms = available_transforms()
 
         self.ledger = Ledger(
@@ -132,6 +133,7 @@ class OptimizationRun:
                 ),
                 "transforms_available": sorted(self.transforms),
                 "int8_path": self.int8_path,
+                "advice": self.advice.to_dict() if self.advice else None,
             },
         )
         start_env = environment.snapshot()
@@ -156,6 +158,11 @@ class OptimizationRun:
                 can_measure_sensitivity=self.can_measure_sensitivity,
                 int8_path=self.int8_path,
                 equalisable_sites=self.equalisable_sites,
+                advised_recipe=self.advice.recommended.params if self.advice else None,
+                advised_rationale=(
+                    f"{self.advice.recommended.why} (family {self.advice.profile.family}, "
+                    f"confidence {self.advice.confidence})" if self.advice else ""
+                ),
             )
 
             proposal = self.policy.propose(state)
@@ -355,3 +362,12 @@ def _count_equalisable(model_path: Path) -> int:
         return len(find_sites(onnx.load(str(model_path))))
     except Exception:  # an unreadable graph simply has nothing to equalise
         return 0
+
+
+def _advice_for(model_path: Path, int8_path: str):
+    try:
+        from anneal.core.advise import advise
+
+        return advise(model_path, int8_path)
+    except Exception:  # advice is optional; the search works without it
+        return None
