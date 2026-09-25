@@ -1,0 +1,125 @@
+{
+  "fix": "entropy calibration now uses 2048 histogram bins folded to 128 (TensorRT's KL setting); before, onnxruntime's 128/128 default made it identical to minmax",
+  "cases": [
+    {
+      "case": "resnet18 agent run",
+      "model": "examples\\resnet18-cpu1t\\models\\resnet18-fp32.onnx",
+      "n": 256,
+      "params": {
+        "per_channel": true,
+        "reduce_range": false,
+        "calib_samples": 64
+      },
+      "old_result": "examples/resnet18-cpu1t/ledger.json trials 3 and 9 (README table rows 3 and 9)",
+      "old_minmax_accuracy": 0.640625,
+      "old_entropy_accuracy": 0.640625,
+      "minmax_reproduces_old": false,
+      "entropy_vs_minmax_agreement": 0.625,
+      "rows": {
+        "fp32": {
+          "accuracy": 0.66796875
+        },
+        "minmax": {
+          "accuracy": 0.64453125,
+          "delta_pp": -2.34375,
+          "ci95_pp": [
+            -5.923353930679637,
+            1.2358539306796368
+          ],
+          "mcnemar_p": 0.28627872467041016,
+          "agreement": 0.8515625
+        },
+        "entropy": {
+          "accuracy": 0.44921875,
+          "delta_pp": -21.875,
+          "ci95_pp": [
+            -27.275234867215847,
+            -16.474765132784153
+          ],
+          "mcnemar_p": 1.724922288337538e-14,
+          "agreement": 0.6171875
+        }
+      }
+    },
+    {
+      "case": "mobilenet_v3_large agent run",
+      "model": "examples\\models\\mobilenet_v3_large-fp32.onnx",
+      "n": 256,
+      "params": {
+        "per_channel": true,
+        "reduce_range": false,
+        "calib_samples": 64,
+        "activation_type": "uint8"
+      },
+      "old_result": "examples/mobilenetv3-cpu1t/ledger.json trials 3 and 10",
+      "old_minmax_accuracy": 0.421875,
+      "old_entropy_accuracy": 0.421875,
+      "minmax_reproduces_old": false,
+      "entropy_vs_minmax_agreement": 0.5,
+      "rows": {
+        "fp32": {
+          "accuracy": 0.71484375
+        },
+        "minmax": {
+          "accuracy": 0.44140625,
+          "delta_pp": -27.34375,
+          "ci95_pp": [
+            -33.1169572301635,
+            -21.5705427698365
+          ],
+          "mcnemar_p": 1.938302550893458e-18,
+          "agreement": 0.515625
+        },
+        "entropy": {
+          "accuracy": 0.46484375,
+          "delta_pp": -25.0,
+          "ci95_pp": [
+            -30.729412873497598,
+            -19.270587126502402
+          ],
+          "mcnemar_p": 4.620814601991648e-16,
+          "agreement": 0.55859375
+        }
+      }
+    },
+    {
+      "case": "efficientnet_b0 recipe sweep",
+      "model": "examples\\models\\efficientnet_b0-fp32.onnx",
+      "n": 512,
+      "params": {
+        "per_channel": true,
+        "calib_samples": 64
+      },
+      "old_result": "examples/equalize/recipe_sweep.json efficientnet_b0/baseline and efficientnet_b0/entropy",
+      "old_minmax_accuracy": 0.224609375,
+      "old_entropy_accuracy": 0.396484375,
+      "minmax_reproduces_old": true,
+      "entropy_vs_minmax_agreement": 0.310546875,
+      "rows": {
+        "fp32": {
+          "accuracy": 0.7421875
+        },
+        "minmax": {
+          "accuracy": 0.224609375,
+          "delta_pp": -51.7578125,
+          "ci95_pp": [
+            -56.153356857503844,
+            -47.362268142496156
+          ],
+          "mcnemar_p": 7.657009210127194e-77,
+          "agreement": 0.279296875
+        },
+        "entropy": {
+          "accuracy": 0.587890625,
+          "delta_pp": -15.4296875,
+          "ci95_pp": [
+            -19.157159898145323,
+            -11.702215101854677
+          ],
+          "mcnemar_p": 1.7572571105611998e-15,
+          "agreement": 0.693359375
+        }
+      }
+    }
+  ]
+}

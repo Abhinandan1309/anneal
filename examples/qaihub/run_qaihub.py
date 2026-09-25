@@ -33,6 +33,9 @@ HERE = Path(__file__).resolve().parent
 CACHE = Path.home() / ".anneal_cache"
 
 
+VARIANTS = ["fp32", "hub int8", "hub int8 + equalised", "anneal recipe"]
+
+
 def static_copy(path: Path, work: Path) -> Path:
     """A batch-1 copy with valid IO: AI Hub's quantizer needs static shapes, and its compiler
     (rightly) rejects graph inputs/outputs repeated in value_info, which onnxruntime's
@@ -76,9 +79,15 @@ def main() -> None:
     ap.add_argument("--device", default="Samsung Galaxy S24 (Family)")
     ap.add_argument("--runtime", default="tflite", choices=["tflite", "qnn_context_binary", "onnx"])
     ap.add_argument("--images", type=int, default=512)
+    ap.add_argument("--variants", default=",".join(VARIANTS),
+                    help="comma-separated subset of: " + ", ".join(VARIANTS))
     ap.add_argument("--out", default=str(HERE / "results"))
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
+    variants = [v.strip() for v in args.variants.split(",") if v.strip()]
+    unknown = set(variants) - set(VARIANTS)
+    if unknown or "fp32" not in variants:
+        ap.error(f"--variants must include fp32 and be drawn from {VARIANTS}; got {variants}")
 
     src = ROOT / "examples" / "models" / f"{args.model}-fp32.onnx"
     work = ROOT / "scratch" / "qaihub" / args.model
@@ -96,7 +105,7 @@ def main() -> None:
     eq = work / f"{args.model}-equalised.onnx"
     eq_result = equalise(src, eq, [np.concatenate(calib_imgs[i:i + 8]) for i in range(0, 64, 8)])
     print(f"{args.model}: {len(eq_result.sites)} equalised sites", flush=True)
-    recipe = apply_transform(
+    recipe = None if "anneal recipe" not in variants else apply_transform(
         "quantize_static_int8",
         {"per_channel": True, "activation_type": "uint8", "equalize": True,
          "calibrate_method": "percentile_asym", "float_stem": True},
@@ -105,12 +114,13 @@ def main() -> None:
 
     device = hub.Device(args.device)
     calibration = {input_name: calib_imgs}
-    src_b1, eq_b1, recipe_b1 = (static_copy(p, work) for p in (src, eq, Path(recipe.path)))
-    q_jobs = {
-        "hub int8": hub.submit_quantize_job(str(src_b1), calibration, name=f"anneal-{args.model}-q"),
-        "hub int8 + equalised": hub.submit_quantize_job(str(eq_b1), calibration, name=f"anneal-{args.model}-q-eq"),
-    }
-    models = {"fp32": str(src_b1), "anneal recipe": str(recipe_b1)}
+    src_b1, eq_b1 = static_copy(src, work), static_copy(eq, work)
+    to_quantize = {"hub int8": src_b1, "hub int8 + equalised": eq_b1}
+    q_jobs = {label: hub.submit_quantize_job(str(path), calibration, name=f"anneal-{args.model}-{label}-q")
+              for label, path in to_quantize.items() if label in variants}
+    models = {"fp32": str(src_b1)}
+    if recipe is not None:
+        models["anneal recipe"] = str(static_copy(Path(recipe.path), work))
     for label, job in q_jobs.items():
         model = target_of(job, label)
         if model is not None:
@@ -157,7 +167,7 @@ def main() -> None:
     result = {"model": args.model, "device": args.device, "runtime": args.runtime, "n": int(len(labels)),
               "equalised_sites": len(eq_result.sites), "variants": {}}
     ref = preds.get("fp32")
-    for label in ["fp32", "hub int8", "hub int8 + equalised", "anneal recipe"]:
+    for label in variants:
         if label not in c_jobs:
             result["variants"][label] = {"compiled": False, "error": "quantize job failed"}
             continue
@@ -176,7 +186,7 @@ def main() -> None:
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
     slug = args.device.lower().replace(" ", "-").replace("(", "").replace(")", "")
-    path = out_dir / f"{args.model}-{slug}-{args.runtime}.json"
+    path = out_dir / f"{args.model}-{slug}-{args.runtime}-n{len(labels)}.json"
     path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(f"\n{args.model} on {args.device} ({args.runtime}), {len(labels)} images", flush=True)
     for label, row in result["variants"].items():

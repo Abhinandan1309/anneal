@@ -79,7 +79,7 @@ def stats(ref_right: np.ndarray, right: np.ndarray) -> dict:
             "mcnemar_p": mcnemar_exact(b, c), "regressions": b, "fixes": c}
 
 
-def run_model(name: str, limit: int, threads: int, out: Path) -> dict:
+def run_model(name: str, limit: int, threads: int, out: Path, redo: set[str] | None = None) -> dict:
     path = model_path(name)
     shape = sample_shape(path)
     cache = Path.home() / ".anneal_cache"
@@ -102,6 +102,8 @@ def run_model(name: str, limit: int, threads: int, out: Path) -> dict:
         # Experimental: dense-consumer equalisation on top of the advice (Imagenette: within noise).
         recipes["anneal (32-bit) + dense equalisation"] = ({**adv32.recommended.params, "equalize_dense": True}, False)
     recipes["minmax (fused, this laptop)"] = (BASELINES["minmax"], True)
+    if redo:
+        recipes = {k: v for k, v in recipes.items() if k in redo}
 
     sessions = {"fp32": session(path, True, threads)}
     built = {}
@@ -125,6 +127,15 @@ def run_model(name: str, limit: int, threads: int, out: Path) -> dict:
             print(f"  {n}/{len(ev)} images ({time.time() - t0:.0f}s)", flush=True)
     y = np.concatenate(labels)
     p = {k: np.concatenate(v) for k, v in preds.items()}
+    previous = None
+    if redo:
+        # Merge into the finished run: same images in the same order, so the stored FP32
+        # predictions must match exactly, or the merge would mix two different samples.
+        old = dict(np.load(out / f"{name}-predictions.npz"))
+        if not (np.array_equal(old["labels"], y) and np.array_equal(old["fp32"], p["fp32"])):
+            raise RuntimeError(f"{name}: redo does not reproduce the stored FP32 predictions")
+        previous = json.loads((out / f"{name}.json").read_text(encoding="utf-8"))
+        p = {**{k: v for k, v in old.items() if k != "labels"}, **{k.replace("/", "_"): v for k, v in p.items()}}
     np.savez_compressed(out / f"{name}-predictions.npz", labels=y, **{k.replace("/", "_"): v for k, v in p.items()})
 
     fp_right = p["fp32"] == y
@@ -136,6 +147,9 @@ def run_model(name: str, limit: int, threads: int, out: Path) -> dict:
                         "mode": "fused" if recipes[k][1] else "emulated", "model_path": built[k]}
                     for k in recipes},
     }
+    if previous is not None:
+        result["recipes"] = {**previous["recipes"], **result["recipes"]}
+        result["redone"] = sorted(set(previous.get("redone", [])) | set(recipes))
     (out / f"{name}.json").write_text(json.dumps(result, indent=1), encoding="utf-8")
     print(f"{name}: FP32 {result['fp32_accuracy'] * 100:.2f}% on {len(y)}", flush=True)
     for k, r in result["recipes"].items():
@@ -150,11 +164,17 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=None, help="scored images (default: all 49,000)")
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--out", default=str(HERE / "results"))
+    ap.add_argument("--redo", default="", help="comma-separated recipe labels to re-score on finished models")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
+    redo = {r.strip() for r in args.redo.split(",") if r.strip()}
     for name in [m.strip() for m in args.models.split(",") if m.strip()]:
+        if redo:
+            print(f"\n== {name} (redo:{', '.join(sorted(redo))})", flush=True)
+            run_model(name, args.limit, args.threads, out, redo)
+            continue
         if (out / f"{name}.json").exists():
             print(f"{name}: already done, skipping", flush=True)
             continue

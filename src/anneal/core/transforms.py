@@ -13,6 +13,8 @@ agent choose how many to spare, turning "quantize or don't" into a tunable dial.
 
 from __future__ import annotations
 
+import contextlib
+
 import hashlib
 import shutil
 from dataclasses import dataclass, field
@@ -163,6 +165,40 @@ def rank_layer_sensitivity(
 
 # ---------------------------------------------------------------------------
 # Calibration
+
+#: onnxruntime's quantize_static cannot pass histogram sizes to its entropy calibrator, which
+#: then defaults to 128 bins *and* 128 quantized bins: the KL search has nothing to search and
+#: returns the min/max range, so "entropy" silently equals "minmax". TensorRT's KL calibration
+#: uses 2048 bins folded to 128; we inject the same.
+ENTROPY_NUM_BINS, ENTROPY_NUM_QUANTIZED_BINS = 2048, 128
+
+
+@contextlib.contextmanager
+def _entropy_bins(active: bool):
+    if not active:
+        yield
+        return
+    import importlib
+
+    # The package re-exports a function named `quantize`, so import the module by path.
+    ort_quantize = importlib.import_module("onnxruntime.quantization.quantize")
+
+    original = ort_quantize.create_calibrator
+
+    def create_calibrator(*args, **kwargs):
+        extra = dict(kwargs.get("extra_options") or {})
+        extra.setdefault("num_bins", ENTROPY_NUM_BINS)
+        extra.setdefault("num_quantized_bins", ENTROPY_NUM_QUANTIZED_BINS)
+        kwargs["extra_options"] = extra
+        return original(*args, **kwargs)
+
+    ort_quantize.create_calibrator = create_calibrator
+    try:
+        yield
+    finally:
+        ort_quantize.create_calibrator = original
+
+
 # ---------------------------------------------------------------------------
 
 
@@ -642,6 +678,10 @@ def quantize_static_int8(
         }
 
     def run_quantizer(exclude: list[str]) -> None:
+        with _entropy_bins(calib_method == "entropy"):
+            _quantize(exclude)
+
+    def _quantize(exclude: list[str]) -> None:
         quantize_static(
             model_input=str(src),
             model_output=str(out),

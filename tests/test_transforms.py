@@ -408,3 +408,27 @@ def test_the_guard_is_absent_from_the_recipe_unless_asked_for(tiny_onnx: Path, t
     )
     result = apply_transform("quantize_static_int8", {}, ModelArtifact(path=tiny_onnx), ctx)
     assert "guard_saturation" not in result.lineage[-1].params
+
+
+def test_entropy_calibration_gets_a_histogram_wider_than_its_quantized_bins():
+    """onnxruntime's quantize_static cannot pass histogram sizes, and its 128/128 default makes
+    entropy calibration return the min/max range. The patch must reach create_calibrator."""
+    import importlib
+
+    from anneal.core.transforms import ENTROPY_NUM_BINS, ENTROPY_NUM_QUANTIZED_BINS, _entropy_bins
+
+    ort_quantize = importlib.import_module("onnxruntime.quantization.quantize")
+    original = ort_quantize.create_calibrator
+    seen = {}
+    fake = lambda *a, **kw: seen.update(kw["extra_options"])  # noqa: E731
+    ort_quantize.create_calibrator = fake
+    try:
+        with _entropy_bins(True):
+            ort_quantize.create_calibrator(None, extra_options={"CalibPercentile": 99.0})
+        assert ort_quantize.create_calibrator is fake  # restored on exit
+        with _entropy_bins(False):
+            assert ort_quantize.create_calibrator is fake  # untouched for other methods
+    finally:
+        ort_quantize.create_calibrator = original
+    assert seen["num_bins"] == ENTROPY_NUM_BINS > ENTROPY_NUM_QUANTIZED_BINS == seen["num_quantized_bins"]
+    assert seen["CalibPercentile"] == 99.0

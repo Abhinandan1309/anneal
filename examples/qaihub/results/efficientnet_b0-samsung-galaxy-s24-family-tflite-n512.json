@@ -1,0 +1,56 @@
+{
+  "model": "efficientnet_b0",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "tflite",
+  "n": 512,
+  "equalised_sites": 16,
+  "variants": {
+    "fp32": {
+      "compiled": true,
+      "latency_ms": 0.843,
+      "compute_units": {
+        "NPU": 244
+      },
+      "compile_job": "jprlxd9vp",
+      "accuracy": 0.734375
+    },
+    "hub int8": {
+      "compiled": true,
+      "latency_ms": 0.413,
+      "compute_units": {
+        "NPU": 246
+      },
+      "compile_job": "jpyo82nr5",
+      "accuracy": 0.625,
+      "delta_pp": -10.9375,
+      "ci95_pp": [
+        -14.35880306114943,
+        -7.51619693885057
+      ],
+      "mcnemar_p": 7.076057190944837e-10,
+      "agreement": 0.748046875
+    },
+    "hub int8 + equalised": {
+      "compiled": true,
+      "latency_ms": 0.544,
+      "compute_units": {
+        "NPU": 262
+      },
+      "compile_job": "jp0mo9k2g",
+      "accuracy": 0.71875,
+      "delta_pp": -1.5625,
+      "ci95_pp": [
+        -3.9184302641776068,
+        0.7934302641776068
+      ],
+      "mcnemar_p": 0.2558750795433298,
+      "agreement": 0.873046875
+    },
+    "anneal recipe": {
+      "compiled": true,
+      "latency_ms": null,
+      "compute_units": null,
+      "compile_job": "jp2rodjxg"
+    }
+  }
+}

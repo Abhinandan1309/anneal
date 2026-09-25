@@ -390,6 +390,12 @@ budget. Full artifacts in [`examples/resnet18-cpu1t/`](examples/resnet18-cpu1t/)
 | 9 | static INT8, entropy calib | 35.45 | 46.56 | 1.32x | 11.28 | 64.06% | 0.844 |
 | 10 | selective INT8, spare stem+head | 578.05 | 770.82 | 0.08x | 12.92 | 67.19% | 0.965 |
 
+*Correction: row 9 is not entropy calibration. onnxruntime's `quantize_static` ran its entropy
+calibrator with 128 histogram bins folded to 128, which returns the min/max range, so row 9 is
+row 3 under another name. With the histogram widened (now the default in `anneal`), onnxruntime's
+entropy calibration scores 44.9% on these 256 images: it clips most ReLU ranges to its smallest
+candidate. Details: [examples/imagenette_entropy](examples/imagenette_entropy/README.md).*
+
 ### What the run actually found
 
 **The textbook first move is a disaster here.** Dynamic INT8 — the transform every
