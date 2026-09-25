@@ -48,14 +48,20 @@ def nhwc(x: np.ndarray) -> np.ndarray:
 
 
 def convert(models: list[str], out: Path) -> None:
-    import tensorflow as tf
+    import onnx
 
-    from anneal.core.dataset import load_calibset
+    from anneal.core.dataset import IMAGENET_MEAN, IMAGENET_STD, load_calibset
     from anneal.core.equalize import equalise
 
     out.mkdir(parents=True, exist_ok=True)
     calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=8, limit=64)
     calib_images = np.concatenate(list(calib.calibration_batches(64)))[:64]
+    # onnx2tf's quantizer wants raw [0, 1] NHWC images plus the normalisation it should apply.
+    raw = nhwc(calib_images) * IMAGENET_STD + IMAGENET_MEAN
+    calib_npy = out / "calibration_nhwc.npy"
+    np.save(calib_npy, raw.astype(np.float32))
+    mean = "[[[[" + ",".join(f"{v:.3f}" for v in IMAGENET_MEAN) + "]]]]"
+    std = "[[[[" + ",".join(f"{v:.3f}" for v in IMAGENET_STD) + "]]]]"
     for name in models:
         src = onnx_path(name)
         work = out / "work" / name
@@ -63,26 +69,21 @@ def convert(models: list[str], out: Path) -> None:
         eq = work / f"{name}-equalised.onnx"
         result = equalise(src, eq, [calib_images[i:i + 8] for i in range(0, 64, 8)])
         print(f"{name}: {len(result.sites)} equalised sites", flush=True)
+        input_name = onnx.load(str(src)).graph.input[0].name
         for variant, onnx_file in (("", src), ("-equalised", eq)):
-            saved = work / f"saved{variant}"
-            if saved.exists():
-                shutil.rmtree(saved)
-            # onnx2tf rewrites NCHW to NHWC; -b 1 fixes the batch so every op has static shapes.
-            subprocess.run([sys.executable, "-m", "onnx2tf", "-i", str(onnx_file), "-o", str(saved),
-                            "-b", "1", "-osd", "-fdosm", "-n"], check=True)
-
-            def representative():
-                for img in calib_images:
-                    yield [nhwc(img[None])]
-
+            tf_dir = work / f"tf{variant}"
+            if tf_dir.exists():
+                shutil.rmtree(tf_dir)
+            # onnx2tf rewrites NCHW to NHWC (-b 1: static shapes) and runs TFLite's full-integer
+            # post-training quantization on our 64 calibration images (-oiqt -cind).
+            subprocess.run([sys.executable, "-m", "onnx2tf", "-i", str(onnx_file), "-o", str(tf_dir),
+                            "-b", "1", "-n", "-oiqt", "-cind", input_name, str(calib_npy), mean, std],
+                           check=True)
             if variant == "":
-                conv = tf.lite.TFLiteConverter.from_saved_model(str(saved))
-                (out / f"{name}-fp32.tflite").write_bytes(conv.convert())
-            conv = tf.lite.TFLiteConverter.from_saved_model(str(saved))
-            conv.optimizations = [tf.lite.Optimize.DEFAULT]
-            conv.representative_dataset = representative
-            conv.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-            (out / f"{name}-int8{variant}.tflite").write_bytes(conv.convert())
+                shutil.copy(next(tf_dir.glob("*_float32.tflite")), out / f"{name}-fp32.tflite")
+            # *_integer_quant: INT8 weights and activations, float input/output.
+            quant = [p for p in tf_dir.glob("*_integer_quant.tflite") if "full" not in p.name and "int16" not in p.name]
+            shutil.copy(quant[0], out / f"{name}-int8{variant}.tflite")
             print(f"  wrote {name}-int8{variant}.tflite", flush=True)
 
 
