@@ -69,7 +69,7 @@ def convert(models: list[str], out: Path) -> None:
                 shutil.rmtree(saved)
             # onnx2tf rewrites NCHW to NHWC; -b 1 fixes the batch so every op has static shapes.
             subprocess.run([sys.executable, "-m", "onnx2tf", "-i", str(onnx_file), "-o", str(saved),
-                            "-b", "1", "-osd", "-n"], check=True)
+                            "-b", "1", "-osd", "-fdosm", "-n"], check=True)
 
             def representative():
                 for img in calib_images:
