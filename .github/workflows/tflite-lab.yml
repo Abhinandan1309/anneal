@@ -20,15 +20,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
           cache: pip
       - name: Install
         run: |
           python -m pip install --upgrade pip
           python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          # onnx2tf 2.x needs Python 3.12 and pins its own stack; older releases download a
-          # pickled test file at conversion time, which numpy rightly refuses to load.
-          python -m pip install "onnx2tf[tensorflow]==2.6.9" onnx_graphsurgeon
+          # onnx2tf 1.x quantizes through TensorFlow's own converter (2.x's built-in quantizer
+          # writes invalid depthwise parameters). Calibration data is supplied, so it has no
+          # reason to download its sample file; if it tries, numpy refuses the pickle and the
+          # job fails, which is the right outcome.
+          python -m pip install "onnx2tf==1.28.8" "tensorflow==2.19.0" tf_keras onnx_graphsurgeon sng4onnx onnxsim psutil ai-edge-litert
           python -m pip install -e .
       - uses: actions/cache@v4
         with:
