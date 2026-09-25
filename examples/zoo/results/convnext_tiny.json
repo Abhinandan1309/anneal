@@ -1,0 +1,109 @@
+{
+ "model": "convnext_tiny",
+ "ops": {
+  "Add": 72,
+  "Constant": 54,
+  "Mul": 54,
+  "Transpose": 46,
+  "MatMul": 36,
+  "LayerNormalization": 23,
+  "Conv": 22,
+  "Div": 18,
+  "Erf": 18,
+  "GlobalAveragePool": 1,
+  "Flatten": 1,
+  "Gemm": 1
+ },
+ "depthwise_convs": 18,
+ "params_m": 28.59,
+ "equalisable_sites": 0,
+ "imbalance": {
+  "before": {
+   "layers": 22,
+   "flagged": 2,
+   "flagged_depthwise": 2,
+   "worst": "/features/features.1/features.1.0/block/block.0/Conv",
+   "worst_p10_sqnr_db": -5.4140828226621736,
+   "median_layer_p10_sqnr_db": 21.60322968895406
+  },
+  "after": {
+   "layers": 22,
+   "flagged": 2,
+   "flagged_depthwise": 2,
+   "worst": "/features/features.1/features.1.0/block/block.0/Conv",
+   "worst_p10_sqnr_db": -5.4140828226621736,
+   "median_layer_p10_sqnr_db": 21.60322968895406
+  },
+  "equalisation": {
+   "sites": 0,
+   "by_kind": {
+    "gated": 0,
+    "relu": 0
+   },
+   "channels_mirrored": 0,
+   "median_levels_before": null,
+   "median_levels_after": null,
+   "max_abs_logit_change": null
+  }
+ },
+ "fp32": 0.79296875,
+ "n_eval": 1024,
+ "recipes": {
+  "minmax (default)": {
+   "fused": {
+    "acc": 0.791015625,
+    "agree": 0.8291015625,
+    "regressions": 65,
+    "fixes": 63
+   },
+   "emulated": {
+    "acc": 0.83203125,
+    "agree": 0.85546875,
+    "regressions": 34,
+    "fixes": 74
+   }
+  },
+  "percentile + float stem": {
+   "fused": {
+    "acc": 0.755859375,
+    "agree": 0.9287109375,
+    "regressions": 42,
+    "fixes": 4
+   },
+   "emulated": {
+    "acc": 0.7685546875,
+    "agree": 0.9384765625,
+    "regressions": 35,
+    "fixes": 10
+   }
+  },
+  "equalize + percentile + float stem": {
+   "fused": {
+    "acc": 0.755859375,
+    "agree": 0.9287109375,
+    "regressions": 42,
+    "fixes": 4
+   },
+   "emulated": {
+    "acc": 0.7685546875,
+    "agree": 0.9384765625,
+    "regressions": 35,
+    "fixes": 10
+   }
+  },
+  "equalize + percentile + float stem + reduce_range": {
+   "fused": {
+    "acc": 0.7666015625,
+    "agree": 0.9365234375,
+    "regressions": 33,
+    "fixes": 6
+   },
+   "emulated": {
+    "acc": 0.759765625,
+    "agree": 0.9384765625,
+    "regressions": 39,
+    "fixes": 5
+   }
+  }
+ }
+}

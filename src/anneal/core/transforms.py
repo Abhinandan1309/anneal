@@ -461,6 +461,16 @@ def load_measured_ranking(path: Path) -> list[str]:
     return order_by_measured_damage(layers)
 
 
+#: Which op types static quantization touches. "default" is onnxruntime's own list, which
+#: also quantizes LayerNormalization, Add, Softmax and friends. "compute" quantizes only the
+#: inputs and weights of the matrix products. On ViT-B/16 the default put an 8-bit scale on
+#: every LayerNorm input -- the residual stream, whose outlier channels span ~9x the median --
+#: and lost 7.2pp; "compute" lost none (emulated, 512 images) while keeping every matmul INT8.
+COMPUTE_OP_SETS: dict[str, list[str] | None] = {
+    "default": None,
+    "compute": ["Conv", "MatMul", "Gemm"],
+}
+
 #: Element-wise ops that belong to a convolution's activation (the stem's SiLU, Hardswish...).
 _ACTIVATION_OPS = ("Sigmoid", "HardSigmoid", "Mul", "Relu", "Clip", "HardSwish", "Add", "Div")
 
@@ -541,6 +551,9 @@ def quantize_static_int8(
     slack = float(params.get("equalize_slack", EQUALIZE_SLACK))
     float_gates = bool(params.get("float_gates", False))
     float_stem = bool(params.get("float_stem", False))
+    quantize_ops = params.get("quantize_ops", "default")
+    if quantize_ops not in COMPUTE_OP_SETS:
+        raise TransformError(f"quantize_ops must be one of {sorted(COMPUTE_OP_SETS)}, got {quantize_ops!r}")
     percentile = float(params.get("calib_percentile", 99.99))
     if equalize and not per_channel:
         raise TransformError(
@@ -580,6 +593,7 @@ def quantize_static_int8(
                 else {}
             ),
             **({"float_stem": True} if float_stem else {}),
+            **({"quantize_ops": quantize_ops} if quantize_ops != "default" else {}),
             **({"calib_percentile": percentile} if calib_method.startswith("percentile") and "calib_percentile" in params else {}),
         },
     )
@@ -620,6 +634,7 @@ def quantize_static_int8(
             reduce_range=reduce_range,
             calibrate_method=methods[calib_method],
             nodes_to_exclude=exclude,
+            op_types_to_quantize=COMPUTE_OP_SETS[quantize_ops],
             extra_options=extra,
         )
 
@@ -814,6 +829,15 @@ REGISTRY: dict[str, TransformSpec] = {
             "equalize_slack": {
                 "type": "number",
                 "description": "How far equalisation may extend a tensor's range downward (default 0.1).",
+            },
+            "quantize_ops": {
+                "type": "string",
+                "enum": ["default", "compute"],
+                "description": (
+                    "'compute' quantizes only Conv/MatMul/Gemm and leaves LayerNorm, residual "
+                    "adds and softmax in float. The fix for transformers, whose residual stream "
+                    "has outlier channels; on CNNs the default is usually better."
+                ),
             },
             "float_stem": {
                 "type": "boolean",

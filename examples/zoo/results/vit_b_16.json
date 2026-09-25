@@ -1,0 +1,94 @@
+{
+ "model": "vit_b_16",
+ "ops": {
+  "Constant": 665,
+  "Unsqueeze": 279,
+  "Reshape": 134,
+  "Concat": 123,
+  "Shape": 101,
+  "Gather": 101,
+  "Transpose": 97,
+  "Add": 85,
+  "Mul": 74,
+  "MatMul": 60,
+  "Cast": 52,
+  "Slice": 48,
+  "Div": 38,
+  "Sqrt": 36,
+  "LayerNormalization": 25,
+  "Squeeze": 24,
+  "Gemm": 13,
+  "Mod": 12,
+  "Softmax": 12,
+  "Erf": 12,
+  "Conv": 1,
+  "ConstantOfShape": 1,
+  "Equal": 1,
+  "Where": 1,
+  "Expand": 1
+ },
+ "depthwise_convs": 0,
+ "params_m": 86.57,
+ "equalisable_sites": 0,
+ "imbalance": {
+  "before": {
+   "layers": 1,
+   "flagged": 0,
+   "flagged_depthwise": 0,
+   "worst": "/conv_proj/Conv",
+   "worst_p10_sqnr_db": 37.28882396057794,
+   "median_layer_p10_sqnr_db": 37.28882396057794
+  },
+  "after": {
+   "layers": 1,
+   "flagged": 0,
+   "flagged_depthwise": 0,
+   "worst": "/conv_proj/Conv",
+   "worst_p10_sqnr_db": 37.28882396057794,
+   "median_layer_p10_sqnr_db": 37.28882396057794
+  },
+  "equalisation": {
+   "sites": 0,
+   "by_kind": {
+    "gated": 0,
+    "relu": 0
+   },
+   "channels_mirrored": 0,
+   "median_levels_before": null,
+   "median_levels_after": null,
+   "max_abs_logit_change": null
+  }
+ },
+ "fp32": 0.83203125,
+ "n_eval": 512,
+ "recipes": {
+  "minmax (default)": {
+   "fused": {
+    "acc": 0.751953125,
+    "agree": 0.80859375,
+    "regressions": 57,
+    "fixes": 16
+   },
+   "emulated": {
+    "acc": 0.748046875,
+    "agree": 0.84375,
+    "regressions": 49,
+    "fixes": 6
+   }
+  },
+  "minmax, compute ops only": {
+   "fused": {
+    "acc": 0.837890625,
+    "agree": 0.919921875,
+    "regressions": 13,
+    "fixes": 16
+   },
+   "emulated": {
+    "acc": 0.833984375,
+    "agree": 0.96484375,
+    "regressions": 6,
+    "fixes": 7
+   }
+  }
+ }
+}

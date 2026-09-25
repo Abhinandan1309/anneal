@@ -1,0 +1,104 @@
+{
+ "model": "resnet50",
+ "ops": {
+  "Conv": 53,
+  "Relu": 49,
+  "Add": 16,
+  "MaxPool": 1,
+  "GlobalAveragePool": 1,
+  "Flatten": 1,
+  "Gemm": 1
+ },
+ "depthwise_convs": 0,
+ "params_m": 25.53,
+ "equalisable_sites": 0,
+ "imbalance": {
+  "before": {
+   "layers": 53,
+   "flagged": 0,
+   "flagged_depthwise": 0,
+   "worst": "/layer2/layer2.2/conv1/Conv",
+   "worst_p10_sqnr_db": 15.727448396578765,
+   "median_layer_p10_sqnr_db": 25.91102077354105
+  },
+  "after": {
+   "layers": 53,
+   "flagged": 0,
+   "flagged_depthwise": 0,
+   "worst": "/layer2/layer2.2/conv1/Conv",
+   "worst_p10_sqnr_db": 15.727448396578765,
+   "median_layer_p10_sqnr_db": 25.91102077354105
+  },
+  "equalisation": {
+   "sites": 0,
+   "by_kind": {
+    "gated": 0,
+    "relu": 0
+   },
+   "channels_mirrored": 0,
+   "median_levels_before": null,
+   "median_levels_after": null,
+   "max_abs_logit_change": null
+  }
+ },
+ "fp32": 0.7861328125,
+ "n_eval": 1024,
+ "recipes": {
+  "minmax (default)": {
+   "fused": {
+    "acc": 0.6552734375,
+    "agree": 0.7294921875,
+    "regressions": 161,
+    "fixes": 27
+   },
+   "emulated": {
+    "acc": 0.7890625,
+    "agree": 0.943359375,
+    "regressions": 14,
+    "fixes": 17
+   }
+  },
+  "percentile + float stem": {
+   "fused": {
+    "acc": 0.7822265625,
+    "agree": 0.94921875,
+    "regressions": 19,
+    "fixes": 15
+   },
+   "emulated": {
+    "acc": 0.7841796875,
+    "agree": 0.955078125,
+    "regressions": 16,
+    "fixes": 14
+   }
+  },
+  "equalize + percentile + float stem": {
+   "fused": {
+    "acc": 0.7822265625,
+    "agree": 0.94921875,
+    "regressions": 19,
+    "fixes": 15
+   },
+   "emulated": {
+    "acc": 0.7841796875,
+    "agree": 0.955078125,
+    "regressions": 16,
+    "fixes": 14
+   }
+  },
+  "equalize + percentile + float stem + reduce_range": {
+   "fused": {
+    "acc": 0.78515625,
+    "agree": 0.9375,
+    "regressions": 19,
+    "fixes": 18
+   },
+   "emulated": {
+    "acc": 0.7900390625,
+    "agree": 0.939453125,
+    "regressions": 17,
+    "fixes": 21
+   }
+  }
+ }
+}

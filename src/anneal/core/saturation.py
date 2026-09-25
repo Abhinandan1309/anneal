@@ -301,8 +301,12 @@ def analyse(
                         stats_total[key] += s[key]
             risky_frac = float(np.mean(risky))
         else:
-            # Gemm / MatMul: activations (N, K); weights (K, O) or (O, K) with transB.
-            x = a.reshape(a.shape[0], -1)
+            # Gemm / MatMul: the reduction runs over the last axis, so a transformer's
+            # (batch, tokens, K) activation is (batch * tokens) rows of K. Weights are (K, O),
+            # or (O, K) for Gemm with transB.
+            x = a.reshape(-1, a.shape[-1])
+            if len(x) > n_positions:
+                x = x[np.linspace(0, len(x) - 1, n_positions).astype(int)]
             w2 = w.T if (node.op_type == "MatMul" or not layer.attrs.get("transB", 0)) else w
             k_len = w2.shape[1]
             risky_frac = weight_pair_risk(w2)

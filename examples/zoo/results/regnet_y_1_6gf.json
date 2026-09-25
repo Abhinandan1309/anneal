@@ -1,0 +1,105 @@
+{
+ "model": "regnet_y_1_6gf",
+ "ops": {
+  "Conv": 140,
+  "Relu": 109,
+  "GlobalAveragePool": 28,
+  "Sigmoid": 27,
+  "Mul": 27,
+  "Add": 27,
+  "Flatten": 1,
+  "Gemm": 1
+ },
+ "depthwise_convs": 0,
+ "params_m": 11.18,
+ "equalisable_sites": 0,
+ "imbalance": {
+  "before": {
+   "layers": 140,
+   "flagged": 0,
+   "flagged_depthwise": 0,
+   "worst": "/trunk_output/block4/block4-1/f/c/c.0/Conv",
+   "worst_p10_sqnr_db": 19.156424059065206,
+   "median_layer_p10_sqnr_db": 32.03922733159599
+  },
+  "after": {
+   "layers": 140,
+   "flagged": 0,
+   "flagged_depthwise": 0,
+   "worst": "/trunk_output/block4/block4-1/f/c/c.0/Conv",
+   "worst_p10_sqnr_db": 19.156424059065206,
+   "median_layer_p10_sqnr_db": 32.03922733159599
+  },
+  "equalisation": {
+   "sites": 0,
+   "by_kind": {
+    "gated": 0,
+    "relu": 0
+   },
+   "channels_mirrored": 0,
+   "median_levels_before": null,
+   "median_levels_after": null,
+   "max_abs_logit_change": null
+  }
+ },
+ "fp32": 0.7763671875,
+ "n_eval": 1024,
+ "recipes": {
+  "minmax (default)": {
+   "fused": {
+    "acc": 0.74609375,
+    "agree": 0.90234375,
+    "regressions": 46,
+    "fixes": 15
+   },
+   "emulated": {
+    "acc": 0.7763671875,
+    "agree": 0.9453125,
+    "regressions": 13,
+    "fixes": 13
+   }
+  },
+  "percentile + float stem": {
+   "fused": {
+    "acc": 0.7509765625,
+    "agree": 0.9326171875,
+    "regressions": 31,
+    "fixes": 5
+   },
+   "emulated": {
+    "acc": 0.7548828125,
+    "agree": 0.9384765625,
+    "regressions": 27,
+    "fixes": 5
+   }
+  },
+  "equalize + percentile + float stem": {
+   "fused": {
+    "acc": 0.7509765625,
+    "agree": 0.9326171875,
+    "regressions": 31,
+    "fixes": 5
+   },
+   "emulated": {
+    "acc": 0.7548828125,
+    "agree": 0.9384765625,
+    "regressions": 27,
+    "fixes": 5
+   }
+  },
+  "equalize + percentile + float stem + reduce_range": {
+   "fused": {
+    "acc": 0.7607421875,
+    "agree": 0.9287109375,
+    "regressions": 32,
+    "fixes": 16
+   },
+   "emulated": {
+    "acc": 0.759765625,
+    "agree": 0.9296875,
+    "regressions": 30,
+    "fixes": 13
+   }
+  }
+ }
+}

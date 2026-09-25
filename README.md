@@ -296,6 +296,23 @@ only a flag.
 | EfficientNet-B0 | 8 of 81, all depthwise (worst −2 dB) | 0 |
 | MobileNetV3-Large | 6 of 62, all depthwise | 1 (its input also feeds a residual Add, which the rewrite leaves alone) |
 
+**Beyond these two: eleven architectures**
+([script](examples/zoo/run_zoo.py), [results](examples/zoo/results/); 512–1,024 images each,
+change vs FP32 in pp, fused on this non-VNNI laptop / emulated 32-bit):
+
+| family | models | onnxruntime default (MinMax) | what fixes it |
+|---|---|---|---|
+| ReLU CNNs | ResNet-50, MobileNetV2, RegNetY-400MF, ShuffleNetV2, MnasNet | **−8 to −18** / ~0 | percentile + float stem, or reduce_range: all within ~2.6pp on the laptop |
+| EfficientNets | B0, B1, V2-S | **−31 to −76 / −25 to −76** | equalise + percentile + stem (+ rr): −0.6, −6.8, −1.4 |
+| Vision transformers | ViT-B/16 | −8.0 / −8.4 | **quantize only Conv/MatMul/Gemm: +0.6 / +0.2** |
+| | Swin-T | −1.8 / −3.1 | compute ops only: −2.5 / +0.2 (within noise) |
+| ConvNeXt | ConvNeXt-Tiny | −0.2 / +3.9 (noise; agreement only 85%) | not solved: every recipe loses 2–4pp |
+
+- **x86 saturation is the rule for CNNs, not a ResNet-18 quirk.** Every ReLU network loses 8–18pp on the non-VNNI laptop and nothing in emulation. On ResNet-50, a single layer saturates (the first conv, 23% of its accumulators); keeping it in float, or `reduce_range`, recovers everything.
+- **The collapse on every CPU belongs to the SiLU/Hardswish-plus-depthwise family.** EfficientNet-B1 keeps about 7pp after the fix. 4.2pp of that sits in one tensor, the equalised stem output, and why B1 is more sensitive there than B0 is not yet known.
+- **Transformers fail somewhere else.** onnxruntime's default op list also quantizes LayerNormalization, whose input is ViT's residual stream. That stream grows to [−42, 34], with outlier channels about 9× the median width, so one 8-bit scale starves half the channels. `quantize_ops="compute"` quantizes only the matrix products' inputs and weights. Leaving the residual stream in float was shown causally to recover the loss. Saturation does not affect transformer MatMuls here: fused and emulated agree within noise.
+- **ConvNeXt is open.** The ViT fix does not carry over. A prototype of gate-side equalisation into the dense fc2 layer went from −3.7 to −1.0pp. That is at the noise limit, and it costs fc2 weight precision.
+
 **What is left.** On EfficientNet, the remaining ~1pp sits at the next boundary: depthwise
 conv → SiLU → squeeze-excite and project conv. Per-channel scales there recover it fully
 ([data](examples/equalize/residual_localisation.json)). Equalising across it means scaling

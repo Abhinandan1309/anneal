@@ -60,6 +60,12 @@ def export_torchvision(
     model.eval()
 
     dummy = torch.randn(batch_size, 3, image_size, image_size)
+    # In eval mode nn.MultiheadAttention takes a fused fast path
+    # (aten::_native_multi_head_attention) that the TorchScript exporter cannot export, so
+    # ViT and friends fail. The plain MatMul/Softmax graph computes the same thing.
+    mha = getattr(torch.backends, "mha", None)
+    if mha is not None and hasattr(mha, "set_fastpath_enabled"):
+        mha.set_fastpath_enabled(False)
     with torch.no_grad():
         torch.onnx.export(
             model,

@@ -113,3 +113,38 @@ def test_cpu_features_classifies_the_int8_path():
     info = cpu_features()
     assert info["int8_path"] in {"x86-avx2-16bit", "x86-vnni", "arm-dotprod", "unknown"}
     assert isinstance(info["int8_features"], list)
+
+
+def test_matmul_activations_reduce_over_the_last_axis(tmp_path):
+    """A transformer's (batch, tokens, K) activation is batch*tokens rows of K, not batch rows."""
+    import onnx
+    from onnx import TensorProto, helper, numpy_helper
+    from onnxruntime.quantization import QuantFormat, QuantType, quantize_static
+
+    from anneal.core.saturation import analyse
+
+    rng = np.random.default_rng(0)
+    w = rng.standard_normal((16, 8)).astype(np.float32)
+    g = helper.make_graph(
+        [helper.make_node("MatMul", ["x", "w"], ["y"], name="mm")], "t",
+        [helper.make_tensor_value_info("x", TensorProto.FLOAT, [2, 5, 16])],
+        [helper.make_tensor_value_info("y", TensorProto.FLOAT, [2, 5, 8])],
+        [numpy_helper.from_array(w, "w")],
+    )
+    m = helper.make_model(g, opset_imports=[helper.make_opsetid("", 13)])
+    m.ir_version = 8
+    src, out = tmp_path / "m.onnx", tmp_path / "q.onnx"
+    onnx.save(m, str(src))
+    batches = [np.abs(rng.standard_normal((2, 5, 16))).astype(np.float32) for _ in range(2)]
+
+    class R:
+        def __init__(self):
+            self.it = iter({"x": b} for b in batches)
+
+        def get_next(self):
+            return next(self.it, None)
+
+    quantize_static(str(src), str(out), R(), quant_format=QuantFormat.QDQ,
+                    activation_type=QuantType.QUInt8, weight_type=QuantType.QInt8, per_channel=True)
+    layers = analyse(out, batches[:1], n_positions=64)
+    assert len(layers) == 1 and layers[0].reduction_len == 16

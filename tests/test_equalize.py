@@ -287,3 +287,20 @@ def test_float_stem_keeps_the_first_conv_and_its_activation_out_of_quantization(
     assert conv_a.input[1] not in producer
     assert out.lineage[-1].params["float_stem"] is True
     assert out.lineage[-1].params["calibrate_method"] == "percentile_asym"
+
+
+def test_compute_only_quantization_leaves_other_ops_in_float(tmp_path: Path, calib):
+    src = _model(tmp_path / "m.onnx", "silu")
+    out = apply_transform(
+        "quantize_static_int8", {"per_channel": True, "quantize_ops": "compute"},
+        ModelArtifact(path=src), TransformContext(workdir=tmp_path / "w", calibset=calib),
+    )
+    q = onnx.load(str(out.path))
+    sig = next(n for n in q.graph.node if n.op_type == "Sigmoid")
+    # The Sigmoid's output feeds the Mul directly: element-wise ops get no Q/DQ of their own.
+    consumers = [n.op_type for n in q.graph.node if sig.output[0] in n.input]
+    assert consumers == ["Mul"]
+    assert out.lineage[-1].params["quantize_ops"] == "compute"
+    with pytest.raises(TransformError):
+        apply_transform("quantize_static_int8", {"quantize_ops": "everything"}, ModelArtifact(path=src),
+                        TransformContext(workdir=tmp_path / "w2", calibset=calib))
