@@ -560,7 +560,8 @@ def quantize_static_int8(
     (see :mod:`anneal.core.equalize`) so each shared activation scale serves every channel.
     The float model is unchanged; only per-channel weight scales absorb the rescale, so it
     requires ``per_channel``. ``float_gates`` additionally keeps each gate branch (the
-    inserted Mul and the Sigmoid/HardSigmoid) out of quantization.
+    inserted Mul and the Sigmoid/HardSigmoid) out of quantization. ``equalize_top_k`` limits the
+    rewrite to the k sites :func:`anneal.core.equalize.rank_sites` predicts gain most.
     """
     from onnxruntime.quantization import (
         CalibrationMethod,
@@ -586,6 +587,7 @@ def quantize_static_int8(
     equalize = bool(params.get("equalize", False))
     equalize_dense = bool(params.get("equalize_dense", False))
     slack = float(params.get("equalize_slack", EQUALIZE_SLACK))
+    top_k = params.get("equalize_top_k")
     float_gates = bool(params.get("float_gates", False))
     float_stem = bool(params.get("float_stem", False))
     quantize_ops = params.get("quantize_ops", "default")
@@ -603,6 +605,11 @@ def quantize_static_int8(
         raise TransformError("equalize_dense needs per_channel weights")
     if not 0.0 <= slack <= 4.0:
         raise TransformError(f"equalize_slack must be in [0, 4], got {slack}")
+    if top_k is not None:
+        if not equalize:
+            raise TransformError("equalize_top_k only applies together with equalize")
+        if isinstance(top_k, bool) or not isinstance(top_k, int) or top_k < 0:
+            raise TransformError(f"equalize_top_k must be a non-negative integer, got {top_k!r}")
 
     methods = {
         "minmax": CalibrationMethod.MinMax,
@@ -631,6 +638,7 @@ def quantize_static_int8(
                 if equalize
                 else {}
             ),
+            **({"equalize_top_k": top_k} if top_k is not None else {}),
             **({"float_stem": True} if float_stem else {}),
             **({"equalize_dense": True, "equalize_slack": slack, "float_gates": float_gates}
                if equalize_dense else {}),
@@ -654,6 +662,7 @@ def quantize_static_int8(
             calib_source.calibration_batches(n_calib),
             slack=slack,
             check_batch=probe,
+            top_k=top_k,
         )
         src = eq_path
         if float_gates:
@@ -661,6 +670,11 @@ def quantize_static_int8(
         eq_meta = {
             "equalisation": result.summary(),
             "equalised_sites": [s.to_dict() for s in result.sites],
+            "equalised_site_ids": [s.producer for s in result.sites],
+            # Every candidate, best first, so a top-k run shows what it left out.
+            "equalisation_ranking": [
+                {"site": r.site, "predicted_gain": round(r.gain, 4)} for r in result.ranking
+            ],
         }
     if equalize_dense:
         from anneal.core.equalize_dense import equalise_dense
@@ -888,6 +902,14 @@ REGISTRY: dict[str, TransformSpec] = {
             "equalize_slack": {
                 "type": "number",
                 "description": "How far equalisation may extend a tensor's range downward (default 0.1).",
+            },
+            "equalize_top_k": {
+                "type": "integer",
+                "description": (
+                    "With equalize: rewrite only the k sites with the highest predicted gain "
+                    "(rounding noise removed from starved channels) instead of all. Each gated "
+                    "site adds one element-wise Mul, which is costly on NPUs; 0 = none."
+                ),
             },
             "quantize_ops": {
                 "type": "string",

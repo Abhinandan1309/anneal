@@ -158,8 +158,11 @@ Withdrawn with its model in the narrowing amendment, before any result. Not run.
 - **Does FP32 differ across devices by more than noise?** No. EfficientNet-B0 FP32 is 74.6% on the
   S24 TFLite, S24 QNN and SA8775P (1,024 images), and 73.4% (S24) vs 74.0% (Pixel 8 GPU) on 512
   images, three images apart. ResNet-50 FP32 is 78.5% on both the S24 and Pixel 8. The SA8775P and
-  S24 TFLite even score the same number of images correct for FP32 and `hub int8`; their INT8 top-1
-  predictions differ from their FP32 ones on 254 vs 253 images, so the runs are not copies.
+  S24 TFLite even score the same number of images correct for FP32 and `hub int8`. Compared image
+  by image (inference jobs `jg9zo2xvp`, `j5wlyz1jp` on the S24; `jgzlzym65`, `jpe76xz05` on the
+  SA8775P), the `hub int8` predictions agree on all 1,024 images: integer inference is bit-exact
+  across the two Hexagon generations. FP32, which the NPU runs in reduced precision, differs on one
+  image, so the runs are not copies.
   Comparisons use per-device FP32 in any case.
 - **Does a variant fail to compile or run?** Yes, on two counts, reported below.
 

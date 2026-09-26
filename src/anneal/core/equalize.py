@@ -37,13 +37,18 @@ Choosing s. Each tensor's quantization range [lo, hi] (always including 0) may n
 top; its bottom may extend by ``slack`` of the range. Within that budget every channel is scaled
 up as far as it will go, in whichever sign lets it go further. Scaling up only ever *adds*
 levels to a channel; the budget bounds what the other channels lose (at most ``slack``).
+
+Choosing sites. Every gated site costs one extra element-wise Mul at inference, which is cheap
+on a CPU but not on an NPU (16 of them cost EfficientNet-B0 ~30% of its INT8 speed on a
+Snapdragon HTP). :func:`rank_sites` predicts, from the same channel ranges, how much each site
+gains, and ``equalise(sites=...)`` / ``equalise(top_k=...)`` rewrites only a chosen subset.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, NamedTuple
 
 import numpy as np
 
@@ -66,10 +71,23 @@ class _Site:
     x: str  # A's output
     y: str  # the activation's output, B's input
 
+    @property
+    def id(self) -> str:
+        """Stable site id: the producer convolution's node name (one output, so unique)."""
+        return self.conv_a.name
+
+
+class SiteGain(NamedTuple):
+    """A site id (producer conv name) and its predicted gain from :func:`rank_sites`."""
+
+    site: str
+    gain: float
+
 
 @dataclass
 class EqualisedSite:
     kind: str
+    #: Producer convolution; also the site's id for ``equalise(sites=...)``.
     producer: str
     consumer: str
     gate: str | None
@@ -81,6 +99,8 @@ class EqualisedSite:
     #: Median quantization levels per channel of the activation, before and after.
     levels_before: float
     levels_after: float
+    #: :func:`site_gain` of this site (channel-equivalents of signal recovered from noise).
+    predicted_gain: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return {k: (round(v, 3) if isinstance(v, float) else v) for k, v in self.__dict__.items()}
@@ -93,10 +113,13 @@ class EqualisationResult:
     #: keeps the gate's input in float, which an imbalanced 8-bit tensor would otherwise be.
     gate_nodes: list[str] = field(default_factory=list)
     max_abs_logit_change: float | None = None
+    #: Every candidate site with its predicted gain, best first (whether rewritten or not).
+    ranking: list[SiteGain] = field(default_factory=list)
 
     def summary(self) -> dict[str, Any]:
         return {
             "sites": len(self.sites),
+            "candidates": len(self.ranking),
             "by_kind": {k: sum(s.kind == k for s in self.sites) for k in ("gated", "relu")},
             "channels_mirrored": sum(s.channels_mirrored for s in self.sites),
             "median_levels_before": float(np.median([s.levels_before for s in self.sites])) if self.sites else None,
@@ -164,6 +187,44 @@ def median_levels(lo: np.ndarray, hi: np.ndarray, levels: int = 255) -> float:
         return 0.0
     step = (t_hi - t_lo) / levels
     return float(np.median((hi - lo) / step))
+
+
+def noise_to_signal(lo: np.ndarray, hi: np.ndarray, levels: int = 255) -> np.ndarray:
+    """Per-channel rounding noise-to-signal power under a shared scale, capped at 1.
+
+    A channel spread over its range r has variance ~r²/12; rounding to step Δ adds Δ²/12, so
+    NSR = (Δ/r)² = 1/levels². This is the inverse of :mod:`anneal.core.imbalance`'s predicted
+    SQNR for a depthwise consumer, whose per-channel weight multiplies signal and noise alike
+    and cancels. A channel spanning less than one step is rounded to a constant and loses all
+    of its signal, hence the cap. Dead channels (no range) carry nothing to lose: 0.
+    """
+    t_hi, t_lo = max(float(hi.max()), 0.0), min(float(lo.min()), 0.0)
+    r = hi - lo
+    if t_hi - t_lo <= 0:
+        return np.zeros(r.shape)
+    step = (t_hi - t_lo) / levels
+    nsr = np.ones(r.shape)
+    live = r > 0
+    nsr[live] = np.minimum((step / r[live]) ** 2, 1.0)
+    nsr[~live] = 0.0
+    return nsr
+
+
+def site_gain(lo: np.ndarray, hi: np.ndarray, s: np.ndarray, levels: int = 255) -> float:
+    """Predicted benefit of scaling an activation's channels by ``s``: the drop in total NSR.
+
+    Measured on the activation the depthwise convolution consumes (y), with its per-channel
+    ranges before and after the rescale; the shared step Δ is recomputed afterwards, so a
+    range extended by ``slack`` counts against the gain. The unit is channel-equivalents of
+    signal recovered from rounding noise: a channel lifted from under one step to many counts
+    ~1, a channel lifted from 10 levels to 100 counts 0.01. That weighting is deliberate: the
+    accuracy loss equalisation fixes comes from starved channels (predicted SQNR under ~10 dB,
+    i.e. fewer than ~3 levels), and making already-healthy channels finer buys almost nothing.
+    It is summed, not averaged, so a site with more starved channels ranks higher.
+    """
+    s = np.asarray(s, dtype=np.float64)
+    lo2, hi2 = np.minimum(s * lo, s * hi), np.maximum(s * lo, s * hi)
+    return float(noise_to_signal(lo, hi, levels).sum() - noise_to_signal(lo2, hi2, levels).sum())
 
 
 # ---------------------------------------------------------------------------
@@ -291,6 +352,56 @@ def channel_ranges(
     return {t: (lo[t].astype(np.float64), hi[t].astype(np.float64)) for t in tensors}
 
 
+def _site_scales(
+    site: _Site,
+    ranges: dict[str, tuple[np.ndarray, np.ndarray]],
+    *,
+    slack: float,
+    allow_negative: bool,
+    max_scale: float,
+) -> np.ndarray:
+    return choose_scales(
+        [ranges[site.x], ranges[site.y]],
+        slack=slack,
+        allow_negative=allow_negative and site.kind == "gated",
+        max_scale=max_scale,
+    )
+
+
+def _rank(
+    sites: list[_Site],
+    ranges: dict[str, tuple[np.ndarray, np.ndarray]],
+    **scale_kw: Any,
+) -> list[SiteGain]:
+    gains = [SiteGain(s.id, site_gain(*ranges[s.y], _site_scales(s, ranges, **scale_kw))) for s in sites]
+    # Stable: equal gains keep graph order.
+    return sorted(gains, key=lambda g: -g.gain)
+
+
+def rank_sites(
+    src: Path,
+    batches: Iterable[np.ndarray],
+    *,
+    slack: float = DEFAULT_SLACK,
+    allow_negative: bool = True,
+    max_scale: float = DEFAULT_MAX_SCALE,
+) -> list[SiteGain]:
+    """Every equalisable site of ``src`` with its predicted gain (:func:`site_gain`), best first.
+
+    Uses the same channel ranges and scale choice as :func:`equalise`, so the ids and gains
+    match what ``equalise`` would do; nothing is written. Site ids are producer conv names.
+    """
+    import onnx
+
+    model = onnx.load(str(src))
+    _name_unnamed_nodes(model)
+    sites = find_sites(model)
+    if not sites:
+        return []
+    ranges = channel_ranges(model, sorted({t for s in sites for t in (s.x, s.y)}), batches)
+    return _rank(sites, ranges, slack=slack, allow_negative=allow_negative, max_scale=max_scale)
+
+
 def equalise(
     src: Path,
     dst: Path,
@@ -300,24 +411,48 @@ def equalise(
     allow_negative: bool = True,
     max_scale: float = DEFAULT_MAX_SCALE,
     check_batch: np.ndarray | None = None,
+    sites: Iterable[str] | None = None,
+    top_k: int | None = None,
 ) -> EqualisationResult:
     """Write an equalised copy of ``src`` to ``dst`` and describe what changed.
 
     ``batches`` are calibration inputs (the ranges are measured on them). With ``check_batch``
     the float outputs of both models are compared on it and the largest change recorded.
+
+    By default every site found is rewritten. ``sites`` restricts that to the named ones (ids
+    as in :func:`rank_sites`: producer conv names; an unknown id is an error), and ``top_k``
+    to the k with the highest predicted gain. At most one of the two may be given.
     """
     import onnx
     from onnx import helper, numpy_helper
 
+    if sites is not None and top_k is not None:
+        raise ValueError("give either sites or top_k, not both")
+    if top_k is not None and (isinstance(top_k, bool) or not isinstance(top_k, int) or top_k < 0):
+        raise ValueError(f"top_k must be a non-negative integer, got {top_k!r}")
+    wanted = None if sites is None else ([sites] if isinstance(sites, str) else list(sites))
+
     model = onnx.load(str(src))
     _name_unnamed_nodes(model)
-    sites = find_sites(model)
+    found = find_sites(model)
+    if wanted is not None:
+        unknown = sorted(set(wanted) - {s.id for s in found})
+        if unknown:
+            raise ValueError(
+                f"not equalisable sites: {unknown}; candidates are {[s.id for s in found]}"
+            )
     result = EqualisationResult()
-    if not sites:
+    if not found:
         onnx.save(model, str(dst))
         return result
 
-    ranges = channel_ranges(model, sorted({t for s in sites for t in (s.x, s.y)}), batches)
+    ranges = channel_ranges(model, sorted({t for s in found for t in (s.x, s.y)}), batches)
+    scale_kw = {"slack": slack, "allow_negative": allow_negative, "max_scale": max_scale}
+    result.ranking = _rank(found, ranges, **scale_kw)
+    gains = dict(result.ranking)
+    if top_k is not None:
+        wanted = [r.site for r in result.ranking[:top_k]]
+    chosen = None if wanted is None else set(wanted)
     g = model.graph
     inits = {i.name: i for i in g.initializer}
 
@@ -328,7 +463,9 @@ def equalise(
         inits[name].CopyFrom(numpy_helper.from_array(arr.astype(np.float32), name))
 
     shared: set[str] = set()
-    for k, site in enumerate(sites):
+    for k, site in enumerate(found):  # k is the index among all sites: stable node names
+        if chosen is not None and site.id not in chosen:
+            continue
         # A weight shared by two convs cannot be rescaled for one of them.
         names = [site.conv_a.input[1], site.conv_b.input[1]]
         if len(site.conv_a.input) > 2 and site.conv_a.input[2]:
@@ -337,14 +474,8 @@ def equalise(
             continue
         shared.update(names)
 
-        lo_x, hi_x = ranges[site.x]
         lo_y, hi_y = ranges[site.y]
-        s = choose_scales(
-            [(lo_x, hi_x), (lo_y, hi_y)],
-            slack=slack,
-            allow_negative=allow_negative and site.kind == "gated",
-            max_scale=max_scale,
-        )
+        s = _site_scales(site, ranges, **scale_kw)
         s64 = s.astype(np.float64)
         rescale(site.conv_a.input[1], s64)
         if len(site.conv_a.input) > 2 and site.conv_a.input[2]:
@@ -393,6 +524,7 @@ def equalise(
                 channels_mirrored=int((s < 0).sum()),
                 levels_before=median_levels(lo_y, hi_y),
                 levels_after=median_levels(lo_y2, hi_y2),
+                predicted_gain=gains[site.id],
             )
         )
 

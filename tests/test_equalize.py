@@ -12,7 +12,14 @@ from onnx import TensorProto, helper, numpy_helper
 
 from anneal.core.artifact import ModelArtifact
 from anneal.core.dataset import SyntheticEvalSet
-from anneal.core.equalize import GATE_MUL_PREFIX, choose_scales, equalise, find_sites
+from anneal.core.equalize import (
+    GATE_MUL_PREFIX,
+    choose_scales,
+    equalise,
+    find_sites,
+    rank_sites,
+    site_gain,
+)
 from anneal.core.transforms import TransformContext, TransformError, apply_transform
 
 C_IN, C = 4, 6
@@ -267,6 +274,177 @@ def test_unnamed_gate_nodes_are_named_so_they_can_be_excluded(tmp_path: Path):
     assert all(result.gate_nodes)
     names = {n.name for n in onnx.load(str(tmp_path / "eq.onnx")).graph.node}
     assert set(result.gate_nodes) <= names
+
+
+# ----- selective equalisation ---------------------------------------------------
+
+#: Per-channel gains of each block's producer conv: heavily, not, and moderately imbalanced.
+_BLOCK_GAINS = [
+    [40.0, 1.0, 0.3, 0.05, 1.0, 0.02],
+    [1.0, 1.1, 0.9, 1.0, 1.2, 0.8],
+    [5.0, 1.0, 0.2, 1.0, 0.5, 0.1],
+]
+
+
+def _chain(path: Path) -> Path:
+    """Three Conv -> SiLU -> depthwise blocks in a row (sites conv_a0, conv_a1, conv_a2)."""
+    rng = np.random.default_rng(0)
+    nodes, inits, t = [], [], "input"
+    for i, gains in enumerate(_BLOCK_GAINS):
+        g = np.array(gains, dtype=np.float32).reshape(C, 1, 1, 1)
+        wa = rng.standard_normal((C, C_IN if i == 0 else C, 1, 1)).astype(np.float32) * g
+        wb = rng.standard_normal((C, 1, 3, 3)).astype(np.float32) / g
+        inits += [numpy_helper.from_array(wa, f"wa{i}"), numpy_helper.from_array(wb, f"wb{i}")]
+        nodes += [
+            helper.make_node("Conv", [t, f"wa{i}"], [f"x{i}"], name=f"conv_a{i}"),
+            helper.make_node("Sigmoid", [f"x{i}"], [f"g{i}"], name=f"gate{i}"),
+            helper.make_node("Mul", [f"x{i}", f"g{i}"], [f"y{i}"], name=f"act{i}"),
+            helper.make_node("Conv", [f"y{i}", f"wb{i}"], [f"z{i}"], name=f"conv_b{i}", group=C,
+                             pads=[1, 1, 1, 1]),
+        ]
+        t = f"z{i}"
+    graph = helper.make_graph(
+        nodes, "chain",
+        [helper.make_tensor_value_info("input", TensorProto.FLOAT, ["N", C_IN, 8, 8])],
+        [helper.make_tensor_value_info(t, TensorProto.FLOAT, ["N", C, 8, 8])],
+        inits,
+    )
+    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
+    model.ir_version = 8
+    onnx.checker.check_model(model)
+    onnx.save(model, str(path))
+    return path
+
+
+def _gate_muls(path: Path) -> list[str]:
+    return [n.name for n in onnx.load(str(path)).graph.node if n.name.startswith(GATE_MUL_PREFIX)]
+
+
+def test_site_gain_counts_rescued_channels_not_already_fine_ones():
+    lo, hi = np.array([0.0, 0.0]), np.array([100.0, 0.2])  # channel 1 spans half a step
+    rescued = site_gain(lo, hi, np.array([1.0, 500.0]))
+    assert rescued == pytest.approx(1.0, abs=0.01)  # one channel's worth of signal recovered
+    fine = site_gain(np.array([0.0, 0.0]), np.array([100.0, 20.0]), np.array([1.0, 5.0]))
+    assert 0 < fine < 0.01
+    assert site_gain(lo, hi, np.ones(2)) == 0.0
+
+
+def test_ranking_covers_every_site_best_first(tmp_path: Path):
+    src = _chain(tmp_path / "m.onnx")
+    ranking = rank_sites(src, _batches())
+    assert sorted(r.site for r in ranking) == ["conv_a0", "conv_a1", "conv_a2"]
+    gains = [r.gain for r in ranking]
+    assert gains == sorted(gains, reverse=True)
+    assert ranking[0].site == "conv_a0"  # the heavily imbalanced block
+    assert ranking[-1].site == "conv_a1"  # the balanced one has almost nothing to gain
+    # equalise measures the same thing.
+    result = equalise(src, tmp_path / "eq.onnx", _batches())
+    assert result.ranking == ranking
+    assert {s.producer: s.predicted_gain for s in result.sites} == dict(ranking)
+
+
+def test_only_the_chosen_sites_are_rewritten_and_the_model_stays_exact(tmp_path: Path):
+    src = _chain(tmp_path / "m.onnx")
+    dst = tmp_path / "eq.onnx"
+    result = equalise(src, dst, _batches(), sites=["conv_a2"])
+    assert [s.producer for s in result.sites] == ["conv_a2"]
+    assert len(result.ranking) == 3
+    assert _gate_muls(dst) == [f"{GATE_MUL_PREFIX}2"]
+    assert result.gate_nodes == [f"{GATE_MUL_PREFIX}2", "gate2"]
+    # Untouched sites keep their weights.
+    before = {i.name: numpy_helper.to_array(i) for i in onnx.load(str(src)).graph.initializer}
+    after = {i.name: numpy_helper.to_array(i) for i in onnx.load(str(dst)).graph.initializer}
+    for name in ("wa0", "wb0", "wa1", "wb1"):
+        assert np.array_equal(before[name], after[name])
+    assert not np.array_equal(before["wa2"], after["wa2"])
+    x = _batches(1, seed=7)[0]
+    ref, out = _run(src, x), _run(dst, x)
+    assert np.abs(out - ref).max() <= 1e-4 * max(1.0, np.abs(ref).max())
+
+
+def test_top_k_takes_the_best_ranked_sites(tmp_path: Path):
+    src = _chain(tmp_path / "m.onnx")
+    ranking = rank_sites(src, _batches())
+    result = equalise(src, tmp_path / "eq.onnx", _batches(), top_k=2)
+    assert {s.producer for s in result.sites} == {r.site for r in ranking[:2]}
+    assert len(_gate_muls(tmp_path / "eq.onnx")) == 2
+
+
+def test_top_k_zero_is_no_equalisation_and_top_k_n_is_all(tmp_path: Path):
+    src = _chain(tmp_path / "m.onnx")
+    none = equalise(src, tmp_path / "none.onnx", _batches(), top_k=0)
+    assert none.sites == [] and none.gate_nodes == [] and len(none.ranking) == 3
+    x = _batches(1, seed=5)[0]
+    assert np.array_equal(_run(src, x), _run(tmp_path / "none.onnx", x))
+
+    full = equalise(src, tmp_path / "full.onnx", _batches())
+    for k in (3, 10):
+        some = equalise(src, tmp_path / f"k{k}.onnx", _batches(), top_k=k)
+        assert [s.to_dict() for s in some.sites] == [s.to_dict() for s in full.sites]
+        assert some.gate_nodes == full.gate_nodes
+        assert np.array_equal(_run(tmp_path / f"k{k}.onnx", x), _run(tmp_path / "full.onnx", x))
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [{"sites": ["conv_b0"]}, {"sites": ["nope"]}, {"top_k": -1}, {"top_k": True},
+     {"sites": ["conv_a0"], "top_k": 1}],
+)
+def test_invalid_site_selection_is_rejected(tmp_path: Path, kwargs):
+    with pytest.raises(ValueError):
+        equalise(_chain(tmp_path / "m.onnx"), tmp_path / "eq.onnx", _batches(), **kwargs)
+
+
+def _static(tmp_path: Path, calib, src: Path, name: str, **params):
+    return apply_transform(
+        "quantize_static_int8", {"per_channel": True, **params}, ModelArtifact(path=src),
+        TransformContext(workdir=tmp_path / name, calibset=calib),
+    )
+
+
+def test_static_quantization_top_k_records_the_chosen_sites(tmp_path: Path, calib):
+    src = _chain(tmp_path / "m.onnx")
+    out = _static(tmp_path, calib, src, "k1", equalize=True, equalize_top_k=1)
+    assert out.lineage[-1].params["equalize_top_k"] == 1
+    assert out.meta["equalised_site_ids"] == [out.meta["equalisation_ranking"][0]["site"]]
+    assert [r["site"] for r in out.meta["equalisation_ranking"]] == [
+        r.site for r in rank_sites(src, calib.calibration_batches(out.meta["calib_samples"]))
+    ]
+    assert out.meta["equalisation"]["sites"] == 1
+    assert out.meta["equalisation"]["candidates"] == 3
+    assert out.meta["equalisation"]["max_abs_logit_change"] < 1e-3
+
+
+def test_static_quantization_top_k_limits_match_off_and_full(tmp_path: Path, calib):
+    src = _chain(tmp_path / "m.onnx")
+    x = _batches(1, seed=9)[0]
+    off = _run(_static(tmp_path, calib, src, "off").path, x)
+    k0 = _static(tmp_path, calib, src, "k0", equalize=True, equalize_top_k=0)
+    assert k0.meta["equalised_site_ids"] == []
+    assert np.array_equal(_run(k0.path, x), off)
+
+    full = _static(tmp_path, calib, src, "full", equalize=True)
+    kn = _static(tmp_path, calib, src, "kn", equalize=True, equalize_top_k=3)
+    assert kn.meta["equalised_sites"] == full.meta["equalised_sites"]
+    assert np.array_equal(_run(kn.path, x), _run(full.path, x))
+    assert "equalize_top_k" not in full.lineage[-1].params
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"per_channel": True, "equalize_top_k": 2},
+        {"per_channel": True, "equalize": True, "equalize_top_k": -1},
+        {"per_channel": True, "equalize": True, "equalize_top_k": 1.5},
+        {"per_channel": True, "equalize": True, "equalize_top_k": True},
+    ],
+)
+def test_invalid_top_k_settings_are_rejected(tmp_path: Path, calib, params):
+    with pytest.raises(TransformError):
+        apply_transform(
+            "quantize_static_int8", params, ModelArtifact(path=_chain(tmp_path / "m.onnx")),
+            TransformContext(workdir=tmp_path / "w", calibset=calib),
+        )
 
 
 def test_float_stem_keeps_the_first_conv_and_its_activation_out_of_quantization(tmp_path: Path, calib):
