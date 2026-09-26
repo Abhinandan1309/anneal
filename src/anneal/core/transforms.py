@@ -780,6 +780,8 @@ def quantize_static_int8(
     ``cle`` first applies data-free cross-layer weight equalisation
     (:mod:`anneal.core.cle`) across Conv/Gemm -> ReLU -> Conv/Gemm pairs, for targets whose
     weights are quantized per tensor; it runs before ``equalize`` when both are set.
+    ``sigmoid_surrogate`` (K > 0) then replaces every Sigmoid by a per-gate fitted sum of K
+    fixed HardSigmoids (see :mod:`anneal.core.surrogate`), the only gate AMD's NPUs run.
 
     ``int16_top_k`` keeps the k activation tensors that are most damaging at 8 bits in 16 bits,
     ranked by :func:`anneal.core.activation_sensitivity.rank_activation_tensors` on the model
@@ -840,6 +842,9 @@ def quantize_static_int8(
     if quantize_ops not in COMPUTE_OP_SETS:
         raise TransformError(f"quantize_ops must be one of {sorted(COMPUTE_OP_SETS)}, got {quantize_ops!r}")
     percentile = float(params.get("calib_percentile", 99.99))
+    surrogate_k = params.get("sigmoid_surrogate", 0)
+    if isinstance(surrogate_k, bool) or not isinstance(surrogate_k, int) or not 0 <= surrogate_k <= 8:
+        raise TransformError(f"sigmoid_surrogate must be an integer in [0, 8], got {surrogate_k!r}")
     if equalize and not per_channel:
         raise TransformError(
             "equalize needs per_channel weights: with one weight scale per tensor the rescale "
@@ -925,6 +930,7 @@ def quantize_static_int8(
             **({"equalize_dense": True, "equalize_slack": slack, "float_gates": float_gates}
                if equalize_dense else {}),
             **({"quantize_ops": quantize_ops} if quantize_ops != "default" else {}),
+            **({"sigmoid_surrogate": surrogate_k} if surrogate_k else {}),
             **({"calib_percentile": percentile} if calib_method.startswith("percentile") and "calib_percentile" in params else {}),
         },
     )
@@ -1007,6 +1013,25 @@ def quantize_static_int8(
             "max_abs_logit_change": change,
             "sites": [d.to_dict() for d in dense_sites],
         }
+    if surrogate_k:
+        # AMD's NPU toolchain swaps every Sigmoid for HardSigmoid(1/6, 1/2); a per-gate sum of
+        # such HardSigmoids is a sigmoid it can run. After equalisation, which looks for the
+        # Sigmoid gates, and on its output (the gate then sees x'/s = x, the same distribution).
+        from anneal.core.surrogate import replace_sigmoids
+
+        sur_path = out.with_name(out.stem + f"-surrogate{surrogate_k}-fp32.onnx")
+        report = replace_sigmoids(
+            src, sur_path, calib_source.calibration_batches(n_calib), k_terms=surrogate_k
+        )
+        src = sur_path
+        if base_exclude:
+            # float_gates named the Sigmoid nodes it keeps in float; keep their replacements.
+            replaced = {g["node"]: g["nodes"] for g in report["per_gate"] if g["node"]}
+            base_exclude = [n for old in base_exclude for n in replaced.get(old, [old])]
+        eq_meta["sigmoid_surrogate"] = {k: v for k, v in report.items() if k != "per_gate"}
+        eq_meta["sigmoid_surrogate_gates"] = [
+            {k: v for k, v in g.items() if k != "nodes"} for g in report["per_gate"]
+        ]
 
     def run_quantizer(exclude: list[str]) -> None:
         with _entropy_bins(calib_method == "entropy"):
@@ -1451,6 +1476,17 @@ REGISTRY: dict[str, TransformSpec] = {
                     "Linear, EfficientNetV2's Fused-MBConv, squeeze-excite MLPs), choosing the "
                     "strength per site by simulated INT8 error; sites where it would not help "
                     "are left alone."
+                ),
+            },
+            "sigmoid_surrogate": {
+                "type": "integer",
+                "description": (
+                    "For AMD NPUs/DPUs (Vitis AI, Ryzen AI via Quark), whose toolchain replaces "
+                    "every Sigmoid with HardSigmoid(u/6 + 1/2): replace each Sigmoid first by a sum "
+                    "of this many such HardSigmoids, sum_i w_i h(k_i x + b_i) with exact 0/1 "
+                    "asymptotes, fitted per gate on its calibration inputs (x^2-weighted for SiLU). "
+                    "AMD's plain swap costs EfficientNet-B0 48.8pp and B1 75.7pp top-1 in float; "
+                    "3 terms: +0.00pp and -2.0pp vs FP32. Applied after equalisation; 0 = off."
                 ),
             },
             "float_gates": {
