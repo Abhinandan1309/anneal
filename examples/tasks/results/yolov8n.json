@@ -1,0 +1,138 @@
+{
+ "model": "yolov8n",
+ "n": 500,
+ "calibration": "32 highest-id COCO val2017 images of this task, disjoint from the scored ones",
+ "mode": "emulated (32-bit accumulation)",
+ "advice": {
+  "profile": {
+   "convs": 63,
+   "depthwise": 0,
+   "matmuls": 0,
+   "layernorms": 0,
+   "gated_sites": 0,
+   "relu_sites": 0,
+   "activations": {
+    "SiLU (Sigmoid*x)": 57
+   },
+   "family": "cnn"
+  },
+  "int8_path": "arm-dotprod",
+  "recommended": {
+   "label": "percentile 99.999 + float stem",
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999,
+    "float_stem": true
+   },
+   "why": "Symmetric 99.999 percentile calibration, stem kept in float; the stem costs nothing measurable here and protects non-VNNI x86."
+  },
+  "alternatives": [
+   {
+    "label": "minmax + float stem",
+    "params": {
+     "per_channel": true,
+     "activation_type": "uint8",
+     "calib_samples": 64,
+     "calibrate_method": "minmax",
+     "float_stem": true
+    },
+    "why": "Within noise of the recommendation on ResNet-50 (ImageNet)."
+   },
+   {
+    "label": "onnxruntime default",
+    "params": {
+     "per_channel": true,
+     "activation_type": "uint8",
+     "calib_samples": 64,
+     "calibrate_method": "minmax"
+    },
+    "why": "Control: fine on 32-bit hardware, 8-18pp worse on non-VNNI x86."
+   }
+  ],
+  "confidence": "high",
+  "evidence": [
+   "ResNet-50, ImageNet (10,000 images): -0.14pp emulated, -0.04pp on non-VNNI x86 (real kernels); adding reduce_range: -0.63pp; asymmetric 99.99 percentile: -0.54pp.",
+   "ResNet-50, MobileNetV2, RegNetY, ShuffleNetV2, MnasNet (1,024 images): default -8 to -18pp on non-VNNI x86, ~0 emulated.",
+   "ResNet-18 on five CPUs: the loss appears only on x86 without VNNI; the stem is the saturating layer."
+  ],
+  "caveats": []
+ },
+ "failed_to_build": {},
+ "recipes": {
+  "minmax (onnxruntime default)": {
+   "metric": 0.39640153631589486,
+   "delta_pts": -0.8899142330255405,
+   "fold_mean_delta_pts": -0.8689341515806498,
+   "ci95_pts": [
+    -1.4288470921427363,
+    -0.30902121101856334
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 32,
+    "calibrate_method": "minmax"
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\yolov8n\\quantize-static-int8-activation-type-uint8-calib-samples-32--353dfd03a0.onnx"
+  },
+  "percentile 99.999": {
+   "metric": 0.3958951215341283,
+   "delta_pts": -0.9405557112021956,
+   "fold_mean_delta_pts": -0.5474147754641617,
+   "ci95_pts": [
+    -1.2738415513106935,
+    0.17901200038237008
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 32,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\yolov8n\\quantize-static-int8-activation-type-uint8-calib-percentile--612e6f1858.onnx"
+  },
+  "anneal advised [cnn]: percentile 99.999 + float stem": {
+   "metric": 0.40013380487114186,
+   "delta_pts": -0.5166873775008407,
+   "fold_mean_delta_pts": 0.028394200675303516,
+   "ci95_pts": [
+    -0.7009220855836535,
+    0.7577104869342606
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 32,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999,
+    "float_stem": true
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\yolov8n\\quantize-static-int8-activation-type-uint8-calib-percentile--1ac8282d08.onnx"
+  },
+  "anneal advised + dense equalisation": {
+   "metric": 0.3964194411268459,
+   "delta_pts": -0.8881237519304364,
+   "fold_mean_delta_pts": -0.6322012858165338,
+   "ci95_pts": [
+    -1.584113728987841,
+    0.3197111573547738
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 32,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999,
+    "float_stem": true,
+    "equalize_dense": true
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\yolov8n\\quantize-static-int8-activation-type-uint8-calib-percentile--030bcc99b4.onnx"
+  }
+ },
+ "metric": "COCO box mAP@[.5:.95]",
+ "fp32": 0.40530067864615027
+}

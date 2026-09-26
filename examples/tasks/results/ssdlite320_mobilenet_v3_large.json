@@ -1,0 +1,140 @@
+{
+ "model": "ssdlite320_mobilenet_v3_large",
+ "n": 500,
+ "calibration": "32 highest-id COCO val2017 images of this task, disjoint from the scored ones",
+ "mode": "emulated (32-bit accumulation)",
+ "advice": {
+  "profile": {
+   "convs": 98,
+   "depthwise": 31,
+   "matmuls": 0,
+   "layernorms": 0,
+   "gated_sites": 8,
+   "relu_sites": 5,
+   "activations": {
+    "Hardswish": 28,
+    "ReLU": 19,
+    "ReLU6/Clip": 24
+   },
+   "family": "gated-depthwise"
+  },
+  "int8_path": "arm-dotprod",
+  "recommended": {
+   "label": "equalise + percentile + float stem",
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "percentile_asym",
+    "float_stem": true,
+    "equalize": true
+   },
+   "why": "Equalise the SiLU/Hardswish -> depthwise chains exactly, calibrate by asymmetric percentile, keep the stem in float."
+  },
+  "alternatives": [
+   {
+    "label": "percentile + float stem",
+    "params": {
+     "per_channel": true,
+     "activation_type": "uint8",
+     "calib_samples": 64,
+     "calibrate_method": "percentile_asym",
+     "float_stem": true
+    },
+    "why": "Without equalisation: faster (no gate multiplies), a few pp less accurate on EfficientNet."
+   },
+   {
+    "label": "onnxruntime default",
+    "params": {
+     "per_channel": true,
+     "activation_type": "uint8",
+     "calib_samples": 64,
+     "calibrate_method": "minmax"
+    },
+    "why": "Control: per-tensor activation scales collapse this family."
+   }
+  ],
+  "confidence": "high",
+  "evidence": [
+   "EfficientNet-B0 on six CPUs, 2,048 images: default -48 to -51pp everywhere; this recipe -0.5 to -0.7pp (not significant); with reduce_range -0.6pp on non-VNNI x86.",
+   "MobileNetV3-Large, same six CPUs: -11 to -25pp -> -1.0 to -2.6pp.",
+   "Cost: about 10% of the INT8 speedup for the gate multiplies (2.33x -> 2.11x on ARM)."
+  ],
+  "caveats": [
+   "8 gated chains will be equalised. EfficientNet-B1 kept ~7pp after this recipe; verify."
+  ]
+ },
+ "failed_to_build": {},
+ "recipes": {
+  "minmax (onnxruntime default)": {
+   "metric": 0.21203682311397884,
+   "delta_pts": -2.5898604564488945,
+   "fold_mean_delta_pts": -3.1496783574639933,
+   "ci95_pts": [
+    -4.456693611171639,
+    -1.8426631037563475
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 32,
+    "calibrate_method": "minmax"
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\ssdlite320_mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-samples-32--353dfd03a0.onnx"
+  },
+  "percentile 99.999": {
+   "metric": 0.23189754874758298,
+   "delta_pts": -0.603787893088481,
+   "fold_mean_delta_pts": -1.1568510540818189,
+   "ci95_pts": [
+    -2.4390093066777307,
+    0.12530719851409286
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 32,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\ssdlite320_mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-percentile--612e6f1858.onnx"
+  },
+  "anneal advised [gated-depthwise]: equalise + percentile + float stem": {
+   "metric": 0.22980345365843355,
+   "delta_pts": -0.8131974020034238,
+   "fold_mean_delta_pts": -1.13296564730216,
+   "ci95_pts": [
+    -2.0252196072543778,
+    -0.24071168734994264
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 32,
+    "calibrate_method": "percentile_asym",
+    "float_stem": true,
+    "equalize": true
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\ssdlite320_mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-samples-32--b30ac18b3f.onnx"
+  },
+  "anneal without equalisation: percentile + float stem": {
+   "metric": 0.23093196178642508,
+   "delta_pts": -0.7003465892042704,
+   "fold_mean_delta_pts": -1.0009122038409706,
+   "ci95_pts": [
+    -1.57781253087588,
+    -0.4240118768060611
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 32,
+    "calibrate_method": "percentile_asym",
+    "float_stem": true
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\ssdlite320_mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-samples-32--9d05df9317.onnx"
+  }
+ },
+ "metric": "COCO box mAP@[.5:.95]",
+ "fp32": 0.2379354276784678
+}
