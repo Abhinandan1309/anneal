@@ -42,7 +42,7 @@ VARIANTS = {
     # mix t=0.5, then ReLU/ReLU6 cross-layer equalisation
     "tidl 8-bit + equalised (per-tensor)": ("equalised_pt", COMMON),
     # the same plus gated dense sites into k x k convs (YOLOv8's Conv -> SiLU -> 3x3 Conv)
-    "tidl 8-bit + equalised (per-tensor, dense kxk)": ("equalised_pt_dense", COMMON),
+    "tidl 8-bit + equalised (per-tensor + dense kxk)": ("equalised_pt_dense", COMMON),
 }
 
 
@@ -142,7 +142,11 @@ def main() -> None:
     inp = fp.get_inputs()[0].name
     sessions = {"fp32": fp}
     rows, timing = {}, {}
-    for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
+    wanted = [v.strip() for v in args.variants.split(",") if v.strip()]
+    unknown = [v for v in wanted if v not in VARIANTS]
+    if unknown:  # fail before minutes of export and compilation, not after
+        raise SystemExit(f"unknown variants {unknown}; labels must not contain commas. Known: {list(VARIANTS)}")
+    for label in wanted:
         which, opts = VARIANTS[label]
         opts = {**opts, "advanced_options:calibration_frames": len(calib)}
         art = work / "artifacts" / label.replace(" ", "_").replace("+", "plus")
