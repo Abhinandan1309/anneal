@@ -92,9 +92,12 @@ def main() -> None:
     src = ROOT / "examples" / "models" / f"{args.model}-fp32.onnx"
     work = ROOT / "scratch" / "qaihub" / args.model
     work.mkdir(parents=True, exist_ok=True)
-    calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=8, limit=64)
+    from anneal.core.artifact import sample_shape
+
+    shape = sample_shape(src)
+    calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=8, limit=64, sample_shape=shape)
     calib_imgs = [x[i:i + 1] for x in calib.calibration_batches(64) for i in range(len(x))][:64]
-    ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=16, limit=args.images)
+    ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=16, limit=args.images, sample_shape=shape)
     eval_imgs, labels = [], []
     for x, y in ev.batches():
         eval_imgs += [x[i:i + 1] for i in range(len(x))]
@@ -127,7 +130,7 @@ def main() -> None:
             models[label] = model
             print(f"  quantized: {label}", flush=True)
 
-    specs = {input_name: (1, 3, 224, 224)}
+    specs = {input_name: (1, *shape)}
     c_jobs = {label: hub.submit_compile_job(m, device=device, input_specs=specs,
                                             options=f"--target_runtime {args.runtime}",
                                             name=f"anneal-{args.model}-{label}")

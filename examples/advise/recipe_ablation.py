@@ -119,7 +119,7 @@ def main() -> None:
     fp_right = p["fp32"] == y
     ref = p["advised: eq + asym 99.99 + stem"] == y
     rows = {}
-    for k in [k for k in ["advised: eq + asym 99.99 + stem", "minmax (default)", *RECIPES] if k in p]:
+    for k in dict.fromkeys(k for k in ["advised: eq + asym 99.99 + stem", "minmax (default)", *recipes] if k in p):
         right = p[k] == y
         row = stats(fp_right, right)
         b, c = int(np.sum(ref & ~right)), int(np.sum(~ref & right))
