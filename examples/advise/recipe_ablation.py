@@ -51,6 +51,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="efficientnet_b0")
     ap.add_argument("--limit", type=int, default=10_000)
+    ap.add_argument("--calib-stride", type=int, default=None,
+                    help="calibrate in chunks of this many 8-image batches (bounds RAM; e.g. 1 for EfficientNet-B1)")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
     name, path = args.model, model_path(args.model)
@@ -60,8 +62,15 @@ def main() -> None:
     ev = load_evalset("imagenet", cache_dir=cache, batch_size=32, limit=args.limit, sample_shape=shape)
     ctx = TransformContext(workdir=ROOT / "scratch" / "imagenet" / f"{name}-recipe-ablation", calibset=calib)
 
+    stored_path = ROOT / "examples" / "imagenet" / "results" / f"{name}-predictions.npz"
+    recipes = dict(RECIPES)
+    if not stored_path.exists():  # no ImageNet run to pair with: score the advised recipe and the default here
+        recipes = {"advised: eq + asym 99.99 + stem": {**BASE, **EQ, **A9999, **STEM},
+                   "minmax (default)": {**BASE, "calibrate_method": "minmax"}, **recipes}
+    if args.calib_stride:
+        recipes = {k: {**v, "calib_stride": args.calib_stride} for k, v in recipes.items()}
     built = {}
-    for label, params in RECIPES.items():
+    for label, params in recipes.items():
         built[label] = apply_transform("quantize_static_int8", dict(params), ModelArtifact(path=path), ctx).path
         gc.collect()
         print(f"  built {label}", flush=True)
@@ -78,12 +87,13 @@ def main() -> None:
             print(f"  {n}/{len(ev)} images ({time.time() - t0:.0f}s)", flush=True)
     y = np.concatenate(labels)
     p = {k: np.concatenate(v) for k, v in preds.items()}
-    stored = np.load(ROOT / "examples" / "imagenet" / "results" / f"{name}-predictions.npz")
     m = len(y)
-    if not (np.array_equal(stored["labels"][:m], y) and np.array_equal(stored["fp32"][:m], p["fp32"])):
-        raise RuntimeError("does not reproduce the stored ImageNet FP32 predictions on these images")
-    p["advised: eq + asym 99.99 + stem"] = stored[ADVISED][:m]
-    p["minmax (default)"] = stored["minmax"][:m]
+    if stored_path.exists():
+        stored = np.load(stored_path)
+        if not (np.array_equal(stored["labels"][:m], y) and np.array_equal(stored["fp32"][:m], p["fp32"])):
+            raise RuntimeError("does not reproduce the stored ImageNet FP32 predictions on these images")
+        p["advised: eq + asym 99.99 + stem"] = stored[ADVISED][:m]
+        p["minmax (default)"] = stored["minmax"][:m]
 
     fp_right = p["fp32"] == y
     ref = p["advised: eq + asym 99.99 + stem"] == y
@@ -94,7 +104,7 @@ def main() -> None:
         b, c = int(np.sum(ref & ~right)), int(np.sum(~ref & right))
         d, lo, hi = paired_delta_ci(b, c, m)
         row["vs_advised"] = {"delta_pp": d, "ci95_pp": [lo, hi], "mcnemar_p": mcnemar_exact(b, c)}
-        row["params"] = RECIPES.get(k)
+        row["params"] = recipes.get(k)
         rows[k] = row
         print(f"  {k:36s} {row['delta_pp']:+6.2f}pp vs FP32 | {d:+6.2f}pp vs advised [{lo:+.2f},{hi:+.2f}] "
               f"p={row['vs_advised']['mcnemar_p']:.2g}", flush=True)

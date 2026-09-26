@@ -225,6 +225,13 @@ class _EvalSetCalibrationReader:
     def rewind(self) -> None:
         self._iter = iter(self._batches)
 
+    # onnxruntime's strided calibration (CalibStridedMinMax) feeds one range of batches at a time.
+    def __len__(self) -> int:
+        return len(self._batches)
+
+    def set_range(self, start_index: int, end_index: int) -> None:
+        self._iter = iter(self._batches[start_index:end_index])
+
 
 def _input_name(model_path: Path) -> str:
     from anneal.core.artifact import describe_io
@@ -589,6 +596,9 @@ def quantize_static_int8(
     slack = float(params.get("equalize_slack", EQUALIZE_SLACK))
     top_k = params.get("equalize_top_k")
     min_gain = params.get("equalize_min_gain")
+    calib_stride = params.get("calib_stride")
+    if calib_stride is not None and (isinstance(calib_stride, bool) or not isinstance(calib_stride, int) or calib_stride < 1):
+        raise TransformError(f"calib_stride must be a positive integer, got {calib_stride!r}")
     float_gates = bool(params.get("float_gates", False))
     float_stem = bool(params.get("float_stem", False))
     quantize_ops = params.get("quantize_ops", "default")
@@ -648,6 +658,7 @@ def quantize_static_int8(
             ),
             **({"equalize_top_k": top_k} if top_k is not None else {}),
             **({"equalize_min_gain": min_gain} if min_gain is not None else {}),
+            **({"calib_stride": calib_stride} if calib_stride is not None else {}),
             **({"float_stem": True} if float_stem else {}),
             **({"equalize_dense": True, "equalize_slack": slack, "float_gates": float_gates}
                if equalize_dense else {}),
@@ -726,6 +737,8 @@ def quantize_static_int8(
         extra["CalibPercentile"] = percentile
     if calib_method == "percentile_asym":
         extra["CalibTensorRangeSymmetric"] = False
+    if calib_stride is not None:
+        extra["CalibStridedMinMax"] = calib_stride
     if float_stem:
         src = _with_named_nodes(src)
         base_exclude = base_exclude + [n for n in stem_nodes(src) if n not in base_exclude]
@@ -919,6 +932,15 @@ REGISTRY: dict[str, TransformSpec] = {
                     "With equalize: rewrite only the k sites with the highest predicted gain "
                     "(rounding noise removed from starved channels) instead of all. Each gated "
                     "site adds one element-wise Mul, which is costly on NPUs; 0 = none."
+                ),
+            },
+            "calib_stride": {
+                "type": "integer",
+                "description": (
+                    "Calibrate in chunks of this many batches (onnxruntime CalibStridedMinMax): "
+                    "bounds calibration memory, which otherwise holds every activation of every "
+                    "calibration image. Histogram methods merge chunk by chunk, so ranges can "
+                    "differ slightly from one-shot calibration."
                 ),
             },
             "equalize_min_gain": {

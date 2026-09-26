@@ -522,3 +522,16 @@ def test_static_quantization_min_gain_records_the_chosen_sites(tmp_path: Path, c
     art = _static(tmp_path, calib, src, "mg", equalize=True, equalize_min_gain=1e9)
     assert art.meta["equalised_site_ids"] == [] and art.meta["equalisation"]["candidates"] == 3
     assert art.lineage[-1].params["equalize_min_gain"] == 1e9
+
+
+def test_strided_calibration_is_recorded_and_close_to_one_shot(tmp_path: Path, calib):
+    src = _chain(tmp_path / "m.onnx")
+    one = _static(tmp_path, calib, src, "one", calibrate_method="percentile")
+    strided = _static(tmp_path, calib, src, "strided", calibrate_method="percentile", calib_stride=1)
+    assert strided.lineage[-1].params["calib_stride"] == 1
+    assert "calib_stride" not in one.lineage[-1].params
+    x = _batches(1, seed=3)[0]
+    a, b = _run(Path(one.path), x), _run(Path(strided.path), x)
+    assert np.abs(a - b).max() <= 0.1 * max(1.0, np.abs(a).max())
+    with pytest.raises(TransformError):
+        _static(tmp_path, calib, src, "bad", calib_stride=0)
