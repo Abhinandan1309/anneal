@@ -289,14 +289,14 @@ def advise(model_path: Path, int8_path: str) -> Advice:
         caveats.append("Outside the families this advice was measured on.")
 
     if saturating and prof.family in ("cnn", "gated-depthwise"):
-        # Measured on AC power, cpu-1t, interleaved rounds: the recipes that keep accuracy
-        # are ~5% faster than FP32 here; the fast default is fast only because it quantizes
-        # the stem, which is what breaks it.
+        # Measured on AC power, cpu-1t, interleaved rounds (examples/advise/*-timing.json): the
+        # recipes that keep accuracy are no faster than FP32 here; the fast default is fast only
+        # because it quantizes the stem, which is what breaks it.
         caveats.append(
-            "On x86 without VNNI the accurate recipes were only ~1.05x faster than FP32 "
-            "(EfficientNet-B0 1.04x, ResNet-50 1.05x); the default's 1.12x comes from the "
-            "quantized stem that costs 13-51pp. INT8 may not be worth deploying on this CPU; "
-            "the same recipes gave 2-4x on ARM."
+            "On x86 without VNNI the accurate recipes ran at about FP32 speed (EfficientNet-B0 "
+            "1.04x, ResNet-50 0.99x); the default's 1.05-1.12x comes from the quantized stem that "
+            "costs 13-51pp. INT8 may not be worth deploying on this CPU; the same recipes gave "
+            "2-4x on ARM."
         )
     return Advice(prof, int8_path, rec, alts, confidence, evidence, caveats)
 

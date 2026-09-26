@@ -16,28 +16,28 @@
     },
     "int8_path": "x86-avx2-16bit",
     "recommended": {
-      "label": "percentile + float stem + reduce_range",
+      "label": "percentile 99.999 + float stem",
       "params": {
         "per_channel": true,
         "activation_type": "uint8",
         "calib_samples": 64,
-        "calibrate_method": "percentile_asym",
-        "float_stem": true,
-        "reduce_range": true
+        "calibrate_method": "percentile",
+        "calib_percentile": 99.999,
+        "float_stem": true
       },
-      "why": "Asymmetric percentile calibration and a float stem; 7-bit weights so full-range per-channel weights cannot saturate this CPU's 16-bit pair sums."
+      "why": "Symmetric 99.999 percentile calibration, stem kept in float; the float stem is what removes this CPU's 16-bit pair-sum saturation."
     },
     "alternatives": [
       {
-        "label": "percentile + float stem",
+        "label": "minmax + float stem",
         "params": {
           "per_channel": true,
           "activation_type": "uint8",
           "calib_samples": 64,
-          "calibrate_method": "percentile_asym",
+          "calibrate_method": "minmax",
           "float_stem": true
         },
-        "why": "Without reduce_range: the float stem alone removed ResNet-50's saturation."
+        "why": "Within noise of the recommendation on ResNet-50 (ImageNet)."
       },
       {
         "label": "onnxruntime default",
@@ -52,61 +52,66 @@
     ],
     "confidence": "high",
     "evidence": [
-      "ResNet-50, MobileNetV2, RegNetY, ShuffleNetV2, MnasNet (1,024 images): default -8 to -18pp on non-VNNI x86, ~0 emulated; this recipe within ~2.6pp on the laptop.",
+      "ResNet-50, ImageNet (10,000 images): -0.14pp emulated, -0.04pp on non-VNNI x86 (real kernels); adding reduce_range: -0.63pp; asymmetric 99.99 percentile: -0.54pp.",
+      "ResNet-50, MobileNetV2, RegNetY, ShuffleNetV2, MnasNet (1,024 images): default -8 to -18pp on non-VNNI x86, ~0 emulated.",
       "ResNet-18 on five CPUs: the loss appears only on x86 without VNNI; the stem is the saturating layer."
     ],
-    "caveats": []
+    "caveats": [
+      "On x86 without VNNI the accurate recipes were only ~1.05x faster than FP32 (EfficientNet-B0 1.04x, ResNet-50 1.05x); the default's 1.12x comes from the quantized stem that costs 13-51pp. INT8 may not be worth deploying on this CPU; the same recipes gave 2-4x on ARM."
+    ]
   },
   "verification": {
     "mode": "fused",
     "n": 1024,
     "fp32_accuracy": 0.7861328125,
-    "fp32_p50_ms": 79.5196,
-    "best": "percentile + float stem + reduce_range",
+    "fp32_p50_ms": null,
+    "best": "percentile 99.999 + float stem",
     "notes": [],
+    "best_vs_recommended_p": 1.0,
+    "advice_contradicted": false,
     "rows": [
       {
-        "accuracy": 0.78515625,
-        "delta_pp": -0.09765625,
+        "accuracy": 0.7919921875,
+        "delta_pp": 0.5859375,
         "ci95_pp": [
-          -1.2619196507205097,
-          1.0666071507205097
+          -0.3111197774859048,
+          1.4829947774859047
         ],
-        "mcnemar_p": 1.0,
-        "agreement": 0.9375,
-        "p50_ms": 83.9866,
-        "speedup": 0.9468129439696332,
-        "path": "scratch\\advise\\resnet50\\quantize-static-int8-activation-type-uint8-calib-samples-64--cb9e682ec3.onnx",
+        "mcnemar_p": 0.28627872467041016,
+        "agreement": 0.966796875,
+        "p50_ms": null,
+        "speedup": null,
+        "path": "runs\\advise\\quantize-static-int8-activation-type-uint8-calib-percentile--e40b9a4977.onnx",
         "error": null,
-        "label": "percentile + float stem + reduce_range",
+        "label": "percentile 99.999 + float stem",
         "params": {
           "per_channel": true,
           "activation_type": "uint8",
           "calib_samples": 64,
-          "calibrate_method": "percentile_asym",
-          "float_stem": true,
-          "reduce_range": true
+          "calibrate_method": "percentile",
+          "calib_percentile": 99.999,
+          "float_stem": true
         }
       },
       {
-        "accuracy": 0.7822265625,
-        "delta_pp": -0.390625,
+        "accuracy": 0.791015625,
+        "delta_pp": 0.48828125,
         "ci95_pp": [
-          -1.5064491543001757,
-          0.7251991543001756
+          -0.5058450379302745,
+          1.4824075379302744
         ],
-        "mcnemar_p": 0.6075913612730801,
-        "agreement": 0.94921875,
-        "p50_ms": 217.2683,
-        "speedup": 0.365997248563182,
-        "path": "scratch\\advise\\resnet50\\quantize-static-int8-activation-type-uint8-calib-samples-64--12aaed67ba.onnx",
+        "mcnemar_p": 0.44206833839416504,
+        "agreement": 0.955078125,
+        "p50_ms": null,
+        "speedup": null,
+        "path": "runs\\advise\\quantize-static-int8-activation-type-uint8-calib-samples-64--bf7af6192b.onnx",
         "error": null,
-        "label": "percentile + float stem",
+        "label": "minmax + float stem",
         "params": {
           "per_channel": true,
           "activation_type": "uint8",
           "calib_samples": 64,
-          "calibrate_method": "percentile_asym",
+          "calibrate_method": "minmax",
           "float_stem": true
         }
       },
@@ -119,9 +124,9 @@
         ],
         "mcnemar_p": 1.9918316452142278e-24,
         "agreement": 0.7294921875,
-        "p50_ms": 207.5471,
-        "speedup": 0.3831400197834612,
-        "path": "scratch\\advise\\resnet50\\quantize-static-int8-activation-type-uint8-calib-samples-64--9254b6a0a6.onnx",
+        "p50_ms": null,
+        "speedup": null,
+        "path": "runs\\advise\\quantize-static-int8-activation-type-uint8-calib-samples-64--9254b6a0a6.onnx",
         "error": null,
         "label": "onnxruntime default",
         "params": {
