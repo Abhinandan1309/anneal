@@ -508,8 +508,7 @@ comparison with NVIDIA (−4.8pp) and HPTQ (−3.0pp) remains indicative only: d
 preprocessing and activation grids. On the recipe's parts, an ImageNet ablation (10,000 images,
 `examples/advise/efficientnet_b0_recipe_ablation.json`) finds equalisation worth about 3.3pp,
 percentile over min/max 2.5pp and the float stem 0.9pp; the best percentile is 99.99 for this
-gated network but 99.999 for ResNet-50 (`examples/advise/resnet50_ablation.json`). The draft
-wording lives in `docs/paper/draft.md`.
+gated network but 99.999 for ResNet-50 (`examples/advise/resnet50_ablation.json`).
 
 **Why the zoo result strengthens the story.** EfficientNet-B1 (−76pp) and EfficientNetV2-S
 (−25pp) collapse emulated, while ReLU-family, ReLU6 and group-conv nets lose ~0 emulated. That

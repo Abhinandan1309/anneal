@@ -14,3 +14,8 @@ scratch/
 
 # Datasets
 data/
+
+# Private drafts (not published yet)
+docs/paper/
+docs/prior_art_check.md
+docs/lit_check_mixed_precision.md
