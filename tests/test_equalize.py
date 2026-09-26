@@ -793,3 +793,17 @@ def test_a_mixed_range_output_keeps_its_tail_float_by_default(tmp_path: Path, ca
     # a classifier (no Concat output) is never touched and its lineage is unchanged
     plain = _static(tmp_path, calib, _model(tmp_path / "m.onnx", "silu"), "cls")
     assert "mixed_range_outputs" not in plain.meta and "float_mixed_outputs" not in plain.lineage[-1].params
+
+
+def test_tidl_emulation_gives_symmetric_power_of_two_activation_scales(tmp_path: Path, calib):
+    src = _model(tmp_path / "m.onnx", "relu")
+    out = _static(tmp_path, calib, src, "tidl", per_channel=False, activation_type="int8",
+                  activation_symmetric=True, pow2_activation_scales=True)
+    q = onnx.load(str(out.path))
+    inits = {i.name: numpy_helper.to_array(i) for i in q.graph.initializer}
+    acts = [n for n in q.graph.node if n.op_type == "QuantizeLinear" and n.input[0] not in inits]
+    assert acts and out.meta["pow2_activation_scales"] == len({n.input[1] for n in acts})
+    for n in acts:
+        scale, zp = float(inits[n.input[1]]), int(inits[n.input[2]])
+        assert zp == 0 and np.log2(scale) == pytest.approx(round(np.log2(scale)))
+    assert out.lineage[-1].params["pow2_activation_scales"] is True

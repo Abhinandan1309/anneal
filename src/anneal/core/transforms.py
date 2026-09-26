@@ -147,6 +147,27 @@ def mixed_range_outputs(model_path: Path, batches, ratio: float = MIXED_OUTPUT_R
     return flagged
 
 
+def round_activation_scales_pow2(quantized: Path) -> int:
+    """Round every activation scale of a QDQ model up to a power of two, in place; the count.
+
+    Activation Q/DQ pairs are those whose QuantizeLinear quantizes a computed tensor (weights
+    are stored pre-quantized with a DequantizeLinear only). Rounding up keeps the range covered.
+    """
+    import onnx
+    from onnx import numpy_helper
+
+    m = onnx.load(str(quantized))
+    inits = {i.name: i for i in m.graph.initializer}
+    scales = {n.input[1] for n in m.graph.node
+              if n.op_type == "QuantizeLinear" and n.input[0] not in inits and n.input[1] in inits}
+    for name in scales:
+        v = numpy_helper.to_array(inits[name]).astype(np.float64)
+        v = np.power(2.0, np.ceil(np.log2(np.maximum(v, np.finfo(np.float32).tiny))))
+        inits[name].CopyFrom(numpy_helper.from_array(v.astype(np.float32), name))
+    onnx.save(m, str(quantized))
+    return len(scales)
+
+
 def concat_groups(quantized: Path) -> list[tuple[list[str], tuple[float, float]]]:
     """Each Concat of a QDQ model: its float input and output tensor names and their union range.
 
@@ -807,6 +828,8 @@ def quantize_static_int8(
     float_stem = bool(params.get("float_stem", False))
     concat_shared = bool(params.get("concat_shared_scale", False))
     float_mixed = bool(params.get("float_mixed_outputs", True))
+    act_symmetric = bool(params.get("activation_symmetric", False))
+    pow2 = bool(params.get("pow2_activation_scales", False))
     quantize_ops = params.get("quantize_ops", "default")
     if quantize_ops not in COMPUTE_OP_SETS:
         raise TransformError(f"quantize_ops must be one of {sorted(COMPUTE_OP_SETS)}, got {quantize_ops!r}")
@@ -887,6 +910,8 @@ def quantize_static_int8(
             **({"concat_shared_scale": True} if concat_shared else {}),
             # On by default and recorded only when switched off, so earlier lineages are unchanged.
             **({"float_mixed_outputs": False} if not float_mixed else {}),
+            **({"activation_symmetric": True} if act_symmetric else {}),
+            **({"pow2_activation_scales": True} if pow2 else {}),
             **({"equalize_dense": True, "equalize_slack": slack, "float_gates": float_gates}
                if equalize_dense else {}),
             **({"quantize_ops": quantize_ops} if quantize_ops != "default" else {}),
@@ -1033,6 +1058,8 @@ def quantize_static_int8(
                 {"tensor": r.tensor, "damage": round(r.damage, 5)} for r in ranking
             ],
         }
+    if act_symmetric:
+        extra["ActivationSymmetric"] = True
     if calib_method == "mean_minmax":
         overrides = extra.setdefault("TensorQuantOverrides", {})
         for t, (lo, hi) in mean_minmax_ranges(src, calib_source.calibration_batches(n_calib)).items():
@@ -1065,6 +1092,10 @@ def quantize_static_int8(
                 overrides.setdefault(t, [{}])[0].update({"rmin": np.float32(lo), "rmax": np.float32(hi)})
         concat_meta = {"concat_groups_shared": len(groups)}
         run_quantizer(base_exclude)
+    if pow2:
+        # TI's TIDL (and AMD's XINT8) scale feature maps by powers of two: each activation scale
+        # is rounded up to the next one, which can cost up to 1 bit of resolution per tensor.
+        concat_meta["pow2_activation_scales"] = round_activation_scales_pow2(out)
     guard_meta: dict[str, Any] = {}
     if guard:
         # Emulate the 16-bit pair arithmetic of x86 CPUs without VNNI on this very model and
@@ -1339,6 +1370,19 @@ REGISTRY: dict[str, TransformSpec] = {
                     "or more (a detector's pixel boxes and 0-1 scores), keep that output's tail "
                     "after the last Conv/Gemm/MatMul in float; one 8-bit scale on it rounds every "
                     "score to zero (Ultralytics' YOLOv8n export: 0 mAP)."
+                ),
+            },
+            "activation_symmetric": {
+                "type": "boolean",
+                "description": "Symmetric activation ranges (zero point 0), as TI TIDL and AMD XINT8 use.",
+            },
+            "pow2_activation_scales": {
+                "type": "boolean",
+                "description": (
+                    "Round every activation scale up to a power of two after quantization, as TI "
+                    "TIDL and AMD XINT8 do for feature maps. With per_channel=False, "
+                    "activation_type=int8, activation_symmetric and concat_shared_scale it "
+                    "emulates TIDL's 8-bit arithmetic in onnxruntime."
                 ),
             },
             "concat_shared_scale": {
