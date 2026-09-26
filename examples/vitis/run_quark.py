@@ -53,6 +53,15 @@ def qconfig(label: str):
                           extra_options=dict(cfg.extra_options))
         return cfg
     cfg = copy.deepcopy(XINT8_QCONFIG)
+    for tag, method in (("minmax cal", "MinMax"), ("percentile cal", "Percentile")):
+        if tag in label:  # activations calibrated differently (weights keep XINT8's own)
+            from quark.onnx import CalibMethod, XInt8Spec
+
+            cfg = QConfig(global_config=QLayerConfig(activation=XInt8Spec(calibration_method=getattr(CalibMethod, method)),
+                                                     weight=XInt8Spec()), extra_options=dict(cfg.extra_options))
+    if "no shift adjust" in label:  # diagnostic only: the DPU's shift constraints off
+        for k in ("AdjustShiftCut", "AdjustShiftBias", "AdjustShiftRead", "AdjustShiftWrite"):
+            cfg.extra_options[k] = False
     if "keep sigmoid" in label:
         cfg.extra_options["ConvertSigmoidToHardSigmoid"] = False
     if "exact pool" in label:  # isolate the DPU's approximations of average pooling / ReduceMean
