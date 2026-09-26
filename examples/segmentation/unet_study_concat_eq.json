@@ -1,0 +1,106 @@
+{
+ "model": "U-Net (milesial, Carvana, transposed-conv up)",
+ "input": [
+  192,
+  288
+ ],
+ "n": 200,
+ "fp32_car_pixel_share": 0.8173842592592593,
+ "images_with_car_in_fp32": 200,
+ "recipes": {
+  "minmax + shared concat": {
+   "car_iou_vs_fp32": 0.0821486692006553,
+   "ci95": [
+    0.0706523364555903,
+    0.0939284820454185
+   ],
+   "pixel_agreement": 0.2509959129050926,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calibrate_method": "minmax",
+    "concat_shared_scale": true
+   }
+  },
+  "concat-equalised + minmax + shared concat": {
+   "car_iou_vs_fp32": 0.1409269948379677,
+   "ci95": [
+    0.12600219226258694,
+    0.15685850205042245
+   ],
+   "pixel_agreement": 0.2997058557581018,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calibrate_method": "minmax",
+    "concat_shared_scale": true,
+    "_pre": "concat"
+   }
+  },
+  "concat-equalised + anneal cnn + shared concat": {
+   "car_iou_vs_fp32": 0.143645505048147,
+   "ci95": [
+    0.12734417628686945,
+    0.1595356049864742
+   ],
+   "pixel_agreement": 0.30188820167824076,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999,
+    "float_stem": true,
+    "concat_shared_scale": true,
+    "_pre": "concat"
+   }
+  },
+  "concat-equalised + TIDL-like": {
+   "car_iou_vs_fp32": 0.16279367056980443,
+   "ci95": [
+    0.148085237528893,
+    0.17902510929575213
+   ],
+   "pixel_agreement": 0.31728795934606485,
+   "params": {
+    "per_channel": false,
+    "activation_type": "int8",
+    "calibrate_method": "minmax",
+    "concat_shared_scale": true,
+    "_pre": "concat"
+   }
+  },
+  "concat-equalised + TIDL-like + pow2 + symmetric": {
+   "car_iou_vs_fp32": 0.9599651483683165,
+   "ci95": [
+    0.950389203723972,
+    0.9686098802800248
+   ],
+   "pixel_agreement": 0.9677818467881945,
+   "params": {
+    "per_channel": false,
+    "activation_type": "int8",
+    "calibrate_method": "minmax",
+    "concat_shared_scale": true,
+    "activation_symmetric": true,
+    "pow2_activation_scales": true,
+    "_pre": "concat"
+   }
+  },
+  "TIDL-like + pow2 + symmetric": {
+   "car_iou_vs_fp32": 0.9576347672951638,
+   "ci95": [
+    0.9479968644566176,
+    0.9670139271376021
+   ],
+   "pixel_agreement": 0.9656514033564815,
+   "params": {
+    "per_channel": false,
+    "activation_type": "int8",
+    "calibrate_method": "minmax",
+    "concat_shared_scale": true,
+    "activation_symmetric": true,
+    "pow2_activation_scales": true
+   }
+  }
+ }
+}

@@ -51,6 +51,15 @@ RECIPES = {
     "TIDL-like + pow2 + symmetric": {
         "per_channel": False, "activation_type": "int8", "calibrate_method": "minmax", "concat_shared_scale": True,
         "activation_symmetric": True, "pow2_activation_scales": True},
+    # which ingredient of the TIDL-like emulation removes the shared-concat collapse?
+    "shared concat + symmetric (uint8 per-ch)": {**BASE, "calibrate_method": "minmax", "concat_shared_scale": True,
+                                                 "activation_symmetric": True},
+    "TIDL-like + symmetric only": {"per_channel": False, "activation_type": "int8", "calibrate_method": "minmax",
+                                   "concat_shared_scale": True, "activation_symmetric": True},
+    "TIDL-like + pow2 only": {"per_channel": False, "activation_type": "int8", "calibrate_method": "minmax",
+                              "concat_shared_scale": True, "pow2_activation_scales": True},
+    "int8 asym + shared concat (per-ch)": {**BASE, "activation_type": "int8", "calibrate_method": "minmax",
+                                           "concat_shared_scale": True},
     "TIDL-like + percentile": {
         "per_channel": False, "activation_type": "int8", "calibrate_method": "percentile",
         "calib_percentile": 99.999, "concat_shared_scale": True},

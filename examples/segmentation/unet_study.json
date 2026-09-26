@@ -1,0 +1,25 @@
+{
+ "model": "U-Net (milesial, Carvana, transposed-conv up)",
+ "input": [
+  192,
+  288
+ ],
+ "n": 5,
+ "fp32_car_pixel_share": 0.8030635127314815,
+ "images_with_car_in_fp32": 5,
+ "recipes": {
+  "minmax (onnxruntime default)": {
+   "car_iou_vs_fp32": 0.9932724593370684,
+   "ci95": [
+    0.9886355493909991,
+    0.9968768928532438
+   ],
+   "pixel_agreement": 0.9949399594907407,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calibrate_method": "minmax"
+   }
+  }
+ }
+}
