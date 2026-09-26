@@ -52,6 +52,9 @@ VARIANTS = {
     "tidl 8-bit ch-wise": ("plain", {**COMMON, "advanced_options:channel_wise_quantization": 1}),
     "tidl 8-bit ch-wise + equalised": ("equalised", {**COMMON, "advanced_options:channel_wise_quantization": 1}),
     "tidl 8-bit + equalised (residual)": ("equalised_res", COMMON),
+    # per-tensor-weight aware (TIDL quantizes weights per tensor): squeeze-excite and residual sites,
+    # activation/weight mix t=0.5, then ReLU cross-layer equalisation
+    "tidl 8-bit + equalised (per-tensor)": ("equalised_pt", COMMON),
 }
 
 
@@ -109,7 +112,13 @@ def main() -> None:
         equalise(src, eq, calib_imgs)  # the exported graph now has batch 1
         eq_res = mdir / f"{name}-equalised-residual.onnx"
         equalise(src, eq_res, calib_imgs, residual=True)
-        models = {"plain": src, "equalised": eq, "equalised_res": eq_res}
+        from anneal.core.cle import cross_layer_equalise
+
+        eq_pt = mdir / f"{name}-equalised-per-tensor.onnx"
+        r = equalise(src, eq_pt, calib_imgs, se=True, mix=(0.5, 0.5))
+        cle = cross_layer_equalise(eq_pt, eq_pt)
+        print(f"  {name}: per-tensor equalisation {r.summary()['by_kind']}, cle pairs {len(cle.pairs)}", flush=True)
+        models = {"plain": src, "equalised": eq, "equalised_res": eq_res, "equalised_pt": eq_pt}
         for p in models.values():
             onnx.shape_inference.infer_shapes_path(str(p), str(p))
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)
