@@ -1,0 +1,121 @@
+{
+ "model": "efficientnet_b2",
+ "n": 5000,
+ "fp32_accuracy": 0.8126,
+ "mode": "emulated",
+ "rows": {
+  "advised: eq + asym 99.99 + stem": {
+   "accuracy": 0.8048,
+   "delta_pp": -0.7799999999999999,
+   "ci95_pp": [
+    -1.2643949567367523,
+    -0.29560504326324777
+   ],
+   "mcnemar_p": 0.00202489878020022,
+   "regressions": 96,
+   "fixes": 57,
+   "vs_advised": {
+    "delta_pp": 0.0,
+    "ci95_pp": [
+     0.0,
+     0.0
+    ],
+    "mcnemar_p": 1.0
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true,
+    "calib_stride": 1
+   }
+  },
+  "minmax (default)": {
+   "accuracy": 0.7626,
+   "delta_pp": -5.0,
+   "ci95_pp": [
+    -5.867286158081633,
+    -4.132713841918367
+   ],
+   "mcnemar_p": 6.436135261919246e-30,
+   "regressions": 376,
+   "fixes": 126,
+   "vs_advised": {
+    "delta_pp": -4.22,
+    "ci95_pp": [
+     -5.0626594152515,
+     -3.3773405847485005
+    ],
+    "mcnemar_p": 7.024890001017307e-23
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "minmax",
+    "calib_stride": 1
+   }
+  },
+  "asym 99.99 + stem (no eq)": {
+   "accuracy": 0.797,
+   "delta_pp": -1.5599999999999998,
+   "ci95_pp": [
+    -2.150325449602166,
+    -0.9696745503978335
+   ],
+   "mcnemar_p": 2.631469292986135e-07,
+   "regressions": 153,
+   "fixes": 75,
+   "vs_advised": {
+    "delta_pp": -0.7799999999999999,
+    "ci95_pp": [
+     -1.2951419941258913,
+     -0.2648580058741085
+    ],
+    "mcnemar_p": 0.0037377190466882
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true,
+    "calib_stride": 1
+   }
+  },
+  "advised + int16 top3 (auto)": {
+   "accuracy": 0.805,
+   "delta_pp": -0.76,
+   "ci95_pp": [
+    -1.2736713914245177,
+    -0.24632860857548244
+   ],
+   "mcnemar_p": 0.004641812329107345,
+   "regressions": 105,
+   "fixes": 67,
+   "vs_advised": {
+    "delta_pp": 0.02,
+    "ci95_pp": [
+     -0.21844364674278907,
+     0.2584436467427891
+    ],
+    "mcnemar_p": 1.0
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true,
+    "int16_top_k": 3,
+    "calib_stride": 1
+   }
+  }
+ }
+}

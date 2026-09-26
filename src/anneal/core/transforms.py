@@ -613,6 +613,7 @@ def quantize_static_int8(
     tolerance = float(params.get("saturation_tolerance", SATURATION_TOLERANCE))
     equalize = bool(params.get("equalize", False))
     equalize_dense = bool(params.get("equalize_dense", False))
+    equalize_residual = bool(params.get("equalize_residual", False))
     slack = float(params.get("equalize_slack", EQUALIZE_SLACK))
     top_k = params.get("equalize_top_k")
     min_gain = params.get("equalize_min_gain")
@@ -641,6 +642,8 @@ def quantize_static_int8(
             "equalize needs per_channel weights: with one weight scale per tensor the rescale "
             "would move quantization error into the weights instead of removing it"
         )
+    if equalize_residual and not equalize:
+        raise TransformError("equalize_residual only applies together with equalize")
     if float_gates and not (equalize or equalize_dense):
         raise TransformError("float_gates only applies together with equalize or equalize_dense")
     if equalize_dense and not per_channel:
@@ -688,6 +691,7 @@ def quantize_static_int8(
                 else {}
             ),
             **({"equalize_top_k": top_k} if top_k is not None else {}),
+            **({"equalize_residual": True} if equalize_residual else {}),
             **({"equalize_min_gain": min_gain} if min_gain is not None else {}),
             **({"calib_stride": calib_stride} if calib_stride is not None else {}),
             **({"stem_int16": True} if stem_int16 else {}),
@@ -718,6 +722,7 @@ def quantize_static_int8(
             check_batch=probe,
             top_k=top_k,
             min_gain=None if min_gain is None else float(min_gain),
+            residual=equalize_residual,
         )
         src = eq_path
         if float_gates:
@@ -1078,6 +1083,14 @@ REGISTRY: dict[str, TransformSpec] = {
             "calib_percentile": {
                 "type": "number",
                 "description": "Percentile for percentile calibration (default 99.99).",
+            },
+            "equalize_residual": {
+                "type": "boolean",
+                "description": (
+                    "With equalize: also rewrite gated sites whose output feeds a residual Add "
+                    "as well as a depthwise Conv (EfficientViT's and MobileNetV3-Large's stems). "
+                    "The branch joining the Add and the Add's consumers take the scale too."
+                ),
             },
             "equalize_dense": {
                 "type": "boolean",

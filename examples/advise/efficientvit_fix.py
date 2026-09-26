@@ -35,6 +35,12 @@ VARIANTS = {
     "conv only + eq + dense eq": {**BASE, "quantize_ops": "conv", "equalize": True, "equalize_dense": True},
     "conv only + eq + dense eq + int16 top4": {**BASE, "quantize_ops": "conv", "equalize": True, "equalize_dense": True,
                                                "int16_top_k": 4},
+    # the stem's output also feeds a residual Add, which plain equalisation skips
+    "conv only + eq (residual) + dense eq": {**BASE, "quantize_ops": "conv", "equalize": True,
+                                             "equalize_residual": True, "equalize_dense": True},
+    "conv only + eq (residual) + dense eq + int16 top4": {**BASE, "quantize_ops": "conv", "equalize": True,
+                                                          "equalize_residual": True, "equalize_dense": True,
+                                                          "int16_top_k": 4},
 }
 
 
@@ -49,15 +55,19 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="efficientvit_b0")
     ap.add_argument("--images", type=int, default=512)
+    ap.add_argument("--src", help="an ONNX model to use instead of examples/models/<model>-fp32.onnx")
+    ap.add_argument("--only", help="comma-separated variant labels")
+    ap.add_argument("--tag", default="", help="suffix of the output JSON")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
-    src = ROOT / "examples" / "models" / f"{args.model}-fp32.onnx"
+    src = Path(args.src) if args.src else ROOT / "examples" / "models" / f"{args.model}-fp32.onnx"
+    variants = {k: v for k, v in VARIANTS.items() if not args.only or k in args.only.split(",")}
     shape = sample_shape(src)
     calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=8, limit=64, sample_shape=shape)
     ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=32, limit=args.images, sample_shape=shape)
-    ctx = TransformContext(workdir=ROOT / "scratch" / "efficientvit_fix" / args.model, calibset=calib)
+    ctx = TransformContext(workdir=ROOT / "scratch" / "efficientvit_fix" / (args.model + args.tag), calibset=calib)
     built = {}
-    for k, params in VARIANTS.items():
+    for k, params in variants.items():
         built[k] = apply_transform("quantize_static_int8", dict(params), ModelArtifact(path=src), ctx).path
         gc.collect()
     so = ort.SessionOptions()
@@ -76,15 +86,16 @@ def main() -> None:
     y = np.concatenate(ys)
     fp = np.concatenate(preds["fp32"]) == y
     rows = {}
-    for k in VARIANTS:
+    for k in variants:
         right = np.concatenate(preds[k]) == y
         b, c = int(np.sum(fp & ~right)), int(np.sum(~fp & right))
         d, lo, hi = paired_delta_ci(b, c, len(y))
         rows[k] = {"accuracy": float(right.mean()), "delta_pp": d, "ci95_pp": [lo, hi], "mcnemar_p": mcnemar_exact(b, c),
-                   "params": VARIANTS[k]}
+                   "params": variants[k], "correct": "".join("1" if r else "0" for r in right)}
         print(f"  {k:32s} {d:+6.2f}pp vs FP32 [{lo:+.2f},{hi:+.2f}]", flush=True)
-    out = HERE / f"{args.model}_fix.json"
-    out.write_text(json.dumps({"model": args.model, "n": int(len(y)), "fp32_accuracy": float(fp.mean()), "rows": rows},
+    out = HERE / f"{args.model}_fix{args.tag}.json"
+    out.write_text(json.dumps({"model": args.model, "n": int(len(y)), "fp32_accuracy": float(fp.mean()), "rows": rows,
+                               "fp32_correct": "".join("1" if r else "0" for r in fp)},
                               indent=1), encoding="utf-8")
     print(f"written: {out}")
 

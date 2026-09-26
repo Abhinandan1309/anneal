@@ -561,3 +561,102 @@ def test_int16_tensors_are_quantized_to_16_bits_and_unknown_names_rejected(tmp_p
     assert len(sixteen) == 2
     with pytest.raises(TransformError):
         _static(tmp_path, calib, src, "bad16", int16_tensors=["no_such_tensor"])
+
+
+# ----- residual sites -----------------------------------------------------------
+
+
+def _residual_model(path: Path, consumer_group: int = 1) -> Path:
+    """EfficientViT's stem: y = hswish(A(input)) feeds a depthwise conv and a residual Add."""
+    wa, ba, wb = _imbalanced_weights()
+    rng = np.random.default_rng(3)
+    wp = rng.standard_normal((C, C, 1, 1)).astype(np.float32) * 0.3
+    bp = rng.standard_normal(C).astype(np.float32)
+    wc = (rng.standard_normal((5, C, 1, 1)) if consumer_group == 1 else rng.standard_normal((C, 1, 3, 3))).astype(np.float32)
+    nodes = [
+        helper.make_node("Conv", ["input", "wa", "ba"], ["x"], name="conv_a"),
+        helper.make_node("HardSwish", ["x"], ["y"], name="act"),
+        helper.make_node("Conv", ["y", "wb"], ["d"], name="conv_b", group=C, pads=[1, 1, 1, 1]),
+        helper.make_node("Relu", ["d"], ["dr"], name="relu_b"),
+        helper.make_node("Conv", ["dr", "wp", "bp"], ["p"], name="conv_p"),
+        helper.make_node("Add", ["p", "y"], ["z"], name="res"),
+        helper.make_node("Conv", ["z", "wc"], ["out"], name="conv_c",
+                         **({} if consumer_group == 1 else {"group": C, "pads": [1, 1, 1, 1]})),
+    ]
+    c_out = 5 if consumer_group == 1 else C
+    graph = helper.make_graph(
+        nodes, "res",
+        [helper.make_tensor_value_info("input", TensorProto.FLOAT, ["N", C_IN, 8, 8])],
+        [helper.make_tensor_value_info("out", TensorProto.FLOAT, ["N", c_out, 8, 8])],
+        [numpy_helper.from_array(a, n) for a, n in ((wa, "wa"), (ba, "ba"), (wb, "wb"), (wp, "wp"), (bp, "bp"), (wc, "wc"))],
+    )
+    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 14)])
+    model.ir_version = 8
+    onnx.checker.check_model(model)
+    onnx.save(model, str(path))
+    return path
+
+
+@pytest.mark.parametrize("consumer_group", [1, C])
+def test_residual_sites_are_opt_in_and_exact_in_float(tmp_path: Path, consumer_group: int):
+    src = _residual_model(tmp_path / "m.onnx", consumer_group)
+    assert find_sites(onnx.load(str(src))) == []
+    [site] = find_sites(onnx.load(str(src)), residual=True)
+    assert (site.conv_p.name, site.z, [c.name for c in site.consumers_z]) == ("conv_p", "z", ["conv_c"])
+
+    dst = tmp_path / "eq.onnx"
+    result = equalise(src, dst, _batches(), residual=True)
+    assert [s.kind for s in result.sites] == ["gated-residual"]
+    assert result.summary()["by_kind"]["gated-residual"] == 1
+    x = _batches(1, seed=7)[0]
+    before, after = _run(src, x), _run(dst, x)
+    assert np.abs(after - before).max() <= 1e-4 * max(1.0, np.abs(before).max())
+
+
+def test_residual_site_needs_a_conv_on_the_other_branch(tmp_path: Path):
+    src = _residual_model(tmp_path / "m.onnx")
+    m = onnx.load(str(src))
+    m.graph.node.remove(next(n for n in m.graph.node if n.name == "conv_p"))
+    next(n for n in m.graph.node if n.name == "res").input[0] = "dr"
+    assert find_sites(m, residual=True) == []
+
+
+def test_static_quantization_records_residual_equalisation(tmp_path: Path, calib):
+    src = _residual_model(tmp_path / "m.onnx")
+    out = _static(tmp_path, calib, src, "r", per_channel=True, equalize=True, equalize_residual=True)
+    assert out.lineage[-1].params["equalize_residual"] is True
+    assert out.meta["equalisation"]["by_kind"]["gated-residual"] == 1
+    with pytest.raises(TransformError):
+        _static(tmp_path, calib, src, "bad", per_channel=True, equalize_residual=True)
+
+
+def test_a_weight_tied_to_another_node_is_left_alone(tmp_path: Path):
+    src = _model(tmp_path / "m.onnx", "silu")
+    m = onnx.load(str(src))
+    m.graph.node.append(helper.make_node("Conv", ["input", "wa"], ["x2"], name="twin"))
+    # conv_a's weight is tied to a second conv: rescaling it for the site would change that one.
+    m.graph.output.append(helper.make_tensor_value_info("x2", TensorProto.FLOAT, ["N", C, 8, 8]))
+    onnx.save(m, str(tmp_path / "tied.onnx"))
+    result = equalise(tmp_path / "tied.onnx", tmp_path / "eq.onnx", _batches())
+    assert result.sites == []
+
+
+def test_residual_consumer_that_starts_the_next_site_keeps_both_sites(tmp_path: Path):
+    """The stem's residual consumer is the next block's expand conv: both sites are rewritten."""
+    src = _residual_model(tmp_path / "m.onnx")
+    m = onnx.load(str(src))
+    rng = np.random.default_rng(5)
+    m.graph.output.pop()
+    m.graph.node.extend([
+        helper.make_node("HardSwish", ["out"], ["y2"], name="act2"),
+        helper.make_node("Conv", ["y2", "wd"], ["out2"], name="conv_d", group=5, pads=[1, 1, 1, 1]),
+    ])
+    m.graph.initializer.append(numpy_helper.from_array(rng.standard_normal((5, 1, 3, 3)).astype(np.float32), "wd"))
+    m.graph.output.append(helper.make_tensor_value_info("out2", TensorProto.FLOAT, ["N", 5, 8, 8]))
+    onnx.save(m, str(tmp_path / "two.onnx"))
+    dst = tmp_path / "eq.onnx"
+    result = equalise(tmp_path / "two.onnx", dst, _batches(), residual=True)
+    assert sorted(s.kind for s in result.sites) == ["gated", "gated-residual"]
+    x = _batches(1, seed=7)[0]
+    before, after = _run(tmp_path / "two.onnx", x), _run(dst, x)
+    assert np.abs(after - before).max() <= 1e-4 * max(1.0, np.abs(before).max())
