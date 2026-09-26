@@ -1,0 +1,79 @@
+{
+  "model": "efficientnet_b0",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "tflite",
+  "n": 256,
+  "variants": {
+    "fp32": {
+      "compile_job": "jpyo2kzl5",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "j5m0k1vyg",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.7421875,
+      "delta_pp_vs_device_fp32": 0.0,
+      "params": null
+    },
+    "full: eq + asym pct + stem": {
+      "compile_job": "j5wlz024p",
+      "compiled": false,
+      "compile_message": "/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:96:1: error: 'tfl.transpose' op has mismatched quantized axes of input and output\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/functional.py:514:1: note: called from\n        return self._run_internal_graph(inputs, training=training, mask=mask)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/functional.py:671:1: note: called from\n                outputs = node.layer(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:65:1: note: called from\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/base_layer.py:1142:1: note: called from\n                    outputs = call_fn(inputs, *args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:96:1: note: called from\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/layers/core/tf_op_layer.py:242:1: note: called from\n            return self._call_wrapper(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/layers/core/tf_op_layer.py:279:1: note: called from\n            result = self.function(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tensorflow/python/util/traceback_utils.py:150:1: note: called from\n      return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tensorflow/python/util/dispatch.py:1260:1: note: called from\n        return dispatch_target(*args, **kwargs)\n^\n",
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "equalize": true,
+        "calibrate_method": "percentile_asym",
+        "float_stem": true
+      }
+    },
+    "no stem: eq + asym pct": {
+      "compile_job": "jpyo2kr05",
+      "compiled": false,
+      "compile_message": "/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:96:1: error: 'tfl.transpose' op has mismatched quantized axes of input and output\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/functional.py:514:1: note: called from\n        return self._run_internal_graph(inputs, training=training, mask=mask)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/functional.py:671:1: note: called from\n                outputs = node.layer(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:65:1: note: called from\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/base_layer.py:1142:1: note: called from\n                    outputs = call_fn(inputs, *args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:96:1: note: called from\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/layers/core/tf_op_layer.py:242:1: note: called from\n            return self._call_wrapper(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/layers/core/tf_op_layer.py:279:1: note: called from\n            result = self.function(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tensorflow/python/util/traceback_utils.py:150:1: note: called from\n      return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tensorflow/python/util/dispatch.py:1260:1: note: called from\n        return dispatch_target(*args, **kwargs)\n^\n",
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "equalize": true,
+        "calibrate_method": "percentile_asym"
+      }
+    },
+    "no eq: asym pct + stem": {
+      "compile_job": "jpe7x0w85",
+      "compiled": false,
+      "compile_message": "/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:96:1: error: 'tfl.transpose' op has mismatched quantized axes of input and output\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/functional.py:514:1: note: called from\n        return self._run_internal_graph(inputs, training=training, mask=mask)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/functional.py:671:1: note: called from\n                outputs = node.layer(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:65:1: note: called from\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/base_layer.py:1142:1: note: called from\n                    outputs = call_fn(inputs, *args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:96:1: note: called from\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/layers/core/tf_op_layer.py:242:1: note: called from\n            return self._call_wrapper(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/layers/core/tf_op_layer.py:279:1: note: called from\n            result = self.function(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tensorflow/python/util/traceback_utils.py:150:1: note: called from\n      return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tensorflow/python/util/dispatch.py:1260:1: note: called from\n        return dispatch_target(*args, **kwargs)\n^\n",
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "calibrate_method": "percentile_asym",
+        "float_stem": true
+      }
+    },
+    "plain QDQ: minmax": {
+      "compile_job": "jp8erdzqp",
+      "compiled": false,
+      "compile_message": "/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:96:1: error: 'tfl.transpose' op has mismatched quantized axes of input and output\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/functional.py:514:1: note: called from\n        return self._run_internal_graph(inputs, training=training, mask=mask)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/functional.py:671:1: note: called from\n                outputs = node.layer(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:65:1: note: called from\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/base_layer.py:1142:1: note: called from\n                    outputs = call_fn(inputs, *args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:96:1: note: called from\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/layers/core/tf_op_layer.py:242:1: note: called from\n            return self._call_wrapper(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/layers/core/tf_op_layer.py:279:1: note: called from\n            result = self.function(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tensorflow/python/util/traceback_utils.py:150:1: note: called from\n      return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tensorflow/python/util/dispatch.py:1260:1: note: called from\n        return dispatch_target(*args, **kwargs)\n^\n",
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "calibrate_method": "minmax"
+      }
+    },
+    "int8 activations: eq + asym pct": {
+      "compile_job": "jgk20w3vg",
+      "compiled": false,
+      "compile_message": "/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:96:1: error: 'tfl.transpose' op has mismatched quantized axes of input and output\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/functional.py:514:1: note: called from\n        return self._run_internal_graph(inputs, training=training, mask=mask)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/functional.py:671:1: note: called from\n                outputs = node.layer(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:65:1: note: called from\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/engine/base_layer.py:1142:1: note: called from\n                    outputs = call_fn(inputs, *args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/utils/traceback_utils.py:96:1: note: called from\n            return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/layers/core/tf_op_layer.py:242:1: note: called from\n            return self._call_wrapper(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tf_keras/src/layers/core/tf_op_layer.py:279:1: note: called from\n            result = self.function(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tensorflow/python/util/traceback_utils.py:150:1: note: called from\n      return fn(*args, **kwargs)\n^\n/tetra/tetra_env/lib/python3.12/site-packages/tensorflow/python/util/dispatch.py:1260:1: note: called from\n        return dispatch_target(*args, **kwargs)\n^\n",
+      "params": {
+        "per_channel": true,
+        "activation_type": "int8",
+        "calib_samples": 16,
+        "equalize": true,
+        "calibrate_method": "percentile_asym"
+      }
+    }
+  }
+}

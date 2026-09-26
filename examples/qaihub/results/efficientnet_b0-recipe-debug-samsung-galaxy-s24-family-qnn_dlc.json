@@ -1,0 +1,124 @@
+{
+  "model": "efficientnet_b0",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "qnn_dlc",
+  "n": 256,
+  "variants": {
+    "fp32": {
+      "compile_job": "jgolw0yxg",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jp2rdnyrg",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.7421875,
+      "delta_pp_vs_device_fp32": 0.0,
+      "params": null,
+      "profile_job": "jglyqvjl5",
+      "latency_ms": 0.853,
+      "compute_units": {
+        "NPU": 242
+      }
+    },
+    "full: eq + asym pct + stem": {
+      "compile_job": "j57enwwlp",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jpe7x3do5",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.734375,
+      "delta_pp_vs_device_fp32": -0.78125,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "equalize": true,
+        "calibrate_method": "percentile_asym",
+        "float_stem": true
+      },
+      "profile_job": "jp3zrjyz5",
+      "latency_ms": 0.67,
+      "compute_units": {
+        "NPU": 261
+      }
+    },
+    "no stem: eq + asym pct": {
+      "compile_job": "jpyo2ww75",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jgzlyk3o5",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.70703125,
+      "delta_pp_vs_device_fp32": -3.515625,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "equalize": true,
+        "calibrate_method": "percentile_asym"
+      },
+      "profile_job": "jgol92jdg",
+      "latency_ms": 0.55,
+      "compute_units": {
+        "NPU": 260
+      }
+    },
+    "no eq: asym pct + stem": {
+      "compile_job": "j568mjj0g",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "j5wlzne3p",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.66796875,
+      "delta_pp_vs_device_fp32": -7.421875,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "calibrate_method": "percentile_asym",
+        "float_stem": true
+      }
+    },
+    "plain QDQ: minmax": {
+      "compile_job": "jgzly99k5",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jgdd4lxrg",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.46484375,
+      "delta_pp_vs_device_fp32": -27.734375,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "calibrate_method": "minmax"
+      },
+      "profile_job": "jpvln6jm5",
+      "latency_ms": 0.418,
+      "compute_units": {
+        "NPU": 244
+      }
+    },
+    "int8 activations: eq + asym pct": {
+      "compile_job": "jp4y4o0vp",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jp4y40n8p",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.0,
+      "delta_pp_vs_device_fp32": -74.21875,
+      "params": {
+        "per_channel": true,
+        "activation_type": "int8",
+        "calib_samples": 16,
+        "equalize": true,
+        "calibrate_method": "percentile_asym"
+      }
+    }
+  }
+}
