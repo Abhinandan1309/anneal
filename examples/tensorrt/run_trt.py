@@ -10,7 +10,7 @@ are scored, as users run them:
 each on the exported model and on Anneal's equalised one (``+ eq``; ``+ eq res`` also rewrites
 residual sites), against ``trt fp16``, the vendor fallback. Latency is the median batch-1 GPU time.
 
-Needs an NVIDIA GPU (TensorRT >= 10, torch with CUDA). Runs as a Kaggle kernel: see
+Needs an NVIDIA GPU (TensorRT 10.x: 11 removed implicit INT8; torch with CUDA). Runs as a Kaggle kernel: see
 examples/tensorrt/kaggle/. Scored on Imagenette validation images (1000-way), paired against FP32.
 
     python examples/tensorrt/run_trt.py --models efficientnet_b0 --images 1000 --out result.json

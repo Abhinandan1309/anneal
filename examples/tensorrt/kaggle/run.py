@@ -20,7 +20,9 @@ def sh(cmd: str) -> None:
 
 sh("nvidia-smi")
 sh(f"git clone --depth 1 --branch {REF} https://github.com/Abhinandan1309/anneal.git /kaggle/temp/anneal")
-sh(f"{sys.executable} -m pip install -q tensorrt 'nvidia-modelopt[onnx]' timm onnx onnxruntime rich")
+# TensorRT 10: what JetPack 6 ships, and the last with implicit INT8 calibration (11 removed the
+# FP16/INT8 builder flags and the calibrator)
+sh(f"{sys.executable} -m pip install -q 'tensorrt>=10,<11' 'nvidia-modelopt[onnx]' timm onnx onnxruntime rich")
 sh(f"{sys.executable} -m pip install -q --no-deps -e /kaggle/temp/anneal")
 sh(f"{sys.executable} -m pip list 2>/dev/null | grep -i -E 'tensorrt|modelopt|onnx|torch'")
 extra = f'--variants "{VARIANTS}"' if VARIANTS else ""
