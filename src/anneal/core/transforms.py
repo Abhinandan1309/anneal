@@ -35,6 +35,10 @@ SATURATION_TOLERANCE = 0.02
 #: tensor's quantization range. On EfficientNet-B0 anything from 0.1 to 1.0 performed alike.
 EQUALIZE_SLACK = 0.1
 
+#: int16_top_k ranks tensors by the predictions they flip on this many calibration images
+#: (the probe is taken from the calibration set, never the eval set, so nothing leaks).
+INT16_PROBE_IMAGES = 64
+
 #: ONNX op types whose weights dominate compute in a CNN/transformer.
 QUANTIZABLE_OPS = ("Conv", "Gemm", "MatMul", "ConvTranspose")
 
@@ -578,6 +582,11 @@ def quantize_static_int8(
     requires ``per_channel``. ``float_gates`` additionally keeps each gate branch (the
     inserted Mul and the Sigmoid/HardSigmoid) out of quantization. ``equalize_top_k`` limits the
     rewrite to the k sites :func:`anneal.core.equalize.rank_sites` predicts gain most.
+
+    ``int16_top_k`` keeps the k activation tensors that are most damaging at 8 bits in 16 bits,
+    ranked by :func:`anneal.core.activation_sensitivity.rank_activation_tensors` on the model
+    being quantized (after equalisation), with a probe of the first :data:`INT16_PROBE_IMAGES`
+    calibration images. ``int16_tensors`` names them by hand instead.
     """
     from onnxruntime.quantization import (
         CalibrationMethod,
@@ -611,6 +620,12 @@ def quantize_static_int8(
     if int16_tensors is not None and (not isinstance(int16_tensors, list)
                                       or not all(isinstance(t, str) for t in int16_tensors)):
         raise TransformError("int16_tensors must be a list of tensor names")
+    int16_top_k = params.get("int16_top_k")
+    if int16_top_k is not None:
+        if isinstance(int16_top_k, bool) or not isinstance(int16_top_k, int) or int16_top_k < 0:
+            raise TransformError(f"int16_top_k must be a non-negative integer, got {int16_top_k!r}")
+        if int16_tensors is not None:
+            raise TransformError("give int16_tensors or int16_top_k, not both")
     if calib_stride is not None and (isinstance(calib_stride, bool) or not isinstance(calib_stride, int) or calib_stride < 1):
         raise TransformError(f"calib_stride must be a positive integer, got {calib_stride!r}")
     float_gates = bool(params.get("float_gates", False))
@@ -675,6 +690,7 @@ def quantize_static_int8(
             **({"calib_stride": calib_stride} if calib_stride is not None else {}),
             **({"stem_int16": True} if stem_int16 else {}),
             **({"int16_tensors": list(int16_tensors)} if int16_tensors else {}),
+            **({"int16_top_k": int16_top_k} if int16_top_k is not None else {}),
             **({"float_stem": True} if float_stem else {}),
             **({"equalize_dense": True, "equalize_slack": slack, "float_gates": float_gates}
                if equalize_dense else {}),
@@ -773,6 +789,34 @@ def quantize_static_int8(
             raise TransformError(f"int16_tensors not in the model: {missing[:3]}")
         extra.setdefault("TensorQuantOverrides", {}).update(
             {t: [{"quant_type": QuantType.QUInt16}] for t in int16_tensors})
+    int16_meta: dict[str, Any] = {}
+    if int16_top_k:
+        # Rank on the model actually being quantized (after equalisation). The probe is the
+        # first INT16_PROBE_IMAGES calibration images, never the eval set: no leakage.
+        from anneal.core.activation_sensitivity import rank_activation_tensors
+
+        probe_x: list[np.ndarray] = []
+        seen = 0
+        for x in calib_source.calibration_batches(INT16_PROBE_IMAGES):
+            x = x[: INT16_PROBE_IMAGES - seen]
+            probe_x.append(x)
+            seen += x.shape[0]
+            if seen >= INT16_PROBE_IMAGES:
+                break
+        ranking = rank_activation_tensors(src, calib_source.calibration_batches(n_calib), probe_x)
+        del probe_x
+        chosen = ranking[:int16_top_k]
+        extra.setdefault("TensorQuantOverrides", {}).update(
+            {r.tensor: [{"quant_type": QuantType.QUInt16}] for r in chosen})
+        int16_meta = {
+            "int16_top_k_tensors": [r.tensor for r in chosen],
+            "int16_top_k_damage": {r.tensor: round(r.damage, 5) for r in chosen},
+            "int16_probe_images": seen,
+            "int16_probe_source": "calibration set (not the eval set)",
+            "activation_sensitivity": [
+                {"tensor": r.tensor, "damage": round(r.damage, 5)} for r in ranking
+            ],
+        }
     if float_stem:
         src = _with_named_nodes(src)
         base_exclude = base_exclude + [n for n in stem_nodes(src) if n not in base_exclude]
@@ -798,6 +842,7 @@ def quantize_static_int8(
         out,
         **guard_meta,
         **eq_meta,
+        **int16_meta,
         calib_samples=n_calib,
         calibration_source=(
             "eval set (overlaps evaluation images; accuracy is optimistic)"
@@ -974,6 +1019,17 @@ REGISTRY: dict[str, TransformSpec] = {
                 "description": (
                     "Activation tensors to quantize to 16 bits (the rest stay 8): mixed precision "
                     "for the few tensors ranked most sensitive by noise injection."
+                ),
+            },
+            "int16_top_k": {
+                "type": "integer",
+                "description": (
+                    "Quantize the k activation tensors that are most sensitive at 8 bits to 16 "
+                    "bits, chosen automatically: after equalisation, each Conv/Gemm/MatMul data "
+                    "input is fake-quantized alone (per-tensor uint8) in the float model and "
+                    "ranked by the share of top-1 predictions it flips on a probe of the first "
+                    "64 calibration images (never eval images). Cost: one float inference pass "
+                    "over the probe per candidate tensor. Excludes int16_tensors; 0 = off."
                 ),
             },
             "stem_int16": {
