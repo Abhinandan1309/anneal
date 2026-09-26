@@ -35,6 +35,9 @@ VARIANTS = {
     "conv only + eq + dense eq": {**BASE, "quantize_ops": "conv", "equalize": True, "equalize_dense": True},
     "conv only + eq + dense eq + int16 top4": {**BASE, "quantize_ops": "conv", "equalize": True, "equalize_dense": True,
                                                "int16_top_k": 4},
+    # every op quantized, for nets without attention (MobileNetV3-Large's stem block is residual too)
+    "eq": {**BASE, "equalize": True},
+    "eq (residual)": {**BASE, "equalize": True, "equalize_residual": True},
     # the stem's output also feeds a residual Add, which plain equalisation skips
     "conv only + eq (residual) + dense eq": {**BASE, "quantize_ops": "conv", "equalize": True,
                                              "equalize_residual": True, "equalize_dense": True},

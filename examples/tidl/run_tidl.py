@@ -48,6 +48,10 @@ VARIANTS = {
     "tidl 8-bit + equalised": ("equalised", COMMON),
     "tidl 16-bit": ("plain", {**COMMON, "tensor_bits": 16}),
     "tidl auto mixed": ("plain", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
+    # TI's reference options quantize weights per tensor; channel-wise is TIDL's alternative
+    "tidl 8-bit ch-wise": ("plain", {**COMMON, "advanced_options:channel_wise_quantization": 1}),
+    "tidl 8-bit ch-wise + equalised": ("equalised", {**COMMON, "advanced_options:channel_wise_quantization": 1}),
+    "tidl 8-bit + equalised (residual)": ("equalised_res", COMMON),
 }
 
 
@@ -103,7 +107,9 @@ def main() -> None:
         calib_imgs = list(calib.calibration_batches(64))
         eq = mdir / f"{name}-equalised.onnx"
         equalise(src, eq, calib_imgs)  # the exported graph now has batch 1
-        models = {"plain": src, "equalised": eq}
+        eq_res = mdir / f"{name}-equalised-residual.onnx"
+        equalise(src, eq_res, calib_imgs, residual=True)
+        models = {"plain": src, "equalised": eq, "equalised_res": eq_res}
         for p in models.values():
             onnx.shape_inference.infer_shapes_path(str(p), str(p))
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)
@@ -149,7 +155,7 @@ def main() -> None:
             print(f"  {name} {label}: done ({timing[label]})", flush=True)
 
         ref = preds["fp32"] == ys
-        out = {"fp32": {"accuracy": float(ref.mean())}}
+        out = {"fp32": {"accuracy": float(ref.mean())}, "fp32_correct": "".join("1" if r else "0" for r in ref)}
         for label, p in preds.items():
             if label == "fp32":
                 continue
@@ -158,7 +164,7 @@ def main() -> None:
             d, lo, hi = paired_delta_ci(b, c, len(ys))
             out[label] = {"accuracy": float(right.mean()), "delta_pp": d, "ci95_pp": [lo, hi],
                           "mcnemar_p": mcnemar_exact(b, c), "agreement": float(np.mean(p == preds["fp32"])),
-                          **timing.get(label, {})}
+                          "correct": "".join("1" if r else "0" for r in right), **timing.get(label, {})}
         out.update(rows)
         report["models"][name] = out
         print(name, json.dumps(out, indent=1), flush=True)
