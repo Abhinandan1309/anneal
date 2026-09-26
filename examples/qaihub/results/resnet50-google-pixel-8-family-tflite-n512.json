@@ -1,0 +1,34 @@
+{
+  "model": "resnet50",
+  "device": "Google Pixel 8 (Family)",
+  "runtime": "tflite",
+  "n": 512,
+  "equalised_sites": 0,
+  "variants": {
+    "fp32": {
+      "compiled": true,
+      "latency_ms": 16.62,
+      "compute_units": {
+        "GPU": 78
+      },
+      "compile_job": "j5wlyr1jp",
+      "accuracy": 0.78515625
+    },
+    "hub int8": {
+      "compiled": true,
+      "latency_ms": 17.262,
+      "compute_units": {
+        "GPU": 81
+      },
+      "compile_job": "jg9zoqxvp",
+      "accuracy": 0.79296875,
+      "delta_pp": 0.78125,
+      "ci95_pp": [
+        -0.5431235793980552,
+        2.1056235793980553
+      ],
+      "mcnemar_p": 0.3876953125,
+      "agreement": 0.953125
+    }
+  }
+}

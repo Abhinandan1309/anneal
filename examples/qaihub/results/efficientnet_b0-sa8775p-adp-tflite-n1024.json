@@ -1,0 +1,36 @@
+{
+  "model": "efficientnet_b0",
+  "device": "SA8775P ADP",
+  "runtime": "tflite",
+  "n": 1024,
+  "equalised_sites": 16,
+  "variants": {
+    "fp32": {
+      "compiled": true,
+      "latency_ms": null,
+      "compute_units": null,
+      "compile_job": "jgoldwrdg",
+      "accuracy": 0.74609375
+    },
+    "hub int8": {
+      "compiled": true,
+      "latency_ms": null,
+      "compute_units": null,
+      "compile_job": "jpvl2mdm5",
+      "accuracy": 0.630859375,
+      "delta_pp": -11.5234375,
+      "ci95_pp": [
+        -13.932438145213439,
+        -9.114436854786561
+      ],
+      "mcnemar_p": 9.962498248584977e-21,
+      "agreement": 0.751953125
+    },
+    "hub int8 + equalised": {
+      "compiled": true,
+      "latency_ms": null,
+      "compute_units": null,
+      "compile_job": "jgjr3y78p"
+    }
+  }
+}

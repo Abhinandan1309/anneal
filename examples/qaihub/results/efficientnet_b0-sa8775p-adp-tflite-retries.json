@@ -1,0 +1,93 @@
+{
+  "note": "SA8775P ADP jobs failed intermittently with \"Failed to fully run the model, failed after compiling\" for every variant, FP32 included; each variant succeeded at least once. Retries reuse the same compiled models. The equalised model ran on 1 of 4 chunks of 256 images (images 768-1023); it is scored there against the same device FP32 predictions.",
+  "retry1": {
+    "retry_of": "examples/qaihub/results/efficientnet_b0-sa8775p-adp-tflite-n1024.json",
+    "jobs": {
+      "hub int8 + equalised inference": {
+        "job": "jgnz1q2kg",
+        "status": "FAILED",
+        "message": "Failed to fully run the model, failed after compiling."
+      },
+      "fp32 profile": {
+        "job": "jprlxdk0p",
+        "status": "FAILED",
+        "message": "Failed to fully run the model, failed after compiling."
+      },
+      "hub int8 profile": {
+        "job": "jp2rod8rg",
+        "status": "FAILED",
+        "message": "Failed to fully run the model, failed after compiling."
+      },
+      "hub int8 + equalised profile": {
+        "job": "jpyo82e85",
+        "status": "SUCCESS",
+        "message": "",
+        "latency_ms": 1.071,
+        "compute_units": {
+          "NPU": 262
+        }
+      }
+    }
+  },
+  "retry2": {
+    "jobs": {
+      "anneal-efficientnet_b0-hub int8 + equalised-inf-part0": {
+        "job": "jgnz1wljg",
+        "status": "FAILED",
+        "message": "Failed to fully run the model, failed after compiling."
+      },
+      "anneal-efficientnet_b0-hub int8 + equalised-inf-part1": {
+        "job": "jpyo8yr05",
+        "status": "FAILED",
+        "message": "Failed to fully run the model, failed after compiling."
+      },
+      "anneal-efficientnet_b0-hub int8 + equalised-inf-part2": {
+        "job": "jp0mox20g",
+        "status": "FAILED",
+        "message": "Failed to fully run the model, failed after compiling."
+      },
+      "anneal-efficientnet_b0-hub int8 + equalised-inf-part3": {
+        "job": "jp8ejkmqp",
+        "status": "SUCCESS",
+        "message": ""
+      },
+      "anneal-efficientnet_b0-fp32-prof-retry2": {
+        "job": "jpxl0zn8p",
+        "status": "SUCCESS",
+        "message": "",
+        "latency_ms": 1.65,
+        "compute_units": {
+          "NPU": 244
+        }
+      },
+      "anneal-efficientnet_b0-hub int8-prof-retry2": {
+        "job": "j5m09lq7g",
+        "status": "FAILED",
+        "message": "Failed to fully run the model, failed after compiling."
+      }
+    },
+    "fp32_accuracy": 0.74609375,
+    "hub_int8_accuracy": 0.630859375
+  },
+  "subset_768_1023": {
+    "n": 256,
+    "fp32_accuracy": 0.762,
+    "hub int8": {
+      "delta_pp": -13.28,
+      "ci95_pp": [
+        -18.33,
+        -8.23
+      ],
+      "mcnemar_p": 6.2e-07
+    },
+    "hub int8 + equalised": {
+      "accuracy": 0.742,
+      "delta_pp": -1.95,
+      "ci95_pp": [
+        -5.1,
+        1.19
+      ],
+      "mcnemar_p": 0.33
+    }
+  }
+}

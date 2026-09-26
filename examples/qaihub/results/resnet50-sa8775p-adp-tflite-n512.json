@@ -1,0 +1,24 @@
+{
+  "model": "resnet50",
+  "device": "SA8775P ADP",
+  "runtime": "tflite",
+  "n": 512,
+  "equalised_sites": 0,
+  "variants": {
+    "fp32": {
+      "compiled": true,
+      "latency_ms": null,
+      "compute_units": null,
+      "compile_job": "jglywq6m5"
+    },
+    "hub int8": {
+      "compiled": true,
+      "latency_ms": 1.012,
+      "compute_units": {
+        "NPU": 81
+      },
+      "compile_job": "j568o0eyg",
+      "accuracy": 0.7890625
+    }
+  }
+}

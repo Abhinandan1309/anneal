@@ -1,0 +1,151 @@
+{
+ "model": "mobilenet_v3_large",
+ "n": 49000,
+ "fp32_accuracy": 0.7528775510204082,
+ "calibration": "64 held-out ImageNet val images (every 50th), disjoint from the scored images",
+ "local_int8_path": "x86-avx2-16bit",
+ "environment_warnings": [],
+ "recipes": {
+  "minmax": {
+   "accuracy": 0.699204081632653,
+   "delta_pp": -5.36734693877551,
+   "ci95_pp": [
+    -5.663369607515867,
+    -5.071324270035152
+   ],
+   "mcnemar_p": 3.067494498732959e-280,
+   "regressions": 4124,
+   "fixes": 1494,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "minmax"
+   },
+   "mode": "emulated",
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\imagenet\\mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-samples-64--9254b6a0a6.onnx"
+  },
+  "entropy": {
+   "accuracy": 0.6808571428571428,
+   "delta_pp": -7.202040816326531,
+   "ci95_pp": [
+    -7.511591199420252,
+    -6.89249043323281
+   ],
+   "mcnemar_p": 0.0,
+   "regressions": 4886,
+   "fixes": 1357,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "entropy"
+   },
+   "mode": "emulated",
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\imagenet\\mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-samples-64--64fa21eeac.onnx"
+  },
+  "percentile": {
+   "accuracy": 0.726,
+   "delta_pp": -2.6877551020408164,
+   "ci95_pp": [
+    -2.937542283947531,
+    -2.4379679201341022
+   ],
+   "mcnemar_p": 1.3895995566858241e-99,
+   "regressions": 2626,
+   "fixes": 1309,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999
+   },
+   "mode": "emulated",
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\imagenet\\mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-percentile--fbbccc0625.onnx"
+  },
+  "anneal (32-bit): equalise + percentile + float stem": {
+   "accuracy": 0.742734693877551,
+   "delta_pp": -1.0142857142857142,
+   "ci95_pp": [
+    -1.218949692552531,
+    -0.8096217360188976
+   ],
+   "mcnemar_p": 2.639970347321893e-22,
+   "regressions": 1560,
+   "fixes": 1063,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "percentile_asym",
+    "float_stem": true,
+    "equalize": true
+   },
+   "mode": "emulated",
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\imagenet\\mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-samples-64--79527d52c0.onnx"
+  },
+  "anneal (x86-avx2-16bit, fused): equalise + percentile + float stem": {
+   "accuracy": 0.7378571428571429,
+   "delta_pp": -1.5020408163265306,
+   "ci95_pp": [
+    -1.7205061904100896,
+    -1.2835754422429715
+   ],
+   "mcnemar_p": 1.5379310182123584e-41,
+   "regressions": 1865,
+   "fixes": 1129,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "percentile_asym",
+    "float_stem": true,
+    "equalize": true
+   },
+   "mode": "fused",
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\imagenet\\mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-samples-64--79527d52c0.onnx"
+  },
+  "anneal (32-bit) + dense equalisation": {
+   "accuracy": 0.7424081632653061,
+   "delta_pp": -1.046938775510204,
+   "ci95_pp": [
+    -1.2482794501522299,
+    -0.8455981008681782
+   ],
+   "mcnemar_p": 2.0733387130409463e-24,
+   "regressions": 1526,
+   "fixes": 1013,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "percentile_asym",
+    "float_stem": true,
+    "equalize": true,
+    "equalize_dense": true
+   },
+   "mode": "emulated",
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\imagenet\\mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-samples-64--4e66b994c9.onnx"
+  },
+  "minmax (fused, this laptop)": {
+   "accuracy": 0.6247755102040816,
+   "delta_pp": -12.810204081632653,
+   "ci95_pp": [
+    -13.17713521391327,
+    -12.443272949352039
+   ],
+   "mcnemar_p": 0.0,
+   "regressions": 7748,
+   "fixes": 1471,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "minmax"
+   },
+   "mode": "fused",
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\imagenet\\mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-samples-64--9254b6a0a6.onnx"
+  }
+ }
+}

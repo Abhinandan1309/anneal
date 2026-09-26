@@ -1,0 +1,50 @@
+{
+  "model": "efficientnet_b0",
+  "device": "Google Pixel 8 (Family)",
+  "runtime": "tflite",
+  "n": 512,
+  "equalised_sites": 16,
+  "variants": {
+    "fp32": {
+      "compiled": true,
+      "latency_ms": 8.924,
+      "compute_units": {
+        "GPU": 244
+      },
+      "compile_job": "jpe76x9o5",
+      "accuracy": 0.740234375
+    },
+    "hub int8": {
+      "compiled": true,
+      "latency_ms": 9.199,
+      "compute_units": {
+        "GPU": 246
+      },
+      "compile_job": "jgzlzyeo5",
+      "accuracy": 0.61328125,
+      "delta_pp": -12.6953125,
+      "ci95_pp": [
+        -15.960414698609254,
+        -9.430210301390748
+      ],
+      "mcnemar_p": 2.9773029709526476e-14,
+      "agreement": 0.765625
+    },
+    "hub int8 + equalised": {
+      "compiled": true,
+      "latency_ms": 9.708,
+      "compute_units": {
+        "GPU": 262
+      },
+      "compile_job": "j5wlyzo3p",
+      "accuracy": 0.728515625,
+      "delta_pp": -1.171875,
+      "ci95_pp": [
+        -3.7091361360921034,
+        1.365386136092103
+      ],
+      "mcnemar_p": 0.4513808323961257,
+      "agreement": 0.884765625
+    }
+  }
+}

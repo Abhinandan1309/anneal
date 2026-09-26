@@ -1,0 +1,88 @@
+{
+ "model": "vit_b_16",
+ "n": 10000,
+ "fp32_accuracy": 0.8168,
+ "calibration": "64 held-out ImageNet val images (every 50th), disjoint from the scored images",
+ "local_int8_path": "x86-avx2-16bit",
+ "environment_warnings": [],
+ "recipes": {
+  "minmax": {
+   "accuracy": 0.7495,
+   "delta_pp": -6.7299999999999995,
+   "ci95_pp": [
+    -7.3817426175538925,
+    -6.078257382446107
+   ],
+   "mcnemar_p": 5.68104130375746e-93,
+   "regressions": 912,
+   "fixes": 239,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "minmax"
+   },
+   "mode": "emulated",
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\imagenet\\vit_b_16\\quantize-static-int8-activation-type-uint8-calib-samples-64--9254b6a0a6.onnx"
+  },
+  "anneal (32-bit): compute ops only": {
+   "accuracy": 0.8095,
+   "delta_pp": -0.73,
+   "ci95_pp": [
+    -1.081964431634789,
+    -0.3780355683652111
+   ],
+   "mcnemar_p": 5.769913570737873e-05,
+   "regressions": 198,
+   "fixes": 125,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "minmax",
+    "quantize_ops": "compute"
+   },
+   "mode": "emulated",
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\imagenet\\vit_b_16\\quantize-static-int8-activation-type-uint8-calib-samples-64--1f4878e049.onnx"
+  },
+  "anneal (x86-avx2-16bit, fused): compute ops only": {
+   "accuracy": 0.8011,
+   "delta_pp": -1.5699999999999998,
+   "ci95_pp": [
+    -1.9869482989724265,
+    -1.1530517010275732
+   ],
+   "mcnemar_p": 1.5033044448590436e-13,
+   "regressions": 306,
+   "fixes": 149,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "minmax",
+    "quantize_ops": "compute"
+   },
+   "mode": "fused",
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\imagenet\\vit_b_16\\quantize-static-int8-activation-type-uint8-calib-samples-64--1f4878e049.onnx"
+  },
+  "minmax (fused, this laptop)": {
+   "accuracy": 0.7483,
+   "delta_pp": -6.8500000000000005,
+   "ci95_pp": [
+    -7.5077187335024,
+    -6.192281266497601
+   ],
+   "mcnemar_p": 1.8166607238807945e-94,
+   "regressions": 929,
+   "fixes": 244,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "minmax"
+   },
+   "mode": "fused",
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\imagenet\\vit_b_16\\quantize-static-int8-activation-type-uint8-calib-samples-64--9254b6a0a6.onnx"
+  }
+ }
+}
