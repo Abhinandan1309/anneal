@@ -423,6 +423,22 @@ def _site_scales(
     )
 
 
+def _mixed_scales(s: np.ndarray, weight_a, weight_b, alpha: float, beta: float) -> np.ndarray:
+    """``sign(s) |s|^alpha s_cle^beta``: activation and cross-layer weight equalisation combined.
+
+    Multiplying every scale by one constant changes nothing after quantization (every step
+    scales with it), so s_cle needs no normalisation. Channels with an all-zero weight row keep 1.
+    """
+    from onnx import numpy_helper
+
+    wa = np.abs(numpy_helper.to_array(weight_a).astype(np.float64)).reshape(len(s), -1).max(axis=1)
+    wb = np.abs(numpy_helper.to_array(weight_b).astype(np.float64)).reshape(len(s), -1).max(axis=1)
+    ok = (wa > 0) & (wb > 0)
+    cle = np.ones(len(s))
+    cle[ok] = np.sqrt(wb[ok] / wa[ok])
+    return (np.sign(s) * np.abs(s) ** alpha * cle ** beta).astype(np.float32)
+
+
 def _rank(
     sites: list[_Site],
     ranges: dict[str, tuple[np.ndarray, np.ndarray]],
@@ -471,6 +487,7 @@ def equalise(
     top_k: int | None = None,
     min_gain: float | None = None,
     residual: bool = False,
+    mix: tuple[float, float] | None = None,
 ) -> EqualisationResult:
     """Write an equalised copy of ``src`` to ``dst`` and describe what changed.
 
@@ -487,6 +504,12 @@ def equalise(
     half the loss (-6.4pp vs -0.7pp for all 16), so the per-site prediction is not used to select.
     At most one of the three may be given. ``residual`` also rewrites gated sites whose output
     feeds a residual Add (see :func:`find_sites`); off by default.
+
+    ``mix = (alpha, beta)`` is for weights quantized *per tensor*, where the rescale also moves
+    precision between channels of A's and B's weights. The scale becomes
+    ``sign(s) * |s|**alpha * s_cle**beta``, with ``s`` the activation equalisation above and
+    ``s_cle = sqrt(max|B_c| / max|A_c|)`` the cross-layer weight equalisation of Nagel et al.
+    (2019), which balances the two weight tensors. (1, 0) is the default; (0, 1) is plain CLE.
     """
     import onnx
     from onnx import helper, numpy_helper
@@ -551,6 +574,8 @@ def equalise(
 
         lo_y, hi_y = ranges[site.y]
         s = _site_scales(site, ranges, **scale_kw)
+        if mix is not None:
+            s = _mixed_scales(s, inits[site.conv_a.input[1]], inits[site.conv_b.input[1]], *mix)
         s64 = s.astype(np.float64)
         rescale(site.conv_a.input[1], s64)
         if len(site.conv_a.input) > 2 and site.conv_a.input[2]:

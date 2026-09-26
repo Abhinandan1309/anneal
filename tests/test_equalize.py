@@ -660,3 +660,21 @@ def test_residual_consumer_that_starts_the_next_site_keeps_both_sites(tmp_path: 
     x = _batches(1, seed=7)[0]
     before, after = _run(tmp_path / "two.onnx", x), _run(dst, x)
     assert np.abs(after - before).max() <= 1e-4 * max(1.0, np.abs(before).max())
+
+
+@pytest.mark.parametrize("mix", [(1.0, 0.0), (0.0, 1.0), (0.5, 0.5)])
+def test_mixed_scales_stay_exact_in_float(tmp_path: Path, mix):
+    src = _model(tmp_path / "m.onnx", "silu")
+    dst = tmp_path / "eq.onnx"
+    result = equalise(src, dst, _batches(), mix=mix)
+    assert len(result.sites) == 1
+    x = _batches(1, seed=7)[0]
+    before, after = _run(src, x), _run(dst, x)
+    assert np.abs(after - before).max() <= 1e-4 * max(1.0, np.abs(before).max())
+
+
+def test_mix_one_zero_is_the_default_rewrite(tmp_path: Path):
+    src = _model(tmp_path / "m.onnx", "silu")
+    a = equalise(src, tmp_path / "a.onnx", _batches())
+    b = equalise(src, tmp_path / "b.onnx", _batches(), mix=(1.0, 0.0))
+    assert a.sites[0].scale_max == pytest.approx(b.sites[0].scale_max)

@@ -252,6 +252,7 @@ def equalise_dense(
     slack: float = DEFAULT_SLACK,
     max_scale: float = DEFAULT_MAX_SCALE,
     sample_images: int = 8,
+    mix: tuple[float, float] | None = None,
 ) -> tuple[list[DenseEqualisedSite], list[str], float | None]:
     """Rewrite the dense sites where it measurably lowers the consumer's INT8 error.
 
@@ -319,13 +320,27 @@ def equalise_dense(
         ).astype(np.float64)
         wb = numpy_helper.to_array(inits[site.b_weight]).astype(np.float64)
         w2 = wb.reshape(wb.shape[0], wb.shape[1]).T if site.b.op_type == "Conv" else wb
-        errors = {a: site_error(samples[site.y], w2, np.sign(s_budget) * np.abs(s_budget) ** a)
-                  for a in DENSE_ALPHAS}
-        alpha = min(errors, key=lambda a: (errors[a], a))
-        if alpha == 0.0:
-            continue
+        if mix is None:
+            errors = {a: site_error(samples[site.y], w2, np.sign(s_budget) * np.abs(s_budget) ** a)
+                      for a in DENSE_ALPHAS}
+            alpha = min(errors, key=lambda a: (errors[a], a))
+            if alpha == 0.0:
+                continue
+            s = np.sign(s_budget) * np.abs(s_budget) ** alpha
+            err_before, err_after = errors[0.0], errors[alpha]
+        else:
+            # Per-tensor weights: mix activation and cross-layer weight equalisation, as
+            # equalise(mix=...) does; the producer's rows and the consumer's columns balance.
+            wa = numpy_helper.to_array(inits[site.a_weight]).astype(np.float64)
+            ra = np.abs(np.moveaxis(wa, site.a_weight_axis, 0)).reshape(len(s_budget), -1).max(axis=1)
+            rb = np.abs(np.moveaxis(wb, site.b_in_axis, 0)).reshape(len(s_budget), -1).max(axis=1)
+            cle = np.ones(len(s_budget))
+            ok = (ra > 0) & (rb > 0)
+            cle[ok] = np.sqrt(rb[ok] / ra[ok])
+            alpha = mix[0]
+            s = np.sign(s_budget) * np.abs(s_budget) ** mix[0] * cle ** mix[1]
+            err_before, err_after = site_error(samples[site.y], w2, np.ones(len(s))), site_error(samples[site.y], w2, s)
         used |= names
-        s = np.sign(s_budget) * np.abs(s_budget) ** alpha
 
         scale_along(site.a_weight, site.a_weight_axis, s)
         if site.a_bias:
@@ -345,7 +360,7 @@ def equalise_dense(
                         node.input[j] = unscaled
         gate_nodes += [mul_name] + [n.name for n in site.gate_nodes]
         done.append(DenseEqualisedSite(site.a.name, site.b.name, int(len(s)), float(alpha),
-                                       errors[0.0], errors[alpha], int((s < 0).sum())))
+                                       err_before, err_after, int((s < 0).sum())))
 
     onnx.checker.check_model(model)
     onnx.save(model, str(dst))

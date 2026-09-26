@@ -57,8 +57,13 @@ class TransformContext:
     extra: dict[str, Any] = field(default_factory=dict)
 
     def path_for(self, artifact: ModelArtifact, record: TransformRecord) -> Path:
-        """Deterministic output path derived from the full recipe."""
-        recipe = f"{artifact.lineage_key}|{record}"
+        """Deterministic output path derived from the source model and the full recipe.
+
+        The source path is part of the key: two different models given the same recipe in one
+        workdir must not share an output file (a derived artifact's path already encodes its
+        own lineage).
+        """
+        recipe = f"{artifact.path.resolve()}|{artifact.lineage_key}|{record}"
         digest = hashlib.sha1(recipe.encode()).hexdigest()[:10]
         stem = _slug(str(record))
         self.workdir.mkdir(parents=True, exist_ok=True)

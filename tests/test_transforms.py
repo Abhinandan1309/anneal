@@ -432,3 +432,15 @@ def test_entropy_calibration_gets_a_histogram_wider_than_its_quantized_bins():
         ort_quantize.create_calibrator = original
     assert seen["num_bins"] == ENTROPY_NUM_BINS > ENTROPY_NUM_QUANTIZED_BINS == seen["num_quantized_bins"]
     assert seen["CalibPercentile"] == 99.0
+
+
+def test_different_source_models_never_share_an_output_path(tmp_path):
+    from anneal.core.artifact import ModelArtifact
+    from anneal.core.transforms import TransformContext, TransformRecord
+
+    ctx = TransformContext(workdir=tmp_path / "w")
+    record = TransformRecord("quantize_static_int8", {"per_channel": True})
+    a = ctx.path_for(ModelArtifact(path=tmp_path / "a.onnx"), record)
+    b = ctx.path_for(ModelArtifact(path=tmp_path / "b.onnx"), record)
+    assert a != b
+    assert a == ctx.path_for(ModelArtifact(path=tmp_path / "a.onnx"), record)  # still deterministic
