@@ -68,6 +68,9 @@ VARIANTS = {
     "tidl 8-bit + anneal 16-bit top4": ("plain", {**COMMON, "_top16": 4}),
     "tidl 8-bit + anneal 16-bit top8": ("plain", {**COMMON, "_top16": 8}),
     "tidl 8-bit + equalised + anneal 16-bit top4": ("equalised", {**COMMON, "_top16": 4}),
+    # Anneal's all-8-bit fixes first, then TIDL's own mixed-precision search on what remains
+    "tidl auto mixed + equalised (per-tensor)": ("equalised_pt", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
+    "tidl auto mixed + cle (max scale 4)": ("cle4", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
 }
 
 

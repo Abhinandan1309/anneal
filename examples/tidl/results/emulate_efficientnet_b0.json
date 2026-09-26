@@ -1,0 +1,47 @@
+{
+ "model": "efficientnet_b0",
+ "n": 1000,
+ "rules": {
+  "per_channel": false,
+  "activation_type": "int8",
+  "activation_symmetric": true,
+  "pow2_activation_scales": true,
+  "calibrate_method": "minmax",
+  "calib_samples": 64
+ },
+ "rows": {
+  "plain": {
+   "delta_pp": -75.1,
+   "ci95_pp": [
+    -77.78025252243143,
+    -72.41974747756858
+   ]
+  },
+  "eq": {
+   "delta_pp": -71.3,
+   "ci95_pp": [
+    -74.14457386896525,
+    -68.45542613103474
+   ],
+   "vs_plain_pp": [
+    3.8,
+    2.614953462517189,
+    4.985046537482811,
+    7.275957614183426e-12
+   ]
+  },
+  "eq-pt": {
+   "delta_pp": -12.8,
+   "ci95_pp": [
+    -15.165160513791824,
+    -10.434839486208178
+   ],
+   "vs_plain_pp": [
+    62.3,
+    59.296201681870095,
+    65.3037983181299,
+    5.745696699864588e-188
+   ]
+  }
+ }
+}
