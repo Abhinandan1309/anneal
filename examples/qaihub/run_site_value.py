@@ -38,11 +38,13 @@ def main() -> None:
     ap.add_argument("--device", default="Samsung Galaxy S24 (Family)")
     ap.add_argument("--runtime", default="qnn_dlc", choices=["tflite", "qnn_dlc", "onnx"])
     ap.add_argument("--images", type=int, default=1024)
+    ap.add_argument("--mode", default="loo", choices=["loo", "combos"],
+                    help="loo: leave each site out; combos: selections chosen from the loo values")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
 
     src = ROOT / "examples" / "models" / f"{args.model}-fp32.onnx"
-    work = ROOT / "scratch" / "qaihub" / f"{args.model}-site-value"
+    work = ROOT / "scratch" / "qaihub" / f"{args.model}-site-value-{args.mode}"
     work.mkdir(parents=True, exist_ok=True)
     calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=8, limit=64)
     calib_imgs = [x[i:i + 1] for x in calib.calibration_batches(64) for i in range(len(x))][:64]
@@ -59,14 +61,29 @@ def main() -> None:
     for site, gain in ranking:
         print(f"  {site:50s} {gain:.3f}", flush=True)
     all_sites = [s for s, _ in ranking]
+    if args.mode == "loo":
+        keep_sets = {f"minus{i}": [s for s in all_sites if s != site] for i, site in enumerate(all_sites)}
+    else:
+        # Selections chosen from the leave-one-out values (EfficientNet-B0): features.2.x are the
+        # highest-resolution sites, ~half the latency cost for little accuracy; the stem and
+        # features.3.0 carried most of the recovery. Single-site values need not add up.
+        F = "/features/features.{0}/features.{0}.{1}/block/block.0/block.0.0/Conv".format
+        keep_sets = {
+            "all - 2.1": [s for s in all_sites if s != F(2, 1)],
+            "all - 2.x": [s for s in all_sites if s not in (F(2, 0), F(2, 1))],
+            "stem + 3.0 only": ["/features/features.0/features.0.0/Conv", F(3, 0)],
+        }
+        for label, keep in keep_sets.items():
+            if not set(keep) <= set(all_sites):
+                raise ValueError(f"{label}: sites not in this model")
     models = {"fp32": static_copy(src, work)}
     full = work / f"{args.model}-eq-all.onnx"
     equalise(src, full, batches)
     models["all"] = static_copy(full, work)
-    for i, site in enumerate(all_sites):
-        dst = work / f"{args.model}-eq-minus{i}.onnx"
-        equalise(src, dst, batches, sites=[s for s in all_sites if s != site])
-        models[f"minus{i}"] = static_copy(dst, work)
+    for i, (label, keep) in enumerate(keep_sets.items()):
+        dst = work / f"{args.model}-eq-set{i}.onnx"
+        equalise(src, dst, batches, sites=keep)
+        models[label] = static_copy(dst, work)
 
     device = hub.Device(args.device)
     calibration = {"input": calib_imgs}
@@ -113,11 +130,14 @@ def main() -> None:
             d, lo, hi = paired_delta_ci(b, c, len(labels))
             rows[label].update(delta_pp=d, ci95_pp=[lo, hi], mcnemar_p=mcnemar_exact(b, c))
     full_right = preds["all"] == labels if "all" in preds else None
-    for i, site in enumerate(all_sites):
-        r = rows.get(f"minus{i}", {})
-        r["left_out_site"], r["predicted_gain"] = site, dict(ranking)[site]
-        if full_right is not None and f"minus{i}" in preds:
-            right = preds[f"minus{i}"] == labels
+    for label, keep in keep_sets.items():
+        r = rows.get(label, {})
+        r["sites"] = keep
+        if args.mode == "loo":
+            (site,) = set(all_sites) - set(keep)
+            r["left_out_site"], r["predicted_gain"] = site, dict(ranking)[site]
+        if full_right is not None and label in preds:
+            right = preds[label] == labels
             b, c = int(np.sum(full_right & ~right)), int(np.sum(~full_right & right))
             d, lo, hi = paired_delta_ci(b, c, len(labels))
             r["vs_all"] = {"delta_pp": d, "ci95_pp": [lo, hi], "mcnemar_p": mcnemar_exact(b, c)}
@@ -126,17 +146,18 @@ def main() -> None:
     result = {"model": args.model, "device": args.device, "runtime": args.runtime, "n": int(len(labels)),
               "ranking": [[s, g] for s, g in ranking], "variants": rows}
     slug = args.device.lower().replace(" ", "-").replace("(", "").replace(")", "")
-    path = HERE / "results" / f"{args.model}-site-value-{slug}-{args.runtime}-n{len(labels)}.json"
+    tag = "site-value" if args.mode == "loo" else "site-combos"
+    path = HERE / "results" / f"{args.model}-{tag}-{slug}-{args.runtime}-n{len(labels)}.json"
     path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(f"\n{args.model} leave-one-site-out on {args.device} ({args.runtime}), {len(labels)} images")
-    for label in ["fp32", "none", "all", *[f"minus{i}" for i in range(len(all_sites))]]:
+    for label in ["fp32", "none", "all", *keep_sets]:
         r = rows.get(label, {})
         acc = f"{r['accuracy'] * 100:5.1f}%" if "accuracy" in r else "  -  "
         d = (f"{r['vs_all']['delta_pp']:+6.1f}pp vs all" if "vs_all" in r
              else f"{r['delta_pp']:+6.1f}pp vs fp32" if "delta_pp" in r else "")
         lat = f"{r['latency_ms']:.3f} ms" if r.get("latency_ms") else ""
         site = f"{r['left_out_site'][:40]} (pred {r['predicted_gain']:.1f})" if "left_out_site" in r else ""
-        print(f"  {label:8s} {acc} {d:18s} {lat:10s} {site}", flush=True)
+        print(f"  {label:16s} {acc} {d:18s} {lat:10s} {site}", flush=True)
     print(f"written: {path}")
 
 

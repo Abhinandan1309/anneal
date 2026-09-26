@@ -1,0 +1,529 @@
+{
+  "model": "efficientnet_b0",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "qnn_dlc",
+  "n": 1024,
+  "ranking": [
+    [
+      "/features/features.7/features.7.0/block/block.0/block.0.0/Conv",
+      24.36541499241595
+    ],
+    [
+      "/features/features.5/features.5.0/block/block.0/block.0.0/Conv",
+      11.478837974665929
+    ],
+    [
+      "/features/features.6/features.6.0/block/block.0/block.0.0/Conv",
+      8.385236849304075
+    ],
+    [
+      "/features/features.6/features.6.1/block/block.0/block.0.0/Conv",
+      4.364249805397729
+    ],
+    [
+      "/features/features.3/features.3.1/block/block.0/block.0.0/Conv",
+      3.222767830528063
+    ],
+    [
+      "/features/features.6/features.6.2/block/block.0/block.0.0/Conv",
+      2.869659394164997
+    ],
+    [
+      "/features/features.3/features.3.0/block/block.0/block.0.0/Conv",
+      2.6232678754261807
+    ],
+    [
+      "/features/features.4/features.4.2/block/block.0/block.0.0/Conv",
+      2.544278195695108
+    ],
+    [
+      "/features/features.0/features.0.0/Conv",
+      2.378061487228451
+    ],
+    [
+      "/features/features.6/features.6.3/block/block.0/block.0.0/Conv",
+      1.7732578165261588
+    ],
+    [
+      "/features/features.4/features.4.1/block/block.0/block.0.0/Conv",
+      1.6763298549259045
+    ],
+    [
+      "/features/features.5/features.5.1/block/block.0/block.0.0/Conv",
+      1.4089294230496157
+    ],
+    [
+      "/features/features.5/features.5.2/block/block.0/block.0.0/Conv",
+      1.2038583220981838
+    ],
+    [
+      "/features/features.4/features.4.0/block/block.0/block.0.0/Conv",
+      0.978737018128816
+    ],
+    [
+      "/features/features.2/features.2.1/block/block.0/block.0.0/Conv",
+      0.8569464760579625
+    ],
+    [
+      "/features/features.2/features.2.0/block/block.0/block.0.0/Conv",
+      0.852998030913094
+    ]
+  ],
+  "variants": {
+    "fp32": {
+      "inference_job": "jgzlyrkz5",
+      "profile_job": "jp3z7m1l5",
+      "latency_ms": 0.841,
+      "compute_units": {
+        "NPU": 242
+      },
+      "accuracy": 0.74609375
+    },
+    "all": {
+      "inference_job": "jgdd4ollg",
+      "profile_job": "j5wlz9q6p",
+      "latency_ms": 0.544,
+      "compute_units": {
+        "NPU": 260
+      },
+      "accuracy": 0.7392578125,
+      "delta_pp": -0.68359375,
+      "ci95_pp": [
+        -2.2497618487058486,
+        0.8825743487058484
+      ],
+      "mcnemar_p": 0.4638176178968696
+    },
+    "minus0": {
+      "inference_job": "jgnzqevmg",
+      "profile_job": "jpxlr1y1p",
+      "latency_ms": 0.545,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.736328125,
+      "delta_pp": -0.9765625,
+      "ci95_pp": [
+        -2.553805095117697,
+        0.600680095117697
+      ],
+      "mcnemar_p": 0.2749903961710005,
+      "left_out_site": "/features/features.7/features.7.0/block/block.0/block.0.0/Conv",
+      "predicted_gain": 24.36541499241595,
+      "vs_all": {
+        "delta_pp": -0.29296875,
+        "ci95_pp": [
+          -1.1270962576689112,
+          0.5411587576689112
+        ],
+        "mcnemar_p": 0.6476058959960938
+      },
+      "latency_saving_ms": -0.0010000000000000009
+    },
+    "minus1": {
+      "inference_job": "jp8er7y8p",
+      "profile_job": "jp0m9rl6g",
+      "latency_ms": 0.537,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.732421875,
+      "delta_pp": -1.3671875,
+      "ci95_pp": [
+        -3.055566329289711,
+        0.32119132928971095
+      ],
+      "mcnemar_p": 0.14053828626952244,
+      "left_out_site": "/features/features.5/features.5.0/block/block.0/block.0.0/Conv",
+      "predicted_gain": 11.478837974665929,
+      "vs_all": {
+        "delta_pp": -0.68359375,
+        "ci95_pp": [
+          -1.8151940469926673,
+          0.44800654699266723
+        ],
+        "mcnemar_p": 0.31050465907901525
+      },
+      "latency_saving_ms": 0.007000000000000006
+    },
+    "minus2": {
+      "inference_job": "jgjryln8p",
+      "profile_job": "jgzly7rk5",
+      "latency_ms": 0.533,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.7333984375,
+      "delta_pp": -1.26953125,
+      "ci95_pp": [
+        -2.8575683704473924,
+        0.3185058704473925
+      ],
+      "mcnemar_p": 0.14803218069275836,
+      "left_out_site": "/features/features.6/features.6.0/block/block.0/block.0.0/Conv",
+      "predicted_gain": 8.385236849304075,
+      "vs_all": {
+        "delta_pp": -0.5859375,
+        "ci95_pp": [
+          -1.5612616354783924,
+          0.38938663547839236
+        ],
+        "mcnemar_p": 0.32693958282470703
+      },
+      "latency_saving_ms": 0.01100000000000001
+    },
+    "minus3": {
+      "inference_job": "j57endyrp",
+      "profile_job": "jp2rdmm4g",
+      "latency_ms": 0.538,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.7392578125,
+      "delta_pp": -0.68359375,
+      "ci95_pp": [
+        -2.2958678965272408,
+        0.9286803965272407
+      ],
+      "mcnemar_p": 0.4766877934342755,
+      "left_out_site": "/features/features.6/features.6.1/block/block.0/block.0.0/Conv",
+      "predicted_gain": 4.364249805397729,
+      "vs_all": {
+        "delta_pp": 0.0,
+        "ci95_pp": [
+          -0.8559947726366381,
+          0.8559947726366381
+        ],
+        "mcnemar_p": 1.0
+      },
+      "latency_saving_ms": 0.006000000000000005
+    },
+    "minus4": {
+      "inference_job": "jgnzqe6mg",
+      "profile_job": "jp3z7mml5",
+      "latency_ms": 0.53,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.7314453125,
+      "delta_pp": -1.46484375,
+      "ci95_pp": [
+        -3.0290002767936715,
+        0.09931277679367141
+      ],
+      "mcnemar_p": 0.08643723427347086,
+      "left_out_site": "/features/features.3/features.3.1/block/block.0/block.0.0/Conv",
+      "predicted_gain": 3.222767830528063,
+      "vs_all": {
+        "delta_pp": -0.78125,
+        "ci95_pp": [
+          -1.756060440025102,
+          0.1935604400251022
+        ],
+        "mcnemar_p": 0.16863754391670227
+      },
+      "latency_saving_ms": 0.014000000000000012
+    },
+    "minus5": {
+      "inference_job": "jgly8kvl5",
+      "profile_job": "jg9z243lp",
+      "latency_ms": 0.543,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.7353515625,
+      "delta_pp": -1.07421875,
+      "ci95_pp": [
+        -2.615981966187189,
+        0.467544466187189
+      ],
+      "mcnemar_p": 0.21453919400817845,
+      "left_out_site": "/features/features.6/features.6.2/block/block.0/block.0.0/Conv",
+      "predicted_gain": 2.869659394164997,
+      "vs_all": {
+        "delta_pp": -0.390625,
+        "ci95_pp": [
+          -0.9314746808763753,
+          0.15022468087637536
+        ],
+        "mcnemar_p": 0.2890625
+      },
+      "latency_saving_ms": 0.0010000000000000009
+    },
+    "minus6": {
+      "inference_job": "jgzly7365",
+      "profile_job": "jgnzqe9rg",
+      "latency_ms": 0.531,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.71875,
+      "delta_pp": -2.734375,
+      "ci95_pp": [
+        -4.372373895139403,
+        -1.096376104860597
+      ],
+      "mcnemar_p": 0.0015162236642818612,
+      "left_out_site": "/features/features.3/features.3.0/block/block.0/block.0.0/Conv",
+      "predicted_gain": 2.6232678754261807,
+      "vs_all": {
+        "delta_pp": -2.05078125,
+        "ci95_pp": [
+          -3.4903972176479376,
+          -0.6111652823520626
+        ],
+        "mcnemar_p": 0.007508175534150202
+      },
+      "latency_saving_ms": 0.013000000000000012
+    },
+    "minus7": {
+      "inference_job": "jp4y4wnlp",
+      "profile_job": "jp8er73xp",
+      "latency_ms": 0.547,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.7373046875,
+      "delta_pp": -0.87890625,
+      "ci95_pp": [
+        -2.444708800574959,
+        0.6868963005749591
+      ],
+      "mcnemar_p": 0.3284320626971899,
+      "left_out_site": "/features/features.4/features.4.2/block/block.0/block.0.0/Conv",
+      "predicted_gain": 2.544278195695108,
+      "vs_all": {
+        "delta_pp": -0.1953125,
+        "ci95_pp": [
+          -0.960844034211945,
+          0.570219034211945
+        ],
+        "mcnemar_p": 0.803619384765625
+      },
+      "latency_saving_ms": -0.0030000000000000027
+    },
+    "minus8": {
+      "inference_job": "jpyo2dz45",
+      "profile_job": "j5wlz9m6p",
+      "latency_ms": 0.531,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.677734375,
+      "delta_pp": -6.8359375,
+      "ci95_pp": [
+        -8.89045730602719,
+        -4.78141769397281
+      ],
+      "mcnemar_p": 8.443958194827311e-11,
+      "left_out_site": "/features/features.0/features.0.0/Conv",
+      "predicted_gain": 2.378061487228451,
+      "vs_all": {
+        "delta_pp": -6.15234375,
+        "ci95_pp": [
+          -8.077133445739424,
+          -4.227554054260575
+        ],
+        "mcnemar_p": 4.15704696083444e-10
+      },
+      "latency_saving_ms": 0.013000000000000012
+    },
+    "minus9": {
+      "inference_job": "jp3z7mnz5",
+      "profile_job": "jgnzqerkg",
+      "latency_ms": 0.537,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.7353515625,
+      "delta_pp": -1.07421875,
+      "ci95_pp": [
+        -2.5920333334421737,
+        0.4435958334421739
+      ],
+      "mcnemar_p": 0.20736789985685422,
+      "left_out_site": "/features/features.6/features.6.3/block/block.0/block.0.0/Conv",
+      "predicted_gain": 1.7732578165261588,
+      "vs_all": {
+        "delta_pp": -0.390625,
+        "ci95_pp": [
+          -0.8588617694083327,
+          0.0776117694083327
+        ],
+        "mcnemar_p": 0.21875
+      },
+      "latency_saving_ms": 0.007000000000000006
+    },
+    "minus10": {
+      "inference_job": "j5wlz9wjp",
+      "profile_job": "jpvlmw4k5",
+      "latency_ms": 0.532,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.736328125,
+      "delta_pp": -0.9765625,
+      "ci95_pp": [
+        -2.4579818813843217,
+        0.504856881384322
+      ],
+      "mcnemar_p": 0.2450608330229457,
+      "left_out_site": "/features/features.4/features.4.1/block/block.0/block.0.0/Conv",
+      "predicted_gain": 1.6763298549259045,
+      "vs_all": {
+        "delta_pp": -0.29296875,
+        "ci95_pp": [
+          -1.2107454707802776,
+          0.6248079707802776
+        ],
+        "mcnemar_p": 0.6776394844055176
+      },
+      "latency_saving_ms": 0.01200000000000001
+    },
+    "minus11": {
+      "inference_job": "j5m0kzqqg",
+      "profile_job": "jprldy90p",
+      "latency_ms": 0.536,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.7373046875,
+      "delta_pp": -0.87890625,
+      "ci95_pp": [
+        -2.3971921971228722,
+        0.6393796971228721
+      ],
+      "mcnemar_p": 0.31350305329645284,
+      "left_out_site": "/features/features.5/features.5.1/block/block.0/block.0.0/Conv",
+      "predicted_gain": 1.4089294230496157,
+      "vs_all": {
+        "delta_pp": -0.1953125,
+        "ci95_pp": [
+          -1.051223675315023,
+          0.660598675315023
+        ],
+        "mcnemar_p": 0.8238029479980469
+      },
+      "latency_saving_ms": 0.008000000000000007
+    },
+    "minus12": {
+      "inference_job": "j5ql12emp",
+      "profile_job": "jgjrylovp",
+      "latency_ms": 0.547,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.732421875,
+      "delta_pp": -1.3671875,
+      "ci95_pp": [
+        -2.8719936106231243,
+        0.13761861062312442
+      ],
+      "mcnemar_p": 0.09795444051950737,
+      "left_out_site": "/features/features.5/features.5.2/block/block.0/block.0.0/Conv",
+      "predicted_gain": 1.2038583220981838,
+      "vs_all": {
+        "delta_pp": -0.68359375,
+        "ci95_pp": [
+          -1.471670450867858,
+          0.10448295086785808
+        ],
+        "mcnemar_p": 0.143463134765625
+      },
+      "latency_saving_ms": -0.0030000000000000027
+    },
+    "minus13": {
+      "inference_job": "jpvlmw0m5",
+      "profile_job": "j57endkvp",
+      "latency_ms": 0.541,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.7333984375,
+      "delta_pp": -1.26953125,
+      "ci95_pp": [
+        -2.9030572847099143,
+        0.3639947847099142
+      ],
+      "mcnemar_p": 0.15971168311801956,
+      "left_out_site": "/features/features.4/features.4.0/block/block.0/block.0.0/Conv",
+      "predicted_gain": 0.978737018128816,
+      "vs_all": {
+        "delta_pp": -0.5859375,
+        "ci95_pp": [
+          -1.522945751921267,
+          0.35107075192126697
+        ],
+        "mcnemar_p": 0.30745625495910645
+      },
+      "latency_saving_ms": 0.0030000000000000027
+    },
+    "minus14": {
+      "inference_job": "jp1n18ylg",
+      "profile_job": "jpyo2dq85",
+      "latency_ms": 0.515,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.740234375,
+      "delta_pp": -0.5859375,
+      "ci95_pp": [
+        -2.0926444591174405,
+        0.9207694591174401
+      ],
+      "mcnemar_p": 0.5257733601756501,
+      "left_out_site": "/features/features.2/features.2.1/block/block.0/block.0.0/Conv",
+      "predicted_gain": 0.8569464760579625,
+      "vs_all": {
+        "delta_pp": 0.09765625,
+        "ci95_pp": [
+          -1.0666071507205097,
+          1.2619196507205097
+        ],
+        "mcnemar_p": 1.0
+      },
+      "latency_saving_ms": 0.029000000000000026
+    },
+    "minus15": {
+      "inference_job": "jp4y4wdvp",
+      "profile_job": "jpvlmw9k5",
+      "latency_ms": 0.515,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.73046875,
+      "delta_pp": -1.5625,
+      "ci95_pp": [
+        -3.250242992849359,
+        0.12524299284935836
+      ],
+      "mcnemar_p": 0.08878242522208006,
+      "left_out_site": "/features/features.2/features.2.0/block/block.0/block.0.0/Conv",
+      "predicted_gain": 0.852998030913094,
+      "vs_all": {
+        "delta_pp": -0.87890625,
+        "ci95_pp": [
+          -2.2176680965148763,
+          0.45985559651487656
+        ],
+        "mcnemar_p": 0.2528697301676033
+      },
+      "latency_saving_ms": 0.029000000000000026
+    },
+    "none": {
+      "inference_job": "jp0m9r26g",
+      "profile_job": "j5m0kzddg",
+      "latency_ms": 0.42,
+      "compute_units": {
+        "NPU": 244
+      },
+      "accuracy": 0.6259765625,
+      "delta_pp": -12.01171875,
+      "ci95_pp": [
+        -14.449618205937883,
+        -9.573819294062117
+      ],
+      "mcnemar_p": 7.144231342234899e-22
+    }
+  }
+}
