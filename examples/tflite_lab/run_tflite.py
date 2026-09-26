@@ -23,7 +23,6 @@ import argparse
 import json
 import platform
 import shutil
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -70,6 +69,27 @@ def static_batch(path: Path, work: Path) -> Path:
     return dst
 
 
+def to_saved_model(onnx_file: Path, tf_dir: Path, calib_images: np.ndarray) -> None:
+    """onnx2tf's Python API, with its test-image download replaced by our calibration images.
+
+    onnx2tf (1.28.8) always downloads a sample .npy and loads it with pickling allowed; this
+    repository never unpickles downloaded files. Its only use is as test input, which our own
+    images (de-normalised to [0, 1], NHWC, as the sample is) serve equally well.
+    """
+    import onnx2tf
+    import onnx2tf.onnx2tf as o2t_main
+    import onnx2tf.utils.common_functions as o2t_common
+
+    from anneal.core.dataset import IMAGENET_MEAN, IMAGENET_STD
+
+    raw = (nhwc(calib_images[:20]) * IMAGENET_STD + IMAGENET_MEAN).astype(np.float32)
+    for module in (o2t_common, o2t_main):
+        if hasattr(module, "download_test_image_data"):
+            module.download_test_image_data = lambda: raw
+    onnx2tf.convert(input_onnx_file_path=str(onnx_file), output_folder_path=str(tf_dir), batch_size=1,
+                    non_verbose=True, output_signaturedefs=True)
+
+
 def quantize_saved_model(saved_model: Path, calib_nhwc: np.ndarray) -> bytes:
     """TFLite full-integer post-training quantization with float input and output."""
     import tensorflow as tf
@@ -100,12 +120,9 @@ def convert(models: list[str], out: Path) -> None:
             tf_dir = work / f"tf{variant}"
             if tf_dir.exists():
                 shutil.rmtree(tf_dir)
-            # onnx2tf only rewrites NCHW to NHWC (-b 1: static shapes) into a float SavedModel
-            # (-osd). Its own quantizer (-oiqt) loads a downloaded, pickled sample file even when
-            # calibration data is given, which this repository refuses to unpickle; TensorFlow's
-            # converter quantizes instead, as most TFLite users do.
-            subprocess.run([sys.executable, "-m", "onnx2tf", "-i", str(onnx_file), "-o", str(tf_dir),
-                            "-b", "1", "-n", "-osd"], check=True)
+            # onnx2tf only rewrites NCHW to NHWC (static batch 1) into a float SavedModel;
+            # TensorFlow's converter quantizes, as most TFLite users do.
+            to_saved_model(onnx_file, tf_dir, calib_images)
             if variant == "":
                 shutil.copy(next(tf_dir.glob("*_float32.tflite")), out / f"{name}-fp32.tflite")
             # INT8 weights (per channel) and activations (per tensor), float input/output.
