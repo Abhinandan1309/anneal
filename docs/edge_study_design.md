@@ -4,6 +4,8 @@ This file is committed **before** the device runs it describes, so its predictio
 adjusted to fit the data. Results go in a separate file that links back here; any prediction
 that fails is reported as a finding.
 
+**Results:** [edge_study_results.md](edge_study_results.md).
+
 ## Amendment: narrowed before any result (committed before the runs)
 
 The full grid below would need about 300 cloud jobs. It was cut, before any device result
