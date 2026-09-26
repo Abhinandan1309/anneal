@@ -77,7 +77,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="efficientnet_b0")
     ap.add_argument("--device", default="Samsung Galaxy S24 (Family)")
-    ap.add_argument("--runtime", default="tflite", choices=["tflite", "qnn_context_binary", "onnx"])
+    ap.add_argument("--runtime", default="tflite", choices=["tflite", "qnn_dlc", "onnx"])
     ap.add_argument("--images", type=int, default=512)
     ap.add_argument("--variants", default=",".join(VARIANTS),
                     help="comma-separated subset of: " + ", ".join(VARIANTS))
