@@ -413,6 +413,7 @@ def equalise(
     check_batch: np.ndarray | None = None,
     sites: Iterable[str] | None = None,
     top_k: int | None = None,
+    min_gain: float | None = None,
 ) -> EqualisationResult:
     """Write an equalised copy of ``src`` to ``dst`` and describe what changed.
 
@@ -421,13 +422,19 @@ def equalise(
 
     By default every site found is rewritten. ``sites`` restricts that to the named ones (ids
     as in :func:`rank_sites`: producer conv names; an unknown id is an error), and ``top_k``
-    to the k with the highest predicted gain. At most one of the two may be given.
+    to the k with the highest predicted gain. ``min_gain`` keeps only sites whose predicted gain
+    is at least that many channels' worth of signal: the data-driven switch, which rewrites
+    nothing on a model whose channels are already balanced (SSDLite-MobileNetV3: total gain 2.9,
+    against 58-366 on the classifiers that collapse without equalisation). At most one of the
+    three may be given.
     """
     import onnx
     from onnx import helper, numpy_helper
 
-    if sites is not None and top_k is not None:
-        raise ValueError("give either sites or top_k, not both")
+    if sum(x is not None for x in (sites, top_k, min_gain)) > 1:
+        raise ValueError("give at most one of sites, top_k and min_gain")
+    if min_gain is not None and (isinstance(min_gain, bool) or not min_gain >= 0):
+        raise ValueError(f"min_gain must be a non-negative number, got {min_gain!r}")
     if top_k is not None and (isinstance(top_k, bool) or not isinstance(top_k, int) or top_k < 0):
         raise ValueError(f"top_k must be a non-negative integer, got {top_k!r}")
     wanted = None if sites is None else ([sites] if isinstance(sites, str) else list(sites))
@@ -452,6 +459,8 @@ def equalise(
     gains = dict(result.ranking)
     if top_k is not None:
         wanted = [r.site for r in result.ranking[:top_k]]
+    if min_gain is not None:
+        wanted = [r.site for r in result.ranking if r.gain >= min_gain]
     chosen = None if wanted is None else set(wanted)
     g = model.graph
     inits = {i.name: i for i in g.initializer}

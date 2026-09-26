@@ -482,3 +482,44 @@ def test_compute_only_quantization_leaves_other_ops_in_float(tmp_path: Path, cal
     with pytest.raises(TransformError):
         apply_transform("quantize_static_int8", {"quantize_ops": "everything"}, ModelArtifact(path=src),
                         TransformContext(workdir=tmp_path / "w2", calibset=calib))
+
+
+def test_min_gain_keeps_only_sites_worth_their_cost(tmp_path: Path):
+    src = _chain(tmp_path / "m.onnx")
+    ranking = rank_sites(src, _batches())
+    cut = (ranking[0].gain + ranking[1].gain) / 2  # between the best site and the rest
+    result = equalise(src, tmp_path / "eq.onnx", _batches(), min_gain=cut)
+    assert [s.producer for s in result.sites] == [ranking[0].site]
+    none = equalise(src, tmp_path / "none.onnx", _batches(), min_gain=ranking[0].gain * 10)
+    assert none.sites == [] and len(none.ranking) == 3
+    full = equalise(src, tmp_path / "full.onnx", _batches(), min_gain=0.0)
+    assert len(full.sites) == 3
+
+
+@pytest.mark.parametrize("kwargs", [{"min_gain": -1.0}, {"min_gain": True}, {"min_gain": 1.0, "top_k": 1}])
+def test_invalid_min_gain_is_rejected(tmp_path: Path, kwargs):
+    with pytest.raises(ValueError):
+        equalise(_chain(tmp_path / "m.onnx"), tmp_path / "eq.onnx", _batches(), **kwargs)
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"per_channel": True, "equalize_min_gain": 1.0},
+        {"per_channel": True, "equalize": True, "equalize_min_gain": -1},
+        {"per_channel": True, "equalize": True, "equalize_min_gain": 1.0, "equalize_top_k": 1},
+    ],
+)
+def test_invalid_min_gain_settings_are_rejected(tmp_path: Path, calib, params):
+    with pytest.raises(TransformError):
+        apply_transform(
+            "quantize_static_int8", params, ModelArtifact(path=_chain(tmp_path / "m.onnx")),
+            TransformContext(workdir=tmp_path / "w", calibset=calib),
+        )
+
+
+def test_static_quantization_min_gain_records_the_chosen_sites(tmp_path: Path, calib):
+    src = _chain(tmp_path / "m.onnx")
+    art = _static(tmp_path, calib, src, "mg", equalize=True, equalize_min_gain=1e9)
+    assert art.meta["equalised_site_ids"] == [] and art.meta["equalisation"]["candidates"] == 3
+    assert art.lineage[-1].params["equalize_min_gain"] == 1e9

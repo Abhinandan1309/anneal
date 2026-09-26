@@ -588,6 +588,7 @@ def quantize_static_int8(
     equalize_dense = bool(params.get("equalize_dense", False))
     slack = float(params.get("equalize_slack", EQUALIZE_SLACK))
     top_k = params.get("equalize_top_k")
+    min_gain = params.get("equalize_min_gain")
     float_gates = bool(params.get("float_gates", False))
     float_stem = bool(params.get("float_stem", False))
     quantize_ops = params.get("quantize_ops", "default")
@@ -610,6 +611,13 @@ def quantize_static_int8(
             raise TransformError("equalize_top_k only applies together with equalize")
         if isinstance(top_k, bool) or not isinstance(top_k, int) or top_k < 0:
             raise TransformError(f"equalize_top_k must be a non-negative integer, got {top_k!r}")
+    if min_gain is not None:
+        if not equalize:
+            raise TransformError("equalize_min_gain only applies together with equalize")
+        if top_k is not None:
+            raise TransformError("give equalize_top_k or equalize_min_gain, not both")
+        if isinstance(min_gain, bool) or not isinstance(min_gain, (int, float)) or min_gain < 0:
+            raise TransformError(f"equalize_min_gain must be a non-negative number, got {min_gain!r}")
 
     methods = {
         "minmax": CalibrationMethod.MinMax,
@@ -639,6 +647,7 @@ def quantize_static_int8(
                 else {}
             ),
             **({"equalize_top_k": top_k} if top_k is not None else {}),
+            **({"equalize_min_gain": min_gain} if min_gain is not None else {}),
             **({"float_stem": True} if float_stem else {}),
             **({"equalize_dense": True, "equalize_slack": slack, "float_gates": float_gates}
                if equalize_dense else {}),
@@ -663,6 +672,7 @@ def quantize_static_int8(
             slack=slack,
             check_batch=probe,
             top_k=top_k,
+            min_gain=None if min_gain is None else float(min_gain),
         )
         src = eq_path
         if float_gates:
@@ -909,6 +919,14 @@ REGISTRY: dict[str, TransformSpec] = {
                     "With equalize: rewrite only the k sites with the highest predicted gain "
                     "(rounding noise removed from starved channels) instead of all. Each gated "
                     "site adds one element-wise Mul, which is costly on NPUs; 0 = none."
+                ),
+            },
+            "equalize_min_gain": {
+                "type": "number",
+                "description": (
+                    "With equalize: rewrite only sites whose predicted gain (channels' worth of "
+                    "quantization signal recovered) is at least this; skips equalisation, and its "
+                    "NPU cost, where channel ranges are already balanced."
                 ),
             },
             "quantize_ops": {
