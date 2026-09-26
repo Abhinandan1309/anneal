@@ -10,10 +10,16 @@ Variants, each scored on Imagenette validation images (1000-way) and paired agai
 * ``xint8``                      AMD's NPU preset on the exported model
 * ``xint8 + cle``                the same with Quark's CLE
 * ``xint8 + anneal eq``          the preset on Anneal's equalised model
-* ``xint8 per-ch w``             power-of-two, per-channel weights (is per-tensor weight the limit?)
-* ``xint8 per-ch w + anneal eq``
+* ``xint8 keep sigmoid``         XINT8 without its Sigmoid -> HardSigmoid swap (the NPU default,
+                                 which changes EfficientNet's SiLU before any quantization)
+* ``xint8 keep sigmoid + anneal eq``
+* ``fp32 hardsigmoid``           no quantization, only that swap: the float ceiling of XINT8
 * ``a8w8``                       float scales, per-tensor symmetric int8 (Quark's A8W8 preset)
 * ``a8w8 + anneal eq``
+* ``a8w8 per-ch w``              A8W8 with per-channel weights (is per-tensor weight the limit?)
+* ``a8w8 per-ch w + anneal eq``
+
+(XINT8 with per-channel weights is refused by Quark: its NPU mode is per-tensor only.)
 
 Quark JIT-builds C++ custom ops, so this runs in CI on Linux: see .github/workflows/quark-lab.yml.
 
@@ -35,23 +41,39 @@ CACHE = Path.home() / ".anneal_cache"
 
 
 def qconfig(label: str):
-    from quark.onnx import CLEConfig, QConfig, QLayerConfig, QuantGranularity, XInt8Spec
+    from quark.onnx import CLEConfig, Int8Spec, QConfig, QLayerConfig, QuantGranularity
     from quark.onnx.quantization.config.custom_config import A8W8_QCONFIG, XINT8_QCONFIG
 
     if label.startswith("a8w8"):
-        return copy.deepcopy(A8W8_QCONFIG)
+        cfg = copy.deepcopy(A8W8_QCONFIG)
+        if "per-ch w" in label:
+            cfg = QConfig(global_config=QLayerConfig(activation=Int8Spec(),
+                                                     weight=Int8Spec(quant_granularity=QuantGranularity.Channel)),
+                          extra_options=dict(cfg.extra_options))
+        return cfg
     cfg = copy.deepcopy(XINT8_QCONFIG)
-    if "per-ch w" in label:
-        cfg = QConfig(global_config=QLayerConfig(activation=XInt8Spec(),
-                                                 weight=XInt8Spec(quant_granularity=QuantGranularity.Channel)),
-                      extra_options=dict(cfg.extra_options))
+    if "keep sigmoid" in label:
+        cfg.extra_options["ConvertSigmoidToHardSigmoid"] = False
     if "cle" in label:
         cfg.algo_config = [CLEConfig()]
     return cfg
 
 
-VARIANTS = ["xint8", "xint8 + cle", "xint8 + anneal eq", "xint8 per-ch w", "xint8 per-ch w + anneal eq",
-            "a8w8", "a8w8 + anneal eq"]
+VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xint8 keep sigmoid",
+            "xint8 keep sigmoid + anneal eq", "a8w8", "a8w8 + anneal eq", "a8w8 per-ch w", "a8w8 per-ch w + anneal eq"]
+
+
+def hardsigmoid_copy(src: Path, dst: Path) -> None:
+    """The float model with every Sigmoid swapped for HardSigmoid, as Quark's NPU mode does
+    (``make_node("HardSigmoid", ...)`` with ONNX's default alpha 0.2, beta 0.5)."""
+    import onnx
+    from onnx import helper
+
+    m = onnx.load(str(src))
+    for i, n in enumerate(m.graph.node):
+        if n.op_type == "Sigmoid":
+            m.graph.node[i].CopyFrom(helper.make_node("HardSigmoid", list(n.input), list(n.output), name=n.name))
+    onnx.save(m, str(dst))
 
 
 class Reader:
@@ -119,7 +141,7 @@ def main() -> None:
         print(f"{name}: equalised {len(eq_result.sites)} sites", flush=True)
         models = {"plain": src, "eq": eq}
 
-        ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=32, limit=args.images, sample_shape=shape)
+        ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)  # batch 1: Quark may fix it
         batches = list(ev.batches())
         ys = np.concatenate([y for _, y in batches])
 
@@ -127,8 +149,12 @@ def main() -> None:
             s = session(path)
             out = [np.asarray(ev.decode(s.run(None, {inp: x})[0])) for x, _ in batches]
             first = s.run(None, {inp: batches[0][0][:1]})[0].ravel()
-            print(f"    {label}: logits min {first.min():.3g} max {first.max():.3g}", flush=True)
-            return np.concatenate(out)
+            p = np.concatenate(out)
+            print(f"    {label}: logits min {first.min():.3g} max {first.max():.3g}, {len(p)} predictions, "
+                  f"{len(np.unique(p))} distinct", flush=True)
+            if len(p) != len(ys):  # numpy would compare unequal lengths as all-False, i.e. 0% accuracy
+                raise RuntimeError(f"{len(p)} predictions for {len(ys)} labels: output batch dimension changed")
+            return p
 
         preds = {"fp32": predict(src, "fp32")}
         rows, timing = {}, {}
@@ -137,7 +163,10 @@ def main() -> None:
             dst = mdir / (label.replace(" ", "_").replace("+", "plus") + ".onnx")
             t = time.time()
             try:
-                ModelQuantizer(qconfig(label)).quantize_model(str(models[which]), str(dst), Reader(inp, calib_imgs))
+                if label == "fp32 hardsigmoid":
+                    hardsigmoid_copy(src, dst)
+                else:
+                    ModelQuantizer(qconfig(label)).quantize_model(str(models[which]), str(dst), Reader(inp, calib_imgs))
                 timing[label] = {"quantize_s": time.time() - t}
                 preds[label] = predict(dst, label)
             except Exception as exc:  # a variant the toolchain cannot quantize is a result too
