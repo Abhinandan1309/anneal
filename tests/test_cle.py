@@ -33,17 +33,53 @@ def _weights(seed: int = 0) -> dict[str, np.ndarray]:
             dict(w1=w1, b1=b1, w2=w2, b2=b2, w3=w3, b3=b3).items()}
 
 
+#: Clip patterns: (form, lo, hi). form "input" = initializer inputs, "const" = Constant-node
+#: inputs, "attr" = opset-10 attributes. None = bound left out.
+CLIPS = {
+    "clip": ("input", 0.0, 6.0),
+    "clip_chain": ("input", 0.0, 6.0),
+    "clip_const": ("const", 0.0, 6.0),
+    "clip_attr": ("attr", 0.0, 6.0),
+    "clip_nomax": ("input", 0.0, None),
+    "clip_lo": ("input", 0.5, 6.0),
+    "clip_neg": ("input", -1.0, 1.0),
+    "clip_attr_lo": ("attr", 0.5, 6.0),
+}
+
+
+def _clip(x: str, y: str, name: str, form: str, lo, hi) -> tuple[list, list]:
+    """A Clip node (plus any Constant nodes) and its initializers."""
+    if form == "attr":
+        attrs = {k: v for k, v in (("min", lo), ("max", hi)) if v is not None}
+        return [helper.make_node("Clip", [x], [y], name=name, **attrs)], []
+    nodes, inits, ins = [], [], [x]
+    for tag, v in (("lo", lo), ("hi", hi)):
+        if v is None:
+            ins.append("")
+            continue
+        t = numpy_helper.from_array(np.array(v, np.float32), f"{name}_{tag}")
+        if form == "const":
+            nodes.append(helper.make_node("Constant", [], [t.name], name=f"{name}_{tag}_c", value=t))
+        else:
+            inits.append(t)
+        ins.append(t.name)
+    while ins[-1] == "":
+        ins.pop()
+    return nodes + [helper.make_node("Clip", ins, [y], name=name)], inits
+
+
 def _model(path: Path, pattern: str = "relu") -> Path:
-    """conv1 -> act -> [maxpool] -> conv2 [-> relu -> conv3]."""
+    """conv1 -> act -> [maxpool] -> conv2 [-> act -> conv3]."""
     w = _weights()
-    act1 = {"relu": "Relu", "maxpool": "Relu", "chain": "Relu", "clip": "Clip", "leaky": "LeakyRelu"}[pattern]
+    act1 = "Clip" if pattern in CLIPS else {"relu": "Relu", "maxpool": "Relu", "chain": "Relu",
+                                             "leaky": "LeakyRelu"}[pattern]
+    opset = 10 if pattern in CLIPS and CLIPS[pattern][0] == "attr" else 13
     nodes = [helper.make_node("Conv", ["input", "w1", "b1"], ["x1"], name="conv1", pads=[1, 1, 1, 1])]
     inits = ["w1", "b1", "w2", "b2"]
     extra = []
     if act1 == "Clip":
-        nodes.append(helper.make_node("Clip", ["x1", "lo", "hi"], ["y1"], name="act1"))
-        extra = [numpy_helper.from_array(np.array(0.0, np.float32), "lo"),
-                 numpy_helper.from_array(np.array(6.0, np.float32), "hi")]
+        clip_nodes, extra = _clip("x1", "y1", "act1", *CLIPS[pattern])
+        nodes += clip_nodes
     elif act1 == "LeakyRelu":
         nodes.append(helper.make_node("LeakyRelu", ["x1"], ["y1"], name="act1", alpha=0.1))
     else:
@@ -61,13 +97,19 @@ def _model(path: Path, pattern: str = "relu") -> Path:
         ]
         inits += ["w3", "b3"]
         out, c_out = "x3", C3
+    if pattern == "clip_chain":
+        clip_nodes, more = _clip("x2", "y2", "act2", *CLIPS[pattern])
+        nodes += clip_nodes + [helper.make_node("Conv", ["y2", "w3", "b3"], ["x3"], name="conv3")]
+        extra += more
+        inits += ["w3", "b3"]
+        out, c_out = "x3", C3
     graph = helper.make_graph(
         nodes, "cle",
         [helper.make_tensor_value_info("input", TensorProto.FLOAT, ["batch", C_IN, 8, 8])],
         [helper.make_tensor_value_info(out, TensorProto.FLOAT, ["batch", None, None, None])],
         [numpy_helper.from_array(w[k], k) for k in inits] + extra,
     )
-    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
+    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", opset)])
     onnx.checker.check_model(model)
     onnx.save(model, str(path))
     return path
@@ -109,23 +151,53 @@ def x() -> np.ndarray:
         ("leaky", [("conv1", "conv2", ["LeakyRelu"])]),
         ("maxpool", [("conv1", "conv2", ["Relu", "MaxPool"])]),
         ("chain", [("conv1", "conv2", ["Relu"]), ("conv2", "conv3", ["Relu"])]),
-        ("clip", []),
+        ("clip", [("conv1", "conv2", ["Clip"])]),
+        ("clip_chain", [("conv1", "conv2", ["Clip"]), ("conv2", "conv3", ["Clip"])]),
+        ("clip_const", [("conv1", "conv2", ["Clip"])]),
+        ("clip_attr", [("conv1", "conv2", ["Clip"])]),
+        ("clip_nomax", [("conv1", "conv2", ["Clip"])]),
+        ("clip_lo", []),
+        ("clip_neg", []),
+        ("clip_attr_lo", []),
     ],
 )
 def test_pairs_are_found(tmp_path: Path, pattern, expected):
     pairs = find_cle_pairs(onnx.load(str(_model(tmp_path / "m.onnx", pattern))))
     assert [(p.producer.name, p.consumer.name, p.via) for p in pairs] == expected
+    for p in pairs:
+        want = [6.0] if pattern.startswith("clip") and pattern != "clip_nomax" else []
+        assert [hi for _, hi in p.ceilings] == want
 
 
-@pytest.mark.parametrize("pattern", ["relu", "leaky", "maxpool", "chain"])
+@pytest.mark.parametrize(
+    "pattern", ["relu", "leaky", "maxpool", "chain", "clip", "clip_chain", "clip_const", "clip_attr", "clip_nomax"]
+)
 def test_float_output_is_unchanged_and_weights_are_balanced(tmp_path: Path, x, pattern):
     src = _model(tmp_path / "m.onnx", pattern)
     dst = tmp_path / "cle.onnx"
     result = cross_layer_equalise(src, dst, check_batch=x)
-    assert result.converged and len(result.pairs) == (2 if pattern == "chain" else 1)
+    chain = pattern in ("chain", "clip_chain")
+    assert result.converged and len(result.pairs) == (2 if chain else 1)
     ref = _run(src, x)
     assert np.abs(_run(dst, x) - ref).max() <= 1e-4 * np.abs(ref).max()
     assert result.max_abs_output_change is not None
+
+    ops = [n.op_type for n in onnx.load(str(dst)).graph.node]
+    if pattern.startswith("clip") and pattern != "clip_nomax":
+        # Every Clip(0, 6) became Relu -> Min(., 6 s) with a [1, C, 1, 1] ceiling; bounds are gone.
+        assert result.clips_converted == (["act1", "act2"] if chain else ["act1"])
+        assert "Clip" not in ops and "Constant" not in ops and ops.count("Min") == len(result.pairs)
+        m = onnx.load(str(dst))
+        inits = {i.name: numpy_helper.to_array(i) for i in m.graph.initializer}
+        assert not any(k.endswith(("_lo", "_hi")) for k in inits)
+        for pair in result.pairs:
+            ceil = inits[f"{'act1' if pair.producer == 'conv1' else 'act2'}_ceiling"]
+            assert ceil.shape == (1, pair.channels, 1, 1)
+            assert ceil.min() == pytest.approx(6 * pair.scale_min, rel=1e-5)
+            assert ceil.max() == pytest.approx(6 * pair.scale_max, rel=1e-5)
+    else:
+        assert result.clips_converted == [] and "Min" not in ops
+        assert ops.count("Clip") == (1 if pattern == "clip_nomax" else 0)
 
     before, after = _conv_weights(src), _conv_weights(dst)
     for pair in result.pairs:
@@ -137,7 +209,7 @@ def test_float_output_is_unchanged_and_weights_are_balanced(tmp_path: Path, x, p
     assert set(before) == set(after)
 
 
-@pytest.mark.parametrize("pattern", ["relu", "maxpool", "chain"])
+@pytest.mark.parametrize("pattern", ["relu", "maxpool", "chain", "clip", "clip_chain"])
 def test_per_tensor_int8_weights_lose_less_after_cle(tmp_path: Path, x, pattern):
     src = _model(tmp_path / "m.onnx", pattern)
     dst = tmp_path / "cle.onnx"
@@ -151,8 +223,9 @@ def test_per_tensor_int8_weights_lose_less_after_cle(tmp_path: Path, x, pattern)
     assert err(dst) < 0.25 * err(src)
 
 
-def test_clip_is_left_alone(tmp_path: Path):
-    src = _model(tmp_path / "m.onnx", "clip")
+@pytest.mark.parametrize("pattern", ["clip_lo", "clip_neg", "clip_attr_lo"])
+def test_clip_with_nonzero_floor_is_left_alone(tmp_path: Path, pattern):
+    src = _model(tmp_path / "m.onnx", pattern)
     dst = tmp_path / "cle.onnx"
     result = cross_layer_equalise(src, dst)
     assert result.pairs == [] and result.iterations == 0
@@ -161,16 +234,19 @@ def test_clip_is_left_alone(tmp_path: Path):
     assert [n.op_type for n in onnx.load(str(dst)).graph.node].count("Clip") == 1
 
 
-def _depthwise_model(path: Path, pad: bool = True, multiplier: int = 2) -> Path:
-    """pw conv -> relu -> [zero pad] -> depthwise conv (with a channel multiplier)."""
+def _depthwise_model(path: Path, pad: bool = True, multiplier: int = 2, relu6: bool = False) -> Path:
+    """pw conv -> relu (or Clip(0, 6)) -> [zero pad] -> depthwise conv (with a channel multiplier)."""
     rng = np.random.default_rng(3)
     g = np.array([10.0, 0.1, 1.0, 0.02])
     w1 = (rng.standard_normal((4, C_IN, 1, 1)) * g.reshape(-1, 1, 1, 1)).astype(np.float32)
     w2 = rng.standard_normal((4 * multiplier, 1, 3, 3)).astype(np.float32)
-    nodes = [
-        helper.make_node("Conv", ["input", "w1"], ["x1"], name="pw"),
-        helper.make_node("Relu", ["x1"], ["y1"], name="act"),
-    ]
+    nodes = [helper.make_node("Conv", ["input", "w1"], ["x1"], name="pw")]
+    clip_inits = []
+    if relu6:
+        clip_nodes, clip_inits = _clip("x1", "y1", "act", "input", 0.0, 6.0)
+        nodes += clip_nodes
+    else:
+        nodes.append(helper.make_node("Relu", ["x1"], ["y1"], name="act"))
     if pad:
         nodes.append(helper.make_node("Pad", ["y1", "pads"], ["p1"], name="pad"))
     nodes.append(helper.make_node("Conv", ["p1" if pad else "y1", "w2"], ["out"], name="dw", group=4))
@@ -180,7 +256,7 @@ def _depthwise_model(path: Path, pad: bool = True, multiplier: int = 2) -> Path:
         [helper.make_tensor_value_info("input", TensorProto.FLOAT, ["batch", C_IN, 8, 8])],
         [helper.make_tensor_value_info("out", TensorProto.FLOAT, ["batch", None, None, None])],
         [numpy_helper.from_array(w1, "w1"), numpy_helper.from_array(w2, "w2"),
-         numpy_helper.from_array(np.array([0, 0, 1, 1, 0, 0, 1, 1], np.int64), "pads")],
+         numpy_helper.from_array(np.array([0, 0, 1, 1, 0, 0, 1, 1], np.int64), "pads")] + clip_inits,
     )
     onnx.save(helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)]), str(path))
     return path
@@ -193,6 +269,44 @@ def test_depthwise_consumer_keeps_its_output(tmp_path: Path, x):
     assert [(p.kind, p.via) for p in result.pairs] == [("depthwise", ["Relu", "Pad"])]
     ref = _run(src, x)
     assert np.abs(_run(dst, x) - ref).max() <= 1e-4 * np.abs(ref).max()
+
+
+@pytest.mark.parametrize("pad", [False, True])
+def test_relu6_into_depthwise_is_exact_balanced_and_quantizes_better(tmp_path: Path, x, pad):
+    src = _depthwise_model(tmp_path / "dw.onnx", pad=pad, multiplier=1, relu6=True)
+    dst = tmp_path / "cle.onnx"
+    result = cross_layer_equalise(src, dst)
+    assert [(p.kind, p.via) for p in result.pairs] == [("depthwise", ["Clip", "Pad"] if pad else ["Clip"])]
+    assert result.clips_converted == ["act"]
+    pair = result.pairs[0]
+    assert pair.balance_before < 0.5 and pair.balance_after > 0.999
+    ops = [n.op_type for n in onnx.load(str(dst)).graph.node]
+    assert "Clip" not in ops and ops[:3] == ["Conv", "Relu", "Min"]
+
+    xs = 3 * x  # drive the pw outputs well past 6 so the ceiling is exercised
+    ref = _run(src, xs)
+    w1 = _conv_weights(src)["pw"][:, :, 0, 0]
+    pre = np.einsum("oc,nchw->nohw", w1, xs)
+    assert (pre > 6).any() and ((pre > 0) & (pre < 6)).any()
+    assert np.abs(_run(dst, xs) - ref).max() <= 1e-4 * np.abs(ref).max()
+
+    def err(path: Path) -> float:
+        q = _run(_fake_quant_per_tensor(path, path.with_name(path.stem + "-q.onnx")), xs)
+        return float(np.linalg.norm(q - ref) / np.linalg.norm(ref))
+
+    assert err(dst) < 0.25 * err(src)
+
+
+def test_relu6_of_skipped_pair_is_not_rewritten(tmp_path: Path):
+    src = _model(tmp_path / "m.onnx", "clip")
+    m = onnx.load(str(src))
+    m.graph.node.append(helper.make_node("Conv", ["x2", "w2"], ["x_tied"], name="tied", pads=[1, 1, 1, 1]))
+    m.graph.output.append(helper.make_tensor_value_info("x_tied", TensorProto.FLOAT, ["batch", None, None, None]))
+    onnx.save(m, str(src))
+    dst = tmp_path / "cle.onnx"
+    result = cross_layer_equalise(src, dst)
+    assert result.pairs == [] and result.clips_converted == []
+    assert [n.op_type for n in onnx.load(str(dst)).graph.node].count("Clip") == 1
 
 
 def test_tied_weights_are_skipped(tmp_path: Path):
