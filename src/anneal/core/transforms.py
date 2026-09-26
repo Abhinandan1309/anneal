@@ -622,6 +622,7 @@ def quantize_static_int8(
     slack = float(params.get("equalize_slack", EQUALIZE_SLACK))
     top_k = params.get("equalize_top_k")
     min_gain = params.get("equalize_min_gain")
+    min_damage = params.get("equalize_min_damage")
     calib_stride = params.get("calib_stride")
     stem_int16 = bool(params.get("stem_int16", False))
     int16_tensors = params.get("int16_tensors")
@@ -660,6 +661,13 @@ def quantize_static_int8(
             raise TransformError("equalize_top_k only applies together with equalize")
         if isinstance(top_k, bool) or not isinstance(top_k, int) or top_k < 0:
             raise TransformError(f"equalize_top_k must be a non-negative integer, got {top_k!r}")
+    if min_damage is not None:
+        if not equalize:
+            raise TransformError("equalize_min_damage only applies together with equalize")
+        if top_k is not None or min_gain is not None:
+            raise TransformError("give one of equalize_top_k, equalize_min_gain, equalize_min_damage")
+        if isinstance(min_damage, bool) or not isinstance(min_damage, (int, float)) or not 0 <= min_damage <= 1:
+            raise TransformError(f"equalize_min_damage must be in [0, 1], got {min_damage!r}")
     if min_gain is not None:
         if not equalize:
             raise TransformError("equalize_min_gain only applies together with equalize")
@@ -698,6 +706,7 @@ def quantize_static_int8(
             **({"equalize_top_k": top_k} if top_k is not None else {}),
             **({"equalize_residual": True} if equalize_residual else {}),
             **({"equalize_min_gain": min_gain} if min_gain is not None else {}),
+            **({"equalize_min_damage": min_damage} if min_damage is not None else {}),
             **({"calib_stride": calib_stride} if calib_stride is not None else {}),
             **({"stem_int16": True} if stem_int16 else {}),
             **({"int16_tensors": list(int16_tensors)} if int16_tensors else {}),
@@ -714,6 +723,25 @@ def quantize_static_int8(
 
     base_exclude: list[str] = []
     eq_meta: dict[str, Any] = {}
+    if equalize and min_damage is not None:
+        # The model-level switch: equalise only if rounding every site tensor to 8 bits at once
+        # flips enough of the calibration images' top-1 predictions (no labels needed). The
+        # summed predicted gain failed this job (docs/zoo_gated_predictions.md); joint damage
+        # ordered the measured benefit on the same eight models.
+        import onnx
+
+        from anneal.core.activation_sensitivity import joint_damage
+        from anneal.core.equalize import _name_unnamed_nodes, find_sites
+
+        probe_model = onnx.load(str(src))
+        _name_unnamed_nodes(probe_model)
+        site_tensors = sorted({t for site in find_sites(probe_model) for t in (site.x, site.y)})
+        batches = list(calib_source.calibration_batches(n_calib))
+        damage = joint_damage(src, site_tensors, batches, batches)
+        eq_meta["joint_damage"] = round(damage, 4)
+        if damage < float(min_damage):
+            equalize = False
+            eq_meta["equalisation_skipped"] = f"joint damage {damage:.3f} < {min_damage}"
     if equalize:
         from anneal.core.equalize import equalise
 
@@ -733,6 +761,7 @@ def quantize_static_int8(
         if float_gates:
             base_exclude = list(result.gate_nodes)
         eq_meta = {
+            **eq_meta,
             "equalisation": result.summary(),
             "equalised_sites": [s.to_dict() for s in result.sites],
             "equalised_site_ids": [s.producer for s in result.sites],
@@ -1066,7 +1095,8 @@ REGISTRY: dict[str, TransformSpec] = {
                 "description": (
                     "With equalize: rewrite all sites if the model's summed predicted gain "
                     "(channels' worth of quantization signal recovered) is at least this, none "
-                    "otherwise; skips equalisation, and its NPU cost, on balanced models."
+                    "otherwise. Superseded by equalize_min_damage: on eight gated classifiers the "
+                    "summed gain did not predict collapse (5.2 collapsed, 153.5 did not)."
                 ),
             },
             "quantize_ops": {
@@ -1095,6 +1125,15 @@ REGISTRY: dict[str, TransformSpec] = {
                     "With equalize: also rewrite gated sites whose output feeds a residual Add "
                     "as well as a depthwise Conv (EfficientViT's and MobileNetV3-Large's stems). "
                     "The branch joining the Add and the Add's consumers take the scale too."
+                ),
+            },
+            "equalize_min_damage": {
+                "type": "number",
+                "description": (
+                    "With equalize: equalise only if rounding every equalisation site's tensors to "
+                    "8 bits at once flips at least this share of the calibration images' top-1 "
+                    "predictions (measured, no labels). 0.3 separated the models that collapse from "
+                    "those that do not on eight gated classifiers."
                 ),
             },
             "equalize_dense": {

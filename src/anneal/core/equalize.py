@@ -502,6 +502,8 @@ def equalise(
     collapse without equalisation), and a model that needs equalisation gets all of it: on the
     Galaxy S24, equalising EfficientNet-B0's top 8 of 16 sites by predicted gain recovered only
     half the loss (-6.4pp vs -0.7pp for all 16), so the per-site prediction is not used to select.
+    The summed gain itself later failed as a switch (docs/zoo_gated_predictions.md: 5.2 collapsed,
+    153.5 did not); the transform's ``equalize_min_damage`` measures joint damage instead.
     At most one of the three may be given. ``residual`` also rewrites gated sites whose output
     feeds a residual Add (see :func:`find_sites`); off by default.
 

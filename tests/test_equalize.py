@@ -678,3 +678,22 @@ def test_mix_one_zero_is_the_default_rewrite(tmp_path: Path):
     a = equalise(src, tmp_path / "a.onnx", _batches())
     b = equalise(src, tmp_path / "b.onnx", _batches(), mix=(1.0, 0.0))
     assert a.sites[0].scale_max == pytest.approx(b.sites[0].scale_max)
+
+
+def test_min_damage_switch_measures_and_decides(tmp_path: Path, calib):
+    src = _model(tmp_path / "m.onnx", "silu")
+    on = _static(tmp_path, calib, src, "on", equalize=True, equalize_min_damage=0.0)
+    assert 0.0 <= on.meta["joint_damage"] <= 1.0
+    assert on.meta["equalisation"]["sites"] == 1
+    assert on.lineage[-1].params["equalize_min_damage"] == 0.0
+    off = _static(tmp_path, calib, src, "off", equalize=True, equalize_min_damage=1.0)
+    if off.meta["joint_damage"] < 1.0:
+        assert "equalisation" not in off.meta and "equalisation_skipped" in off.meta
+
+
+@pytest.mark.parametrize("params", [{"equalize_min_damage": 0.3},  # without equalize
+                                    {"equalize": True, "equalize_min_damage": 1.5},
+                                    {"equalize": True, "equalize_min_damage": 0.3, "equalize_top_k": 2}])
+def test_invalid_min_damage_settings_are_rejected(tmp_path: Path, calib, params):
+    with pytest.raises(TransformError):
+        _static(tmp_path, calib, _model(tmp_path / "m.onnx", "silu"), "bad", **params)
