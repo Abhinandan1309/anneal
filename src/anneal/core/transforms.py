@@ -35,6 +35,12 @@ SATURATION_TOLERANCE = 0.02
 #: tensor's quantization range. On EfficientNet-B0 anything from 0.1 to 1.0 performed alike.
 EQUALIZE_SLACK = 0.1
 
+#: Default ``equalize_mix`` when weights are quantized per tensor: the share t of cross-layer
+#: weight equalisation blended into the activation equalisation scale. MobileNetV3-Small with
+#: per-tensor weights on onnxruntime: -63.5pp without equalisation, -8.6pp at t=0, -7.2pp at
+#: t=0.5, -11.1pp at t=1 (plain CLE).
+EQUALIZE_PER_TENSOR_MIX = 0.5
+
 #: int16_top_k ranks tensors by the predictions they flip on this many calibration images
 #: (the probe is taken from the calibration set, never the eval set, so nothing leaks).
 INT16_PROBE_IMAGES = 64
@@ -772,8 +778,14 @@ def quantize_static_int8(
 
     ``equalize`` first rescales channels across Conv -> SiLU/Hardswish/ReLU -> depthwise Conv
     (see :mod:`anneal.core.equalize`) so each shared activation scale serves every channel.
-    The float model is unchanged; only per-channel weight scales absorb the rescale, so it
-    requires ``per_channel``. ``float_gates`` additionally keeps each gate branch (the
+    The float model is unchanged. With ``per_channel`` weights the per-channel weight scales
+    absorb the rescale exactly. With per-tensor weights the rescale also moves precision between
+    the channels of the two weight tensors, so the scale is blended with cross-layer weight
+    equalisation: ``equalize_mix`` = t uses ``mix=(1 - t, t)`` of
+    :func:`anneal.core.equalize.equalise` (0 = activation equalisation only, 1 = plain CLE),
+    defaulting to 0.5 when ``per_channel`` is off (MobileNetV3-Small, per-tensor weights,
+    onnxruntime: -63.5pp plain, -8.6pp at t=0, -7.2pp at t=0.5, -11.1pp at t=1).
+    ``float_gates`` additionally keeps each gate branch (the
     inserted Mul and the Sigmoid/HardSigmoid) out of quantization. ``equalize_top_k`` limits the
     rewrite to the k sites :func:`anneal.core.equalize.rank_sites` predicts gain most.
 
@@ -818,6 +830,7 @@ def quantize_static_int8(
     top_k = params.get("equalize_top_k")
     min_gain = params.get("equalize_min_gain")
     min_damage = params.get("equalize_min_damage")
+    eq_mix = params.get("equalize_mix")
     calib_stride = params.get("calib_stride")
     stem_int16 = bool(params.get("stem_int16", False))
     int16_tensors = params.get("int16_tensors")
@@ -845,11 +858,16 @@ def quantize_static_int8(
     surrogate_k = params.get("sigmoid_surrogate", 0)
     if isinstance(surrogate_k, bool) or not isinstance(surrogate_k, int) or not 0 <= surrogate_k <= 8:
         raise TransformError(f"sigmoid_surrogate must be an integer in [0, 8], got {surrogate_k!r}")
-    if equalize and not per_channel:
-        raise TransformError(
-            "equalize needs per_channel weights: with one weight scale per tensor the rescale "
-            "would move quantization error into the weights instead of removing it"
-        )
+    if eq_mix is not None:
+        if not equalize:
+            raise TransformError("equalize_mix only applies together with equalize")
+        if isinstance(eq_mix, bool) or not isinstance(eq_mix, (int, float)) or not 0 <= eq_mix <= 1:
+            raise TransformError(f"equalize_mix must be a number in [0, 1], got {eq_mix!r}")
+        eq_mix = float(eq_mix)
+    elif equalize and not per_channel:
+        # One weight scale per tensor: pure activation equalisation would move rounding error
+        # into the weights, so blend in cross-layer weight equalisation (measured best at 0.5).
+        eq_mix = EQUALIZE_PER_TENSOR_MIX
     if equalize_residual and not equalize:
         raise TransformError("equalize_residual only applies together with equalize")
     if equalize_se and not equalize:
@@ -917,6 +935,9 @@ def quantize_static_int8(
             **({"equalize_se": True} if equalize_se else {}),
             **({"equalize_min_gain": min_gain} if min_gain is not None else {}),
             **({"equalize_min_damage": min_damage} if min_damage is not None else {}),
+            # Recorded only when set (always for per-tensor equalisation, whose default is 0.5),
+            # so per-channel recipes keep their lineage keys.
+            **({"equalize_mix": eq_mix} if eq_mix is not None else {}),
             **({"calib_stride": calib_stride} if calib_stride is not None else {}),
             **({"stem_int16": True} if stem_int16 else {}),
             **({"int16_tensors": list(int16_tensors)} if int16_tensors else {}),
@@ -963,7 +984,9 @@ def quantize_static_int8(
 
         probe_model = onnx.load(str(src))
         _name_unnamed_nodes(probe_model)
-        site_tensors = sorted({t for site in find_sites(probe_model) for t in (site.x, site.y)})
+        # The same sites the rewrite below would take, with every tensor each one rescales.
+        probe_sites = find_sites(probe_model, residual=equalize_residual, se=equalize_se)
+        site_tensors = sorted({t for site in probe_sites for t in site.tensors})
         batches = list(calib_source.calibration_batches(n_calib))
         damage = joint_damage(src, site_tensors, batches, batches)
         eq_meta["joint_damage"] = round(damage, 4)
@@ -985,6 +1008,7 @@ def quantize_static_int8(
             min_gain=None if min_gain is None else float(min_gain),
             residual=equalize_residual,
             se=equalize_se,
+            mix=None if eq_mix is None else (1.0 - eq_mix, eq_mix),
         )
         src = eq_path
         if float_gates:
@@ -1332,13 +1356,25 @@ REGISTRY: dict[str, TransformSpec] = {
                 "description": (
                     "Before quantizing, rescale channels across Conv -> SiLU/Hardswish/ReLU -> "
                     "depthwise Conv so one shared activation scale serves every channel. Exact in "
-                    "float; needs per_channel. The fix for EfficientNet/MobileNetV3-style nets "
-                    "whose INT8 accuracy collapses on every CPU."
+                    "float. The fix for EfficientNet/MobileNetV3-style nets whose INT8 accuracy "
+                    "collapses on every CPU. With per_channel false it is blended with cross-layer "
+                    "weight equalisation (see equalize_mix, default 0.5 then)."
                 ),
             },
             "equalize_slack": {
                 "type": "number",
                 "description": "How far equalisation may extend a tensor's range downward (default 0.1).",
+            },
+            "equalize_mix": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": (
+                    "With equalize: blend t in [0, 1] of cross-layer weight equalisation into "
+                    "the scale (0 = activation equalisation only, 1 = plain CLE), for weights "
+                    "quantized per tensor. Default 0.5 with per_channel false (MobileNetV3-Small: "
+                    "-63.5pp plain, -7.2pp at 0.5, -8.6pp at 0, -11.1pp at 1); unset otherwise."
+                ),
             },
             "equalize_top_k": {
                 "type": "integer",
@@ -1424,9 +1460,9 @@ REGISTRY: dict[str, TransformSpec] = {
             "equalize_se": {
                 "type": "boolean",
                 "description": (
-                    "With equalize: also rewrite gated sites whose output feeds a squeeze-excite "
-                    "block (EfficientNet's and MobileNetV3's depthwise conv -> SiLU/Hardswish -> "
-                    "SE -> projection). The depthwise conv's output channels take the scale; the "
+                    "With equalize: also rewrite gated and ReLU sites whose output feeds a "
+                    "squeeze-excite block (EfficientNet's and MobileNetV3's depthwise conv -> "
+                    "SiLU/Hardswish/ReLU -> SE -> projection). The depthwise conv's output channels take the scale; the "
                     "SE's first FC and the projection divide it out of their input channels."
                 ),
             },

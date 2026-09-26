@@ -249,7 +249,6 @@ def test_recipes_without_equalisation_keep_their_lineage_keys(tmp_path: Path, ca
 @pytest.mark.parametrize(
     "params",
     [
-        {"per_channel": False, "equalize": True},
         {"per_channel": True, "float_gates": True},
         {"per_channel": True, "equalize": True, "equalize_slack": -1.0},
     ],
@@ -813,7 +812,8 @@ def test_tidl_emulation_gives_symmetric_power_of_two_activation_scales(tmp_path:
 def _se_model(path: Path, act2: str = "silu", gate2: str = "Sigmoid", pool: str = "gap",
               proj_group: int = 1) -> Path:
     """EfficientNet's block: A -> SiLU -> depthwise D -> act2 -> SE(pool, FC1, ReLU, FC2, gate2)
-    -> Mul -> projection, with D's output channels imbalanced ~1000x (one of them below zero)."""
+    -> Mul -> projection, with D's output channels imbalanced ~1000x (one of them below zero).
+    act2 "relu" is MobileNetV3's ReLU block (depthwise -> ReLU -> SE -> projection)."""
     wa, ba, wb = _imbalanced_weights()
     rng = np.random.default_rng(8)
     gains2 = np.array([0.02, 30.0, 1.0, 0.1, 5.0, 0.5], dtype=np.float32)
@@ -834,6 +834,8 @@ def _se_model(path: Path, act2: str = "silu", gate2: str = "Sigmoid", pool: str 
     if act2 == "silu":
         nodes += [helper.make_node("Sigmoid", ["x2"], ["g2"], name="gate_d"),
                   helper.make_node("Mul", ["g2", "x2"], ["y2"], name="act_d")]
+    elif act2 == "relu":
+        nodes += [helper.make_node("Relu", ["x2"], ["y2"], name="act_d")]
     else:
         nodes += [helper.make_node("HardSwish", ["x2"], ["y2"], name="act_d")]
     if pool == "gap":
@@ -994,3 +996,161 @@ def test_static_quantization_records_se_equalisation(tmp_path: Path, calib):
     assert plain.meta["equalisation"]["by_kind"]["gated-se"] == 0
     with pytest.raises(TransformError):
         _static(tmp_path, calib, src, "bad", equalize_se=True)
+
+
+# ----- ReLU squeeze-excite sites ---------------------------------------------------
+
+
+@pytest.mark.parametrize("gate2,pool,proj_group", [
+    ("Sigmoid", "gap", 1),
+    ("HardSigmoid", "reducemean", 1),
+    ("HardSigmoid", "gap", C),
+])
+def test_relu_se_sites_are_opt_in_positive_and_exact_in_float(tmp_path: Path, gate2, pool, proj_group):
+    src = _se_model(tmp_path / "m.onnx", "relu", gate2, pool, proj_group)
+    assert [s.kind for s in find_sites(onnx.load(str(src)))] == ["gated"]
+    sites = find_sites(onnx.load(str(src)), se=True)
+    assert [s.kind for s in sites] == ["gated", "relu-se"]
+    se = sites[1]
+    assert (se.id, se.act.name, se.gate, se.fc1.name, se.se_mul.name, se.z) == (
+        "conv_d", "act_d", None, "se_fc1", "se_mul", "z")
+    assert se.tensors == ("x2", "y2", "z")
+
+    dst = tmp_path / "eq.onnx"
+    result = equalise(src, dst, _batches(), se=True, sites=["conv_d"])
+    [done] = result.sites
+    assert done.kind == "relu-se" and done.consumer == "conv_c" and done.gate is None
+    assert done.channels_mirrored == 0 and done.scale_max > 1.5
+    assert result.gate_nodes == []  # ReLU(s x) = s ReLU(x): no gate Mul inserted
+    assert result.summary()["by_kind"]["relu-se"] == 1
+    assert done.levels_after > done.levels_before
+    _assert_same(src, dst)
+    ops = [n.op_type for n in onnx.load(str(dst)).graph.node]
+    assert ops == [n.op_type for n in onnx.load(str(src)).graph.node]
+
+
+def test_relu_se_site_composes_with_the_gated_site_on_the_same_depthwise_conv(tmp_path: Path):
+    src = _se_model(tmp_path / "m.onnx", "relu")
+    dst = tmp_path / "eq.onnx"
+    result = equalise(src, dst, _batches(), se=True)
+    assert sorted(s.kind for s in result.sites) == ["gated", "relu-se"]
+    assert {s.producer for s in result.sites} == {"conv_a", "conv_d"}
+    assert len(result.gate_nodes) == 2  # only the gated site gets a Mul and a gate
+    _assert_same(src, dst)
+    assert {r.site for r in rank_sites(src, _batches(), se=True)} == {"conv_a", "conv_d"}
+
+
+@pytest.mark.parametrize("mix", [(0.0, 1.0), (0.5, 0.5)])
+def test_relu_se_site_with_mixed_scales_stays_exact_and_positive(tmp_path: Path, mix):
+    src = _se_model(tmp_path / "m.onnx", "relu")
+    dst = tmp_path / "eq.onnx"
+    result = equalise(src, dst, _batches(), se=True, mix=mix)
+    assert len(result.sites) == 2
+    assert next(s for s in result.sites if s.kind == "relu-se").channels_mirrored == 0
+    _assert_same(src, dst)
+
+
+def test_relu_se_site_matching_is_strict(tmp_path: Path):
+    src = _se_model(tmp_path / "m.onnx", "relu")
+
+    def count(path):
+        return [s.kind for s in find_sites(onnx.load(str(path)), se=True)].count("relu-se")
+
+    assert count(src) == 1
+
+    def pool_over_channels(m):
+        idx = list(m.graph.node).index(_node(m, "se_pool"))
+        m.graph.node.remove(_node(m, "se_pool"))
+        m.graph.node.insert(idx, helper.make_node("ReduceMean", ["y2"], ["p"], name="se_pool", axes=[1, 2, 3]))
+
+    def no_gate(m):
+        _node(m, "se_mul").input[1] = "f2"
+        m.graph.node.remove(_node(m, "se_gate"))
+
+    def leaky(m):  # not ReLU: the rewrite would change the negative slope's output
+        _node(m, "act_d").op_type = "LeakyRelu"
+
+    edits = {
+        "pool_over_channels": pool_over_channels,
+        "x2_second_consumer": lambda m: _side_output(m, "x2"),
+        "y2_second_consumer": lambda m: _side_output(m, "y2"),
+        "p_second_consumer": lambda m: _side_output(m, "p"),
+        "e_second_consumer": lambda m: _side_output(m, "e"),
+        "z_feeds_non_conv": lambda m: _side_output(m, "z"),
+        "z_is_output": lambda m: m.graph.output.append(
+            helper.make_tensor_value_info("z", TensorProto.FLOAT, None)),
+        "no_gate": no_gate,
+        "leaky_relu": leaky,
+    }
+    for name, fn in edits.items():
+        assert count(_edit(src, tmp_path / f"{name}.onnx", fn)) == 0, name
+
+
+def test_static_quantization_records_relu_se_equalisation(tmp_path: Path, calib):
+    src = _se_model(tmp_path / "m.onnx", "relu")
+    out = _static(tmp_path, calib, src, "se", equalize=True, equalize_se=True)
+    assert out.meta["equalisation"]["by_kind"]["relu-se"] == 1
+    assert out.meta["equalisation"]["max_abs_logit_change"] < 1e-3
+    plain = _static(tmp_path, calib, src, "plain", equalize=True)
+    assert plain.meta["equalisation"]["by_kind"]["relu-se"] == 0
+
+
+# ----- per-tensor weights -----------------------------------------------------------
+
+
+def test_per_tensor_equalisation_defaults_to_a_half_mix_and_records_it(tmp_path: Path, calib):
+    src = _model(tmp_path / "m.onnx", "silu")
+    out = _static(tmp_path, calib, src, "pt", per_channel=False, equalize=True)
+    params = out.lineage[-1].params
+    assert params["per_channel"] is False and params["equalize_mix"] == 0.5
+    assert out.meta["equalisation"]["sites"] == 1
+    assert out.meta["equalisation"]["max_abs_logit_change"] < 1e-3
+    # The mix reaches the rewrite: t=0 is the plain (per-channel) scale, t=0.5 is not.
+    t0 = _static(tmp_path, calib, src, "pt0", per_channel=False, equalize=True, equalize_mix=0)
+    assert t0.lineage[-1].params["equalize_mix"] == 0.0
+    plain = _static(tmp_path, calib, src, "pc", equalize=True)
+    assert t0.meta["equalised_sites"][0]["scale_max"] == plain.meta["equalised_sites"][0]["scale_max"]
+    assert out.meta["equalised_sites"][0]["scale_max"] != t0.meta["equalised_sites"][0]["scale_max"]
+
+
+def test_per_channel_equalisation_keeps_its_lineage_keys(tmp_path: Path, calib):
+    src = _model(tmp_path / "m.onnx", "silu")
+    out = _static(tmp_path, calib, src, "pc", equalize=True)
+    assert "equalize_mix" not in out.lineage[-1].params
+    mixed = _static(tmp_path, calib, src, "pcm", equalize=True, equalize_mix=0.25)
+    assert mixed.lineage[-1].params["equalize_mix"] == 0.25
+    assert mixed.meta["equalisation"]["max_abs_logit_change"] < 1e-3
+
+
+@pytest.mark.parametrize("params", [
+    {"equalize_mix": 0.5},  # without equalize
+    {"per_channel": False, "equalize_mix": 0.5},
+    {"equalize": True, "equalize_mix": 1.5},
+    {"equalize": True, "equalize_mix": -0.1},
+    {"equalize": True, "equalize_mix": True},
+    {"equalize": True, "equalize_mix": "half"},
+])
+def test_invalid_equalize_mix_is_rejected(tmp_path: Path, calib, params):
+    with pytest.raises(TransformError):
+        _static(tmp_path, calib, _model(tmp_path / "m.onnx", "silu"), "bad", **params)
+
+
+# ----- the joint-damage switch sees the sites the rewrite takes ------------------------
+
+
+def test_min_damage_probe_includes_se_site_tensors(tmp_path: Path, calib, monkeypatch):
+    import anneal.core.activation_sensitivity as act_sens
+
+    seen: list[list[str]] = []
+    real = act_sens.joint_damage
+
+    def spy(src, tensors, *args, **kwargs):
+        seen.append(list(tensors))
+        return real(src, tensors, *args, **kwargs)
+
+    monkeypatch.setattr(act_sens, "joint_damage", spy)
+    src = _se_model(tmp_path / "m.onnx", "relu")
+    _static(tmp_path, calib, src, "plain", equalize=True, equalize_min_damage=0.0)
+    _static(tmp_path, calib, src, "se", equalize=True, equalize_se=True, equalize_min_damage=0.0)
+    assert seen[0] == ["x", "y"]
+    assert seen[1] == ["x", "x2", "y", "y2", "z"]
