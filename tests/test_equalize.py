@@ -807,3 +807,190 @@ def test_tidl_emulation_gives_symmetric_power_of_two_activation_scales(tmp_path:
         scale, zp = float(inits[n.input[1]]), int(inits[n.input[2]])
         assert zp == 0 and np.log2(scale) == pytest.approx(round(np.log2(scale)))
     assert out.lineage[-1].params["pow2_activation_scales"] is True
+# ----- squeeze-excite sites -----------------------------------------------------
+
+
+def _se_model(path: Path, act2: str = "silu", gate2: str = "Sigmoid", pool: str = "gap",
+              proj_group: int = 1) -> Path:
+    """EfficientNet's block: A -> SiLU -> depthwise D -> act2 -> SE(pool, FC1, ReLU, FC2, gate2)
+    -> Mul -> projection, with D's output channels imbalanced ~1000x (one of them below zero)."""
+    wa, ba, wb = _imbalanced_weights()
+    rng = np.random.default_rng(8)
+    gains2 = np.array([0.02, 30.0, 1.0, 0.1, 5.0, 0.5], dtype=np.float32)
+    wd = wb * gains2.reshape(C, 1, 1, 1)
+    bd = np.array([0.0, 0.0, 0.0, -0.1, 0.0, 0.0], dtype=np.float32) * gains2
+    w1 = rng.standard_normal((3, C, 1, 1)).astype(np.float32) * 0.3
+    b1 = rng.standard_normal(3).astype(np.float32)
+    w2 = rng.standard_normal((C, 3, 1, 1)).astype(np.float32)
+    b2 = rng.standard_normal(C).astype(np.float32)
+    wc = (rng.standard_normal((5, C, 1, 1)) if proj_group == 1
+          else rng.standard_normal((C, 1, 3, 3))).astype(np.float32)
+    nodes = [
+        helper.make_node("Conv", ["input", "wa", "ba"], ["x"], name="conv_a"),
+        helper.make_node("Sigmoid", ["x"], ["g"], name="gate"),
+        helper.make_node("Mul", ["x", "g"], ["y"], name="act"),
+        helper.make_node("Conv", ["y", "wd", "bd"], ["x2"], name="conv_d", group=C, pads=[1, 1, 1, 1]),
+    ]
+    if act2 == "silu":
+        nodes += [helper.make_node("Sigmoid", ["x2"], ["g2"], name="gate_d"),
+                  helper.make_node("Mul", ["g2", "x2"], ["y2"], name="act_d")]
+    else:
+        nodes += [helper.make_node("HardSwish", ["x2"], ["y2"], name="act_d")]
+    if pool == "gap":
+        nodes += [helper.make_node("GlobalAveragePool", ["y2"], ["p"], name="se_pool")]
+    else:
+        nodes += [helper.make_node("ReduceMean", ["y2"], ["p"], name="se_pool", axes=[-1, -2], keepdims=1)]
+    gate_kw = {"alpha": 1 / 6, "beta": 0.5} if gate2 == "HardSigmoid" else {}
+    nodes += [
+        helper.make_node("Conv", ["p", "w1", "b1"], ["f1"], name="se_fc1"),
+        helper.make_node("Relu", ["f1"], ["f1r"], name="se_relu"),
+        helper.make_node("Conv", ["f1r", "w2", "b2"], ["f2"], name="se_fc2"),
+        helper.make_node(gate2, ["f2"], ["e"], name="se_gate", **gate_kw),
+        helper.make_node("Mul", ["y2", "e"], ["z"], name="se_mul"),
+        helper.make_node("Conv", ["z", "wc"], ["out"], name="conv_c",
+                         **({} if proj_group == 1 else {"group": C, "pads": [1, 1, 1, 1]})),
+    ]
+    c_out = 5 if proj_group == 1 else C
+    graph = helper.make_graph(
+        nodes, "se",
+        [helper.make_tensor_value_info("input", TensorProto.FLOAT, ["N", C_IN, 8, 8])],
+        [helper.make_tensor_value_info("out", TensorProto.FLOAT, ["N", c_out, 8, 8])],
+        [numpy_helper.from_array(a, n) for a, n in (
+            (wa, "wa"), (ba, "ba"), (wd, "wd"), (bd, "bd"), (w1, "w1"),
+            (b1, "b1"), (w2, "w2"), (b2, "b2"), (wc, "wc"))],
+    )
+    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 14)])
+    model.ir_version = 8
+    onnx.checker.check_model(model)
+    onnx.save(model, str(path))
+    return path
+
+
+def _assert_same(a: Path, b: Path) -> None:
+    x = _batches(1, seed=7)[0]
+    before, after = _run(a, x), _run(b, x)
+    assert np.abs(after - before).max() <= 1e-4 * max(1.0, np.abs(before).max())
+
+
+@pytest.mark.parametrize("act2,gate2,pool,proj_group", [
+    ("silu", "Sigmoid", "gap", 1),
+    ("hardswish_fused", "HardSigmoid", "gap", 1),
+    ("silu", "HardSigmoid", "reducemean", 1),
+    ("hardswish_fused", "Sigmoid", "reducemean", C),
+])
+def test_se_sites_are_opt_in_and_exact_in_float(tmp_path: Path, act2, gate2, pool, proj_group):
+    src = _se_model(tmp_path / "m.onnx", act2, gate2, pool, proj_group)
+    assert [s.kind for s in find_sites(onnx.load(str(src)))] == ["gated"]
+    sites = find_sites(onnx.load(str(src)), se=True)
+    assert [s.kind for s in sites] == ["gated", "gated-se"]
+    se = sites[1]
+    assert (se.id, se.fc1.name, se.se_mul.name, se.z, [c.name for c in se.consumers_z]) == (
+        "conv_d", "se_fc1", "se_mul", "z", ["conv_c"])
+    assert se.tensors == ("x2", "y2", "z")
+
+    dst = tmp_path / "eq.onnx"
+    result = equalise(src, dst, _batches(), se=True, sites=["conv_d"])
+    [done] = result.sites
+    assert done.kind == "gated-se" and done.consumer == "conv_c"
+    assert result.summary()["by_kind"]["gated-se"] == 1
+    assert done.levels_after > done.levels_before
+    _assert_same(src, dst)
+
+
+def test_se_site_composes_with_the_gated_site_on_the_same_depthwise_conv(tmp_path: Path):
+    src = _se_model(tmp_path / "m.onnx", "hardswish_fused")
+    dst = tmp_path / "eq.onnx"
+    result = equalise(src, dst, _batches(), se=True)
+    # conv_d is the consumer of the first site and the producer of the second.
+    assert sorted(s.kind for s in result.sites) == ["gated", "gated-se"]
+    assert {s.producer for s in result.sites} == {"conv_a", "conv_d"}
+    assert len(result.gate_nodes) == 4  # an inserted Mul and a gate per site
+    _assert_same(src, dst)
+    assert {r.site for r in rank_sites(src, _batches(), se=True)} == {"conv_a", "conv_d"}
+
+
+@pytest.mark.parametrize("mix", [(0.0, 1.0), (0.5, 0.5)])
+def test_se_site_with_mixed_scales_stays_exact(tmp_path: Path, mix):
+    src = _se_model(tmp_path / "m.onnx")
+    dst = tmp_path / "eq.onnx"
+    assert len(equalise(src, dst, _batches(), se=True, mix=mix).sites) == 2
+    _assert_same(src, dst)
+
+
+def _edit(src: Path, dst: Path, fn) -> Path:
+    m = onnx.load(str(src))
+    fn(m)
+    onnx.save(m, str(dst))
+    return dst
+
+
+def _node(m, name):
+    return next(n for n in m.graph.node if n.name == name)
+
+
+def _side_output(m, tensor: str) -> None:
+    m.graph.node.append(helper.make_node("Relu", [tensor], ["side"], name="side"))
+    m.graph.output.append(helper.make_tensor_value_info("side", TensorProto.FLOAT, None))
+
+
+def test_se_site_matching_is_strict(tmp_path: Path):
+    src = _se_model(tmp_path / "m.onnx")
+
+    def se_count(path):
+        return [s.kind for s in find_sites(onnx.load(str(path)), se=True)].count("gated-se")
+
+    assert se_count(src) == 1
+
+    def pool_over_channels(m):  # a mean over C mixes channels: not per-channel linear in s
+        idx = list(m.graph.node).index(_node(m, "se_pool"))
+        m.graph.node.remove(_node(m, "se_pool"))
+        m.graph.node.insert(idx, helper.make_node("ReduceMean", ["y2"], ["p"], name="se_pool", axes=[1, 2, 3]))
+
+    def no_gate(m):  # z = y2 * f2: not a squeeze-excite gate
+        _node(m, "se_mul").input[1] = "f2"
+        m.graph.node.remove(_node(m, "se_gate"))
+
+    edits = {
+        "pool_over_channels": pool_over_channels,
+        "y2_second_consumer": lambda m: _side_output(m, "y2"),
+        "p_second_consumer": lambda m: _side_output(m, "p"),
+        "e_second_consumer": lambda m: _side_output(m, "e"),
+        "z_feeds_non_conv": lambda m: _side_output(m, "z"),
+        "z_is_output": lambda m: m.graph.output.append(
+            helper.make_tensor_value_info("z", TensorProto.FLOAT, None)),
+        "no_gate": no_gate,
+    }
+    for name, fn in edits.items():
+        assert se_count(_edit(src, tmp_path / f"{name}.onnx", fn)) == 0, name
+
+
+def test_se_site_with_a_tied_weight_is_left_alone(tmp_path: Path):
+    src = _se_model(tmp_path / "m.onnx")
+
+    def share(weight: str, input_: str):
+        def fn(m):  # the weight also feeds a conv on another branch
+            if input_ == "p2":  # a second pool for the twin, so FC1's input keeps one consumer
+                m.graph.node.append(helper.make_node("GlobalAveragePool", ["y"], ["p2"], name="pool2"))
+            m.graph.node.append(helper.make_node("Conv", [input_, weight], ["twin"], name="twin"))
+            m.graph.output.append(helper.make_tensor_value_info("twin", TensorProto.FLOAT, ["N", "C", "H", "W"]))
+        return fn
+
+    for weight, input_ in (("w1", "p2"), ("wc", "y")):
+        path = _edit(src, tmp_path / f"shared_{weight}.onnx", share(weight, input_))
+        assert [s.kind for s in find_sites(onnx.load(str(path)), se=True)].count("gated-se") == 1
+        dst = tmp_path / f"eq_{weight}.onnx"
+        assert equalise(path, dst, _batches(), se=True, sites=["conv_d"]).sites == []
+        _assert_same(path, dst)
+
+
+def test_static_quantization_records_se_equalisation(tmp_path: Path, calib):
+    src = _se_model(tmp_path / "m.onnx")
+    out = _static(tmp_path, calib, src, "se", equalize=True, equalize_se=True)
+    assert out.lineage[-1].params["equalize_se"] is True
+    assert out.meta["equalisation"]["by_kind"]["gated-se"] == 1
+    assert out.meta["equalisation"]["max_abs_logit_change"] < 1e-3
+    plain = _static(tmp_path, calib, src, "plain", equalize=True)
+    assert "equalize_se" not in plain.lineage[-1].params
+    assert plain.meta["equalisation"]["by_kind"]["gated-se"] == 0
+    with pytest.raises(TransformError):
+        _static(tmp_path, calib, src, "bad", equalize_se=True)

@@ -811,6 +811,7 @@ def quantize_static_int8(
     equalize = bool(params.get("equalize", False))
     equalize_dense = bool(params.get("equalize_dense", False))
     equalize_residual = bool(params.get("equalize_residual", False))
+    equalize_se = bool(params.get("equalize_se", False))
     slack = float(params.get("equalize_slack", EQUALIZE_SLACK))
     top_k = params.get("equalize_top_k")
     min_gain = params.get("equalize_min_gain")
@@ -846,6 +847,8 @@ def quantize_static_int8(
         )
     if equalize_residual and not equalize:
         raise TransformError("equalize_residual only applies together with equalize")
+    if equalize_se and not equalize:
+        raise TransformError("equalize_se only applies together with equalize")
     if float_gates and not (equalize or equalize_dense):
         raise TransformError("float_gates only applies together with equalize or equalize_dense")
     if equalize_dense and not per_channel:
@@ -906,6 +909,7 @@ def quantize_static_int8(
             ),
             **({"equalize_top_k": top_k} if top_k is not None else {}),
             **({"equalize_residual": True} if equalize_residual else {}),
+            **({"equalize_se": True} if equalize_se else {}),
             **({"equalize_min_gain": min_gain} if min_gain is not None else {}),
             **({"equalize_min_damage": min_damage} if min_damage is not None else {}),
             **({"calib_stride": calib_stride} if calib_stride is not None else {}),
@@ -974,6 +978,7 @@ def quantize_static_int8(
             top_k=top_k,
             min_gain=None if min_gain is None else float(min_gain),
             residual=equalize_residual,
+            se=equalize_se,
         )
         src = eq_path
         if float_gates:
@@ -1389,6 +1394,15 @@ REGISTRY: dict[str, TransformSpec] = {
                     "With equalize: also rewrite gated sites whose output feeds a residual Add "
                     "as well as a depthwise Conv (EfficientViT's and MobileNetV3-Large's stems). "
                     "The branch joining the Add and the Add's consumers take the scale too."
+                ),
+            },
+            "equalize_se": {
+                "type": "boolean",
+                "description": (
+                    "With equalize: also rewrite gated sites whose output feeds a squeeze-excite "
+                    "block (EfficientNet's and MobileNetV3's depthwise conv -> SiLU/Hardswish -> "
+                    "SE -> projection). The depthwise conv's output channels take the scale; the "
+                    "SE's first FC and the projection divide it out of their input channels."
                 ),
             },
             "float_mixed_outputs": {

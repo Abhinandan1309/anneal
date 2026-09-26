@@ -33,6 +33,13 @@ activations such as SiLU and Hardswish do not satisfy; HPTQ (Habi et al., 2021) 
 equalisation for Swish as a likely cause of EfficientNet's INT8 loss. The gate-side ``1/s``
 removes that requirement at the cost of one element-wise Mul per block.
 
+Squeeze-excite (opt-in, ``se=True``). After the depthwise conv, EfficientNet and MobileNetV3
+run ``y = x * gate(x)``, ``z = y * SE(mean_hw(y))`` and a 1x1 projection of z. Scaling the
+depthwise conv's output channels by s scales x, y, the pooled mean and z; the SE's first FC and
+the projection divide s out of their input channels, so the SE's output and the block's output
+are unchanged. This balances the depthwise conv's *output* side, which matters most when weights
+are quantized per tensor (the depthwise and projection weights then share one scale each).
+
 Choosing s. Each tensor's quantization range [lo, hi] (always including 0) may not grow at the
 top; its bottom may extend by ``slack`` of the range. Within that budget every channel is scaled
 up as far as it will go, in whichever sign lets it go further. Scaling up only ever *adds*
@@ -63,7 +70,7 @@ DEFAULT_MAX_SCALE = 1e3
 
 @dataclass
 class _Site:
-    kind: str  # "gated" or "relu"
+    kind: str  # "gated", "gated-se" or "relu"
     conv_a: Any
     act: Any  # the Mul (gated) or the Relu
     gate: Any | None
@@ -76,6 +83,12 @@ class _Site:
     conv_p: Any | None = None
     consumers_z: list = field(default_factory=list)
     z: str | None = None
+    #: Squeeze-excite sites only (kind "gated-se"): y also feeds ``pool`` (GlobalAveragePool or
+    #: ReduceMean over H, W), whose only consumer ``fc1`` (a Conv) takes the scale out of its
+    #: input channels, and ``se_mul`` (z = y * e). ``conv_b`` is then z's first consumer.
+    pool: Any | None = None
+    fc1: Any | None = None
+    se_mul: Any | None = None
 
     @property
     def tensors(self) -> tuple[str, ...]:
@@ -131,7 +144,9 @@ class EqualisationResult:
         return {
             "sites": len(self.sites),
             "candidates": len(self.ranking),
-            "by_kind": {k: sum(s.kind == k for s in self.sites) for k in ("gated", "gated-residual", "relu")},
+            "by_kind": {
+                k: sum(s.kind == k for s in self.sites) for k in ("gated", "gated-residual", "gated-se", "relu")
+            },
             "channels_mirrored": sum(s.channels_mirrored for s in self.sites),
             "median_levels_before": float(np.median([s.levels_before for s in self.sites])) if self.sites else None,
             "median_levels_after": float(np.median([s.levels_after for s in self.sites])) if self.sites else None,
@@ -252,7 +267,7 @@ def _attr(node, name: str, default=None):
     return default
 
 
-def find_sites(model, *, residual: bool = False) -> list[_Site]:
+def find_sites(model, *, residual: bool = False, se: bool = False) -> list[_Site]:
     """Conv -> (gated activation | ReLU) -> depthwise Conv chains that can be equalised exactly.
 
     Every intermediate tensor must have exactly the consumers the rewrite accounts for; a
@@ -261,6 +276,19 @@ def find_sites(model, *, residual: bool = False) -> list[_Site]:
     Conv whose output only feeds that Add and every consumer of z is a group-1 or depthwise
     Conv (EfficientViT's and MobileNetV3-Large's stems): P's output channels are scaled with y,
     so z carries the scale, and z's consumers divide it out of their input channels.
+
+    With ``se``, a gated activation whose output feeds a squeeze-excite block is a site too
+    (kind ``"gated-se"``; EfficientNet's and MobileNetV3's depthwise -> SE -> projection)::
+
+        x = A(...);  y = x * gate(x);  p = GlobalAveragePool(y);  e = gate2(... FC1(p) ...)
+        z = y * e;   C_i(z) for every consumer C_i of z
+
+    A's output channels take s (so x, y, p and z do: pooling is linear and e is untouched),
+    FC1's input channels and every C_i's input channels divide it out. Exact for either sign
+    of s. Matched strictly: y feeds exactly the pooling op (GlobalAveragePool, or ReduceMean
+    over axes 2, 3 with keepdims) and the SE Mul; p feeds only FC1 (a group-1 Conv with
+    constant weights); e is a Sigmoid/HardSigmoid output that feeds only the SE Mul; z feeds
+    only group-1 or depthwise Convs with constant weights and is not a graph output.
     """
     g = model.graph
     inits = {i.name: i for i in g.initializer}
@@ -307,15 +335,68 @@ def find_sites(model, *, residual: bool = False) -> list[_Site]:
         if not conv_with_const_weights(p) or len(consumers.get(others[0], [])) != 1:
             return None
         z = add.output[0]
+        cs = z_consumers_ok(z, (b.input[1], p.input[1]))
+        if cs is None:
+            return None
+        return b, add, p, cs, z
+
+    def is_spatial_mean(node, y: str) -> bool:
+        """GlobalAveragePool(y), or ReduceMean(y) over H and W of an NCHW tensor, keepdims."""
+        if node.input[0] != y:
+            return False
+        if node.op_type == "GlobalAveragePool":
+            return True
+        if node.op_type != "ReduceMean" or _attr(node, "keepdims", 1) != 1:
+            return False
+        axes = _attr(node, "axes")
+        if axes is None and len(node.input) > 1 and node.input[1] in inits:
+            from onnx import numpy_helper
+
+            axes = numpy_helper.to_array(inits[node.input[1]]).tolist()
+        # Negative axes are relative to the rank, assumed 4 (NCHW) as everywhere in this module.
+        return axes is not None and sorted(int(a) % 4 for a in axes) == [2, 3]
+
+    def z_consumers_ok(z: str, exclude: tuple[str, ...]):
         cs = consumers.get(z, [])
         if not cs or z in graph_outputs:
             return None
         for c in cs:
-            if not conv_with_const_weights(c) or c.input[0] != z or c.input[1] in (b.input[1], p.input[1]):
+            if not conv_with_const_weights(c) or c.input[0] != z or c.input[1] in exclude:
                 return None
             if not (is_depthwise(c) or _attr(c, "group", 1) == 1):
                 return None
-        return b, add, p, cs, z
+        return cs
+
+    def se_consumers(a, y: str):
+        """(pool, FC1, SE Mul, consumers of z, z) when y feeds a squeeze-excite block."""
+        if not se or y in graph_outputs:
+            return None
+        outs = consumers.get(y, [])
+        if len(outs) != 2:
+            return None
+        pools = [o for o in outs if o.op_type in ("GlobalAveragePool", "ReduceMean")]
+        muls = [o for o in outs if o.op_type == "Mul"]
+        if len(pools) != 1 or len(muls) != 1 or not is_spatial_mean(pools[0], y):
+            return None
+        pool, mul = pools[0], muls[0]
+        p = pool.output[0]
+        fcs = consumers.get(p, [])
+        if p in graph_outputs or len(fcs) != 1:
+            return None
+        fc1 = fcs[0]
+        if not conv_with_const_weights(fc1) or fc1.input[0] != p or _attr(fc1, "group", 1) != 1:
+            return None
+        if len(mul.input) != 2 or list(mul.input).count(y) != 1:
+            return None
+        e = next(i for i in mul.input if i != y)
+        gate2 = producer.get(e)
+        if gate2 is None or gate2.op_type not in GATE_OPS or consumers.get(e, []) != [mul] or e in graph_outputs:
+            return None
+        z = mul.output[0]
+        cs = z_consumers_ok(z, (a.input[1], fc1.input[1]))
+        if cs is None:
+            return None
+        return pool, fc1, mul, cs, z
 
     def add_site(a, act, gate, x: str, y: str, kind: str = "gated") -> None:
         b = depthwise_only_consumer(y)
@@ -326,6 +407,12 @@ def find_sites(model, *, residual: bool = False) -> list[_Site]:
         if found is not None:
             b, add, p, cs, z = found
             sites.append(_Site(kind, a, act, gate, b, x, y, add, p, cs, z))
+            return
+        found_se = se_consumers(a, y) if kind == "gated" else None
+        if found_se is not None:
+            pool, fc1, mul, cs, z = found_se
+            sites.append(_Site("gated-se", a, act, gate, cs[0], x, y, consumers_z=cs, z=z,
+                               pool=pool, fc1=fc1, se_mul=mul))
 
     sites: list[_Site] = []
     for node in g.node:
@@ -418,21 +505,25 @@ def _site_scales(
     return choose_scales(
         [ranges[t] for t in site.tensors],
         slack=slack,
-        allow_negative=allow_negative and site.kind == "gated",
+        allow_negative=allow_negative and site.kind in ("gated", "gated-se"),
         max_scale=max_scale,
     )
 
 
-def _mixed_scales(s: np.ndarray, weight_a, weight_b, alpha: float, beta: float) -> np.ndarray:
+def _mixed_scales(
+    s: np.ndarray, weight_a, weight_b, alpha: float, beta: float, b_axis: int = 0
+) -> np.ndarray:
     """``sign(s) |s|^alpha s_cle^beta``: activation and cross-layer weight equalisation combined.
 
     Multiplying every scale by one constant changes nothing after quantization (every step
     scales with it), so s_cle needs no normalisation. Channels with an all-zero weight row keep 1.
+    ``b_axis`` is the axis of ``weight_b`` that s divides (1 for a dense consumer's input channels).
     """
     from onnx import numpy_helper
 
     wa = np.abs(numpy_helper.to_array(weight_a).astype(np.float64)).reshape(len(s), -1).max(axis=1)
-    wb = np.abs(numpy_helper.to_array(weight_b).astype(np.float64)).reshape(len(s), -1).max(axis=1)
+    wb = np.moveaxis(np.abs(numpy_helper.to_array(weight_b).astype(np.float64)), b_axis, 0)
+    wb = wb.reshape(len(s), -1).max(axis=1)
     ok = (wa > 0) & (wb > 0)
     cle = np.ones(len(s))
     cle[ok] = np.sqrt(wb[ok] / wa[ok])
@@ -457,6 +548,7 @@ def rank_sites(
     allow_negative: bool = True,
     max_scale: float = DEFAULT_MAX_SCALE,
     residual: bool = False,
+    se: bool = False,
 ) -> list[SiteGain]:
     """Every equalisable site of ``src`` with its predicted gain (:func:`site_gain`), best first.
 
@@ -467,7 +559,7 @@ def rank_sites(
 
     model = onnx.load(str(src))
     _name_unnamed_nodes(model)
-    sites = find_sites(model, residual=residual)
+    sites = find_sites(model, residual=residual, se=se)
     if not sites:
         return []
     ranges = channel_ranges(model, sorted({t for s in sites for t in s.tensors}), batches)
@@ -487,6 +579,7 @@ def equalise(
     top_k: int | None = None,
     min_gain: float | None = None,
     residual: bool = False,
+    se: bool = False,
     mix: tuple[float, float] | None = None,
 ) -> EqualisationResult:
     """Write an equalised copy of ``src`` to ``dst`` and describe what changed.
@@ -505,7 +598,11 @@ def equalise(
     The summed gain itself later failed as a switch (docs/zoo_gated_predictions.md: 5.2 collapsed,
     153.5 did not); the transform's ``equalize_min_damage`` measures joint damage instead.
     At most one of the three may be given. ``residual`` also rewrites gated sites whose output
-    feeds a residual Add (see :func:`find_sites`); off by default.
+    feeds a residual Add (see :func:`find_sites`); off by default. ``se`` likewise rewrites
+    gated sites whose output feeds a squeeze-excite block (kind ``"gated-se"``); off by default.
+    A depthwise conv can be both the consumer of an ordinary gated site (its weights divided by
+    that site's s) and the producer of a gated-se site (multiplied by another): both act on its
+    output-channel axis and commute.
 
     ``mix = (alpha, beta)`` is for weights quantized *per tensor*, where the rescale also moves
     precision between channels of A's and B's weights. The scale becomes
@@ -526,7 +623,7 @@ def equalise(
 
     model = onnx.load(str(src))
     _name_unnamed_nodes(model)
-    found = find_sites(model, residual=residual)
+    found = find_sites(model, residual=residual, se=se)
     if wanted is not None:
         unknown = sorted(set(wanted) - {s.id for s in found})
         if unknown:
@@ -566,31 +663,46 @@ def equalise(
     for k, site in enumerate(found):  # k is the index among all sites: stable node names
         if chosen is not None and site.id not in chosen:
             continue
-        names = [site.conv_a.input[1], site.conv_b.input[1]]
+        names = [site.conv_a.input[1]]
+        if site.fc1 is None:
+            names.append(site.conv_b.input[1])
         if len(site.conv_a.input) > 2 and site.conv_a.input[2]:
             names.append(site.conv_a.input[2])
         if site.conv_p is not None:
-            names += [n for n in site.conv_p.input[1:3] if n] + [c.input[1] for c in site.consumers_z]
+            names += [n for n in site.conv_p.input[1:3] if n]
+        if site.fc1 is not None:
+            names.append(site.fc1.input[1])  # FC1's bias is untouched: its output is unchanged
+        names += [c.input[1] for c in site.consumers_z]
         if len(set(names)) != len(names) or any(uses.get(n, 0) > 1 for n in names):
             continue
 
         lo_y, hi_y = ranges[site.y]
         s = _site_scales(site, ranges, **scale_kw)
         if mix is not None:
-            s = _mixed_scales(s, inits[site.conv_a.input[1]], inits[site.conv_b.input[1]], *mix)
+            # For a gated-se site the weight balanced against A's is the projection's (z's first
+            # consumer), along its input channels unless it is depthwise.
+            b_axis = 0 if site.fc1 is None or _is_depthwise_weight(site.conv_b, inits) else 1
+            s = _mixed_scales(s, inits[site.conv_a.input[1]], inits[site.conv_b.input[1]], *mix, b_axis=b_axis)
         s64 = s.astype(np.float64)
         rescale(site.conv_a.input[1], s64)
         if len(site.conv_a.input) > 2 and site.conv_a.input[2]:
             rescale(site.conv_a.input[2], s64)
-        rescale(site.conv_b.input[1], s64, divide=True)
+        if site.fc1 is None:
+            rescale(site.conv_b.input[1], s64, divide=True)
+        else:
+            # p = mean(y) carries s too; FC1's input channels divide it out, so e is unchanged.
+            w = numpy_helper.to_array(inits[site.fc1.input[1]]).astype(np.float64)
+            w = w / s64.reshape((1, -1) + (1,) * (w.ndim - 2))
+            inits[site.fc1.input[1]].CopyFrom(numpy_helper.from_array(w.astype(np.float32), site.fc1.input[1]))
         if site.conv_p is not None:
             # z = P(...) + y: scale P's output channels too, so z' = s * z ...
             for name in site.conv_p.input[1:3]:
                 if name:
                     rescale(name, s64)
-            # ... and divide s out of every consumer of z: a depthwise conv's input channel c is
-            # its output channel c (exact); a dense conv's input channels move precision between
-            # z and its weights, as in equalize_dense.
+        if site.z is not None:
+            # ... (or z = y * e, which carries s already) and divide s out of every consumer of z:
+            # a depthwise conv's input channel c is its output channel c (exact); a dense conv's
+            # input channels move precision between z and its weights, as in equalize_dense.
             for c in site.consumers_z:
                 w = numpy_helper.to_array(inits[c.input[1]]).astype(np.float64)
                 if w.shape[1] == 1 and _attr(c, "group", 1) == w.shape[0]:
@@ -599,7 +711,7 @@ def equalise(
                     w = w / s64.reshape((1, -1) + (1,) * (w.ndim - 2))
                     inits[c.input[1]].CopyFrom(numpy_helper.from_array(w.astype(np.float32), c.input[1]))
 
-        if site.kind == "gated" and site.gate is None:
+        if site.kind in ("gated", "gated-se") and site.gate is None:
             # HardSwish(x) = x * HardSigmoid(x) with alpha 1/6, beta 1/2: split it so the gate
             # can see x'/s.
             gate_out = f"anneal_eq_gate_{k}"
@@ -612,7 +724,7 @@ def equalise(
             g.node.insert(idx, site.gate)
             # protobuf copies on insert: keep handles to the nodes that are in the graph.
             site.gate, site.act = g.node[idx], g.node[idx + 1]
-        if site.kind == "gated":
+        if site.kind in ("gated", "gated-se"):
             inv = f"anneal_eq_inv_{k}"
             unscaled = f"anneal_eq_unscaled_{k}"
             mul_name = f"{GATE_MUL_PREFIX}{k}"
@@ -630,7 +742,7 @@ def equalise(
         hi_y2 = np.maximum(s64 * lo_y, s64 * hi_y)
         result.sites.append(
             EqualisedSite(
-                kind=site.kind if site.z is None else "gated-residual",
+                kind="gated-residual" if site.conv_p is not None else site.kind,
                 producer=site.conv_a.name,
                 consumer=site.conv_b.name,
                 gate=site.gate.name if site.gate is not None else None,
@@ -652,6 +764,11 @@ def equalise(
     if check_batch is not None:
         result.max_abs_logit_change = _max_output_change(src, dst, check_batch)
     return result
+
+
+def _is_depthwise_weight(conv, inits) -> bool:
+    w = inits[conv.input[1]]
+    return len(w.dims) >= 2 and w.dims[1] == 1 and _attr(conv, "group", 1) == w.dims[0]
 
 
 def _max_output_change(a: Path, b: Path, batch: np.ndarray) -> float:
