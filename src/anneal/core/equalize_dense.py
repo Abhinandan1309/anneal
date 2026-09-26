@@ -106,7 +106,10 @@ def _const_value(model, name: str):
     return None
 
 
-def find_dense_sites(model) -> list[DenseSite]:
+def find_dense_sites(model, *, any_kernel: bool = False) -> list[DenseSite]:
+    """Gated dense sites. ``any_kernel`` also accepts k x k group-1 Conv consumers (YOLO's
+    Conv -> SiLU -> 3x3 Conv): dividing input channel c scales every tap of it, so the rewrite is
+    just as exact; the strength then comes from ``mix``, since the error simulation is 1x1."""
     g = model.graph
     inits = {i.name: i for i in g.initializer}
     consts = _constants(model)
@@ -161,7 +164,7 @@ def find_dense_sites(model) -> list[DenseSite]:
             return None
         dims = list(inits[b.input[1]].dims)
         if b.op_type == "Conv" and channel_axis == 1:
-            if _attr(b, "group", 1) != 1 or dims[2:] != [1] * (len(dims) - 2):
+            if _attr(b, "group", 1) != 1 or (not any_kernel and dims[2:] != [1] * (len(dims) - 2)):
                 return None
             return b, 1
         if b.op_type == "MatMul" and channel_axis == -1 and len(dims) == 2:
@@ -253,6 +256,7 @@ def equalise_dense(
     max_scale: float = DEFAULT_MAX_SCALE,
     sample_images: int = 8,
     mix: tuple[float, float] | None = None,
+    any_kernel: bool = False,
 ) -> tuple[list[DenseEqualisedSite], list[str], float | None]:
     """Rewrite the dense sites where it measurably lowers the consumer's INT8 error.
 
@@ -265,7 +269,7 @@ def equalise_dense(
 
     model = onnx.load(str(src))
     _name_unnamed_nodes(model)
-    sites = find_dense_sites(model)
+    sites = find_dense_sites(model, any_kernel=any_kernel)
     dst.parent.mkdir(parents=True, exist_ok=True)
     if not sites:
         onnx.save(model, str(dst))
@@ -319,8 +323,15 @@ def equalise_dense(
             slack=slack, allow_negative=True, max_scale=max_scale,
         ).astype(np.float64)
         wb = numpy_helper.to_array(inits[site.b_weight]).astype(np.float64)
-        w2 = wb.reshape(wb.shape[0], wb.shape[1]).T if site.b.op_type == "Conv" else wb
-        if mix is None:
+        if site.b.op_type == "Conv" and wb.ndim > 2 and wb.shape[2:] != (1,) * (wb.ndim - 2):
+            # k x k consumer: taps flattened into rows (an approximation of the conv's error), and
+            # the strength must come from mix: the 1x1 simulation does not model spatial sums
+            w2 = np.moveaxis(wb, 1, -1).reshape(-1, wb.shape[1]).T
+            site_mix = mix if mix is not None else (1.0, 0.0)
+        else:
+            w2 = wb.reshape(wb.shape[0], wb.shape[1]).T if site.b.op_type == "Conv" else wb
+            site_mix = mix
+        if site_mix is None:
             errors = {a: site_error(samples[site.y], w2, np.sign(s_budget) * np.abs(s_budget) ** a)
                       for a in DENSE_ALPHAS}
             alpha = min(errors, key=lambda a: (errors[a], a))
@@ -337,8 +348,8 @@ def equalise_dense(
             cle = np.ones(len(s_budget))
             ok = (ra > 0) & (rb > 0)
             cle[ok] = np.sqrt(rb[ok] / ra[ok])
-            alpha = mix[0]
-            s = np.sign(s_budget) * np.abs(s_budget) ** mix[0] * cle ** mix[1]
+            alpha = site_mix[0]
+            s = np.sign(s_budget) * np.abs(s_budget) ** site_mix[0] * cle ** site_mix[1]
             err_before, err_after = site_error(samples[site.y], w2, np.ones(len(s))), site_error(samples[site.y], w2, s)
         used |= names
 

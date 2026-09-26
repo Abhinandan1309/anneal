@@ -141,3 +141,31 @@ def test_static_quantization_records_dense_equalisation(tmp_path: Path):
     )
     assert out.meta["dense_equalisation"]["sites_rewritten"] == 1
     assert out.lineage[-1].params["equalize_dense"] is True
+
+
+def _yolo_block(path: Path) -> Path:
+    """YOLOv8's Conv -> SiLU -> 3x3 Conv (the consumer has a spatial kernel)."""
+    src = onnx.load(str(_fused_mbconv(path)))
+    rng = np.random.default_rng(2)
+    for init in src.graph.initializer:
+        if init.name == "wb":
+            init.CopyFrom(numpy_helper.from_array(rng.standard_normal((5, 6, 3, 3)).astype(np.float32), "wb"))
+    project = next(n for n in src.graph.node if n.name == "project")
+    project.attribute.extend([helper.make_attribute("pads", [1, 1, 1, 1])])
+    onnx.save(src, str(path))
+    return path
+
+
+@pytest.mark.parametrize("mix", [None, (0.5, 0.5)])
+def test_a_kxk_consumer_is_a_site_only_with_any_kernel_and_stays_exact(tmp_path: Path, mix):
+    src = _yolo_block(tmp_path / "y.onnx")
+    assert find_dense_sites(onnx.load(str(src))) == []
+    assert len(find_dense_sites(onnx.load(str(src)), any_kernel=True)) == 1
+    rng = np.random.default_rng(3)
+    batches = [rng.standard_normal((2, 4, 8, 8)).astype(np.float32) for _ in range(3)]
+    dst = tmp_path / "eq.onnx"
+    done, _, change = equalise_dense(src, dst, batches, mix=mix, any_kernel=True)
+    assert len(done) == 1 and change is not None
+    x = batches[0]
+    before, after = _run(src, x), _run(dst, x)
+    assert np.abs(after - before).max() <= 1e-4 * max(1.0, np.abs(before).max())

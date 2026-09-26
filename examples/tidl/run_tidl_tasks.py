@@ -41,6 +41,8 @@ VARIANTS = {
     # per-tensor-weight aware: gated, squeeze-excite and residual sites with the activation/weight
     # mix t=0.5, then ReLU/ReLU6 cross-layer equalisation
     "tidl 8-bit + equalised (per-tensor)": ("equalised_pt", COMMON),
+    # the same plus gated dense sites into k x k convs (YOLOv8's Conv -> SiLU -> 3x3 Conv)
+    "tidl 8-bit + equalised (per-tensor, dense kxk)": ("equalised_pt_dense", COMMON),
 }
 
 
@@ -126,7 +128,13 @@ def main() -> None:
     r_pt = equalise(src, eq_pt, calib, residual=True, se=True, mix=(0.5, 0.5))
     c_pt = cross_layer_equalise(eq_pt, eq_pt)
     print(f"{args.model}: per-tensor equalisation {r_pt.summary()['by_kind']}, cle pairs {len(c_pt.pairs)}", flush=True)
-    models = {"plain": src, "equalised": eq, "concat_eq": cat_eq, "concat_eq_cle": cat_eq_cle, "equalised_pt": eq_pt}
+    eq_ptd = work / f"{args.model}-equalised-per-tensor-dense.onnx"
+    equalise(src, eq_ptd, calib, residual=True, se=True, mix=(0.5, 0.5))
+    d_pt, _, _ = equalise_dense(eq_ptd, eq_ptd, calib, mix=(0.5, 0.5), any_kernel=True)
+    cross_layer_equalise(eq_ptd, eq_ptd)
+    print(f"{args.model}: per-tensor dense kxk sites {len(d_pt)}", flush=True)
+    models = {"plain": src, "equalised": eq, "concat_eq": cat_eq, "concat_eq_cle": cat_eq_cle, "equalised_pt": eq_pt,
+              "equalised_pt_dense": eq_ptd}
     for p in models.values():
         onnx.shape_inference.infer_shapes_path(str(p), str(p))
 
