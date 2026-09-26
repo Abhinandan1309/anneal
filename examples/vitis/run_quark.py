@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import shutil
 import json
 import sys
 import time
@@ -60,7 +61,9 @@ def qconfig(label: str):
 
 
 VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xint8 keep sigmoid",
-            "xint8 keep sigmoid + anneal eq", "a8w8", "a8w8 + anneal eq", "a8w8 per-ch w", "a8w8 per-ch w + anneal eq"]
+            "xint8 keep sigmoid + anneal eq", "a8w8", "a8w8 + anneal eq", "a8w8 per-ch w", "a8w8 per-ch w + anneal eq",
+            # the HardSigmoid-sum surrogate (anneal.core.surrogate): only HardSigmoids reach the NPU
+            "fp32 surrogate", "xint8 + surrogate", "xint8 + anneal eq + surrogate"]
 
 
 def hardsigmoid_copy(src: Path, dst: Path) -> None:
@@ -139,7 +142,12 @@ def main() -> None:
         eq = mdir / f"{name}-equalised.onnx"
         eq_result = equalise(src, eq, calib_imgs)
         print(f"{name}: equalised {len(eq_result.sites)} sites", flush=True)
-        models = {"plain": src, "eq": eq}
+        from anneal.core.surrogate import replace_sigmoids
+
+        sur, eq_sur = mdir / f"{name}-surrogate.onnx", mdir / f"{name}-equalised-surrogate.onnx"
+        replace_sigmoids(src, sur, calib_imgs, k_terms=3)
+        replace_sigmoids(eq, eq_sur, calib_imgs, k_terms=3)
+        models = {"plain": src, "eq": eq, "sur": sur, "eq sur": eq_sur}
 
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)  # batch 1: Quark may fix it
         batches = list(ev.batches())
@@ -159,12 +167,15 @@ def main() -> None:
         preds = {"fp32": predict(src, "fp32")}
         rows, timing = {}, {}
         for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
-            which = "eq" if "anneal eq" in label else "plain"
+            which = ("eq sur" if "anneal eq" in label and "surrogate" in label else "eq" if "anneal eq" in label
+                     else "sur" if "surrogate" in label else "plain")
             dst = mdir / (label.replace(" ", "_").replace("+", "plus") + ".onnx")
             t = time.time()
             try:
                 if label == "fp32 hardsigmoid":
                     hardsigmoid_copy(src, dst)
+                elif label == "fp32 surrogate":
+                    shutil.copy(models["sur"], dst)
                 else:
                     ModelQuantizer(qconfig(label)).quantize_model(str(models[which]), str(dst), Reader(inp, calib_imgs))
                 timing[label] = {"quantize_s": time.time() - t}
