@@ -69,6 +69,11 @@ def main() -> None:
     if not stored_path.exists():  # no ImageNet run to pair with: score the advised recipe and the default here
         recipes = {"advised: eq + asym 99.99 + stem": {**BASE, **EQ, **A9999, **STEM},
                    "minmax (default)": {**BASE, "calibrate_method": "minmax"}, **recipes}
+    sens = HERE / f"{name}_tensor_sensitivity.json"
+    if sens.exists():  # mixed precision: the k tensors noise injection ranks most sensitive at 16 bits
+        order = json.loads(sens.read_text(encoding="utf-8"))["order"]
+        for k in (3, 5):
+            recipes[f"advised + top{k} int16"] = {**BASE, **EQ, **A9999, **STEM, "int16_tensors": order[:k]}
     if args.only:
         keep = set(args.only.split(","))
         recipes = {k: v for k, v in recipes.items() if k in keep}

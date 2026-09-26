@@ -548,3 +548,16 @@ def test_stem_int16_puts_one_16_bit_quantizer_on_the_stem_output(tmp_path: Path,
     assert len(sixteen) == 1
     x = _batches(1, seed=2)[0]
     assert np.isfinite(_run(Path(art.path), x)).all()
+
+
+def test_int16_tensors_are_quantized_to_16_bits_and_unknown_names_rejected(tmp_path: Path, calib):
+    src = _chain(tmp_path / "m.onnx")
+    y_tensors = [n.output[0] for n in onnx.load(str(src)).graph.node if n.op_type == "Mul"][:2]
+    art = _static(tmp_path, calib, src, "t16", int16_tensors=y_tensors)
+    m = onnx.load(str(art.path))
+    types = {i.name: i.data_type for i in m.graph.initializer}
+    sixteen = [n for n in m.graph.node if n.op_type == "QuantizeLinear" and len(n.input) > 2
+               and types.get(n.input[2]) == onnx.TensorProto.UINT16]
+    assert len(sixteen) == 2
+    with pytest.raises(TransformError):
+        _static(tmp_path, calib, src, "bad16", int16_tensors=["no_such_tensor"])

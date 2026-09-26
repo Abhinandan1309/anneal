@@ -607,6 +607,10 @@ def quantize_static_int8(
     min_gain = params.get("equalize_min_gain")
     calib_stride = params.get("calib_stride")
     stem_int16 = bool(params.get("stem_int16", False))
+    int16_tensors = params.get("int16_tensors")
+    if int16_tensors is not None and (not isinstance(int16_tensors, list)
+                                      or not all(isinstance(t, str) for t in int16_tensors)):
+        raise TransformError("int16_tensors must be a list of tensor names")
     if calib_stride is not None and (isinstance(calib_stride, bool) or not isinstance(calib_stride, int) or calib_stride < 1):
         raise TransformError(f"calib_stride must be a positive integer, got {calib_stride!r}")
     float_gates = bool(params.get("float_gates", False))
@@ -670,6 +674,7 @@ def quantize_static_int8(
             **({"equalize_min_gain": min_gain} if min_gain is not None else {}),
             **({"calib_stride": calib_stride} if calib_stride is not None else {}),
             **({"stem_int16": True} if stem_int16 else {}),
+            **({"int16_tensors": list(int16_tensors)} if int16_tensors else {}),
             **({"float_stem": True} if float_stem else {}),
             **({"equalize_dense": True, "equalize_slack": slack, "float_gates": float_gates}
                if equalize_dense else {}),
@@ -758,6 +763,16 @@ def quantize_static_int8(
         if stem_out is None:
             raise TransformError("stem_int16: no stem convolution found")
         extra["TensorQuantOverrides"] = {stem_out: [{"quant_type": QuantType.QUInt16}]}
+    if int16_tensors:
+        # Tensors ranked most sensitive by noise injection (examples/advise/tensor_sensitivity.py).
+        import onnx
+
+        known = {o for n in onnx.load(str(src)).graph.node for o in n.output}
+        missing = [t for t in int16_tensors if t not in known]
+        if missing:
+            raise TransformError(f"int16_tensors not in the model: {missing[:3]}")
+        extra.setdefault("TensorQuantOverrides", {}).update(
+            {t: [{"quant_type": QuantType.QUInt16}] for t in int16_tensors})
     if float_stem:
         src = _with_named_nodes(src)
         base_exclude = base_exclude + [n for n in stem_nodes(src) if n not in base_exclude]
@@ -951,6 +966,14 @@ REGISTRY: dict[str, TransformSpec] = {
                     "With equalize: rewrite only the k sites with the highest predicted gain "
                     "(rounding noise removed from starved channels) instead of all. Each gated "
                     "site adds one element-wise Mul, which is costly on NPUs; 0 = none."
+                ),
+            },
+            "int16_tensors": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": (
+                    "Activation tensors to quantize to 16 bits (the rest stay 8): mixed precision "
+                    "for the few tensors ranked most sensitive by noise injection."
                 ),
             },
             "stem_int16": {
