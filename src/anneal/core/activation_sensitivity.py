@@ -175,3 +175,50 @@ def rank_activation_tensors(
             rows.append(TensorDamage(t, float(np.mean(_predict(session, xs) != ref))))
             del session
     return sorted(rows, key=lambda r: -r.damage)
+
+
+def joint_damage(
+    model_path: Path,
+    tensors: Sequence[str],
+    calib_batches: Iterable[np.ndarray],
+    probe_batches: Iterable[np.ndarray],
+) -> float:
+    """Share of probe top-1 predictions that change when all ``tensors`` are 8-bit at once.
+
+    The model-level counterpart of :func:`rank_activation_tensors`: rounding every listed tensor
+    together captures how their errors compound downstream, which per-tensor scores miss.
+    """
+    import onnx
+    from onnx import helper, numpy_helper
+
+    model_path = Path(model_path)
+    tensors = list(dict.fromkeys(tensors))
+    xs = [np.ascontiguousarray(x, dtype=np.float32) for x in probe_batches]
+    if not xs:
+        raise ValueError("joint damage needs probe batches; none were given")
+    if not tensors:
+        return 0.0
+    ranges = tensor_ranges(model_path, tensors, calib_batches)
+    session = _session(model_path)
+    ref = _predict(session, xs)
+    del session
+    model = onnx.load(str(model_path))
+    g = model.graph
+    for i, t in enumerate(tensors):
+        scale, zp = uint8_qparams(*ranges[t])
+        s_name, z_name, q, dq = f"anneal_jfq{i}_scale", f"anneal_jfq{i}_zp", f"{t}__anneal_jfq_q", f"{t}__anneal_jfq"
+        for node in g.node:
+            for j, inp in enumerate(node.input):
+                if inp == t:
+                    node.input[j] = dq
+        g.initializer.extend([numpy_helper.from_array(np.array(scale, np.float32), s_name),
+                              numpy_helper.from_array(np.array(zp, np.uint8), z_name)])
+        g.node.extend([helper.make_node("QuantizeLinear", [t, s_name, z_name], [q], name=f"anneal_jfq{i}_q"),
+                       helper.make_node("DequantizeLinear", [q, s_name, z_name], [dq], name=f"anneal_jfq{i}_dq")])
+    with tempfile.TemporaryDirectory(prefix="anneal-joint-") as tmp:
+        path = Path(tmp) / "joint.onnx"
+        onnx.save(model, str(path))
+        session = _session(path)
+        out = float(np.mean(_predict(session, xs) != ref))
+        del session
+    return out

@@ -1,0 +1,106 @@
+{
+ "mobilenet_v3_small": {
+  "sites": 11,
+  "summed_gain": 5.198077318038875,
+  "joint_damage_plain": 0.96875,
+  "joint_damage_equalised": 0.09375,
+  "measured_benefit": 0.875,
+  "probe_images": 64
+ },
+ "mobilenet_v3_large": {
+  "sites": 14,
+  "summed_gain": 58.38790210229307,
+  "joint_damage_plain": 0.09375,
+  "joint_damage_equalised": 0.0625,
+  "measured_benefit": 0.03125,
+  "probe_images": 64
+ },
+ "efficientnet_b0": {
+  "sites": 16,
+  "summed_gain": 72.74960406046188,
+  "joint_damage_plain": 0.546875,
+  "joint_damage_equalised": 0.015625,
+  "measured_benefit": 0.53125,
+  "probe_images": 64
+ },
+ "efficientnet_b1": {
+  "sites": 22,
+  "summed_gain": 91.19747568392067,
+  "joint_damage_plain": 1.0,
+  "joint_damage_equalised": 0.203125,
+  "measured_benefit": 0.796875,
+  "probe_images": 64
+ },
+ "efficientnet_b2": {
+  "sites": 22,
+  "summed_gain": 64.0504817055459,
+  "joint_damage_plain": 0.125,
+  "joint_damage_equalised": 0.015625,
+  "measured_benefit": 0.109375,
+  "probe_images": 64
+ },
+ "efficientvit_b0": {
+  "sites": 10,
+  "summed_gain": 18.684179929263713,
+  "joint_damage_plain": 0.90625,
+  "joint_damage_equalised": 0.109375,
+  "measured_benefit": 0.796875,
+  "probe_images": 64
+ },
+ "mobilevit_s": {
+  "sites": 7,
+  "summed_gain": 23.345653413996168,
+  "joint_damage_plain": 0.53125,
+  "joint_damage_equalised": 0.046875,
+  "measured_benefit": 0.484375,
+  "probe_images": 64
+ },
+ "lcnet_100": {
+  "sites": 13,
+  "summed_gain": 69.84492303274071,
+  "joint_damage_plain": 0.703125,
+  "joint_damage_equalised": 0.03125,
+  "measured_benefit": 0.671875,
+  "probe_images": 64
+ },
+ "fbnetv3_b": {
+  "sites": 27,
+  "summed_gain": 165.47421857740542,
+  "joint_damage_plain": 0.140625,
+  "joint_damage_equalised": 0.015625,
+  "measured_benefit": 0.125,
+  "probe_images": 64
+ },
+ "efficientnet_b3": {
+  "sites": 25,
+  "summed_gain": 153.51983181887374,
+  "joint_damage_plain": 0.046875,
+  "joint_damage_equalised": 0.015625,
+  "measured_benefit": 0.03125,
+  "probe_images": 64
+ },
+ "efficientvit_b1": {
+  "sites": 14,
+  "summed_gain": 58.44838857205555,
+  "joint_damage_plain": 0.78125,
+  "joint_damage_equalised": 0.03125,
+  "measured_benefit": 0.75,
+  "probe_images": 64
+ },
+ "ssdlite320_mobilenet_v3_large": {
+  "sites": 13,
+  "summed_gain": 2.9201010724005827,
+  "joint_damage_plain": 0.453125,
+  "joint_damage_equalised": 0.0703125,
+  "measured_benefit": 0.3828125,
+  "probe_images": 32
+ },
+ "lraspp_mobilenet_v3_large": {
+  "sites": 14,
+  "summed_gain": null,
+  "joint_damage_plain": 0.038236379623413086,
+  "joint_damage_equalised": 0.0027616024017333984,
+  "measured_benefit": 0.03547477722167969,
+  "probe_images": 32
+ }
+}
