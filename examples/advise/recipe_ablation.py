@@ -74,7 +74,18 @@ def main() -> None:
         built[label] = apply_transform("quantize_static_int8", dict(params), ModelArtifact(path=path), ctx).path
         gc.collect()
         print(f"  built {label}", flush=True)
-    sessions = {"fp32": session(path, True, 4), **{k: session(p, False, 4) for k, p in built.items()}}
+    def lean(model: Path, fused: bool):
+        # No memory arena: nine sessions of a 240-px model otherwise exhaust 16 GB between them.
+        import onnxruntime as ort
+
+        so = ort.SessionOptions()
+        so.intra_op_num_threads = 4
+        so.enable_cpu_mem_arena = False
+        if not fused:
+            so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
+        return ort.InferenceSession(str(model), so, providers=["CPUExecutionProvider"])
+
+    sessions = {"fp32": lean(path, True), **{k: lean(p, False) for k, p in built.items()}}
     inp = sessions["fp32"].get_inputs()[0].name
     preds = {k: [] for k in sessions}
     labels, t0, n = [], time.time(), 0

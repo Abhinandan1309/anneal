@@ -1,0 +1,232 @@
+{
+ "model": "efficientnet_b1",
+ "n": 10000,
+ "fp32_accuracy": 0.7966,
+ "mode": "emulated",
+ "rows": {
+  "advised: eq + asym 99.99 + stem": {
+   "accuracy": 0.7614,
+   "delta_pp": -3.52,
+   "ci95_pp": [
+    -4.060906594465255,
+    -2.979093405534745
+   ],
+   "mcnemar_p": 8.703615323030005e-38,
+   "regressions": 563,
+   "fixes": 211,
+   "vs_advised": {
+    "delta_pp": 0.0,
+    "ci95_pp": [
+     0.0,
+     0.0
+    ],
+    "mcnemar_p": 1.0
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true,
+    "calib_stride": 1
+   }
+  },
+  "minmax (default)": {
+   "accuracy": 0.0025,
+   "delta_pp": -79.41,
+   "ci95_pp": [
+    -80.2049610920693,
+    -78.61503890793071
+   ],
+   "mcnemar_p": 0.0,
+   "regressions": 7946,
+   "fixes": 5,
+   "vs_advised": {
+    "delta_pp": -75.89,
+    "ci95_pp": [
+     -76.73159302923919,
+     -75.04840697076081
+    ],
+    "mcnemar_p": 0.0
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "minmax",
+    "calib_stride": 1
+   }
+  },
+  "eq + asym 99.999 + stem": {
+   "accuracy": 0.7262,
+   "delta_pp": -7.04,
+   "ci95_pp": [
+    -7.7116935728023615,
+    -6.3683064271976395
+   ],
+   "mcnemar_p": 2.101937379862878e-95,
+   "regressions": 964,
+   "fixes": 260,
+   "vs_advised": {
+    "delta_pp": -3.52,
+    "ci95_pp": [
+     -4.1634085047122085,
+     -2.876591495287792
+    ],
+    "mcnemar_p": 7.674567349685351e-27
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.999,
+    "float_stem": true,
+    "calib_stride": 1
+   }
+  },
+  "eq + sym 99.999 + stem": {
+   "accuracy": 0.7419,
+   "delta_pp": -5.47,
+   "ci95_pp": [
+    -6.100583846174321,
+    -4.839416153825678
+   ],
+   "mcnemar_p": 7.997499496274469e-66,
+   "regressions": 806,
+   "fixes": 259,
+   "vs_advised": {
+    "delta_pp": -1.95,
+    "ci95_pp": [
+     -2.540346501302413,
+     -1.359653498697587
+    ],
+    "mcnemar_p": 1.1067122580937465e-10
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "equalize": true,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999,
+    "float_stem": true,
+    "calib_stride": 1
+   }
+  },
+  "eq + asym 99.99": {
+   "accuracy": 0.7615,
+   "delta_pp": -3.51,
+   "ci95_pp": [
+    -4.055528212271373,
+    -2.9644717877286273
+   ],
+   "mcnemar_p": 6.17115095465914e-37,
+   "regressions": 569,
+   "fixes": 218,
+   "vs_advised": {
+    "delta_pp": 0.01,
+    "ci95_pp": [
+     -0.3455117460563013,
+     0.36551174605630127
+    ],
+    "mcnemar_p": 1.0
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "calib_stride": 1
+   }
+  },
+  "eq + minmax + stem": {
+   "accuracy": 0.6069,
+   "delta_pp": -18.970000000000002,
+   "ci95_pp": [
+    -19.843276036918454,
+    -18.096723963081548
+   ],
+   "mcnemar_p": 0.0,
+   "regressions": 2121,
+   "fixes": 224,
+   "vs_advised": {
+    "delta_pp": -15.45,
+    "ci95_pp": [
+     -16.29491630804477,
+     -14.605083691955231
+    ],
+    "mcnemar_p": 1.5847732749512772e-278
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "equalize": true,
+    "calibrate_method": "minmax",
+    "float_stem": true,
+    "calib_stride": 1
+   }
+  },
+  "asym 99.99 + stem (no eq)": {
+   "accuracy": 0.1489,
+   "delta_pp": -64.77000000000001,
+   "ci95_pp": [
+    -65.74170290826775,
+    -63.79829709173226
+   ],
+   "mcnemar_p": 0.0,
+   "regressions": 6565,
+   "fixes": 88,
+   "vs_advised": {
+    "delta_pp": -61.25000000000001,
+    "ci95_pp": [
+     -62.24390312908251,
+     -60.256096870917496
+    ],
+    "mcnemar_p": 0.0
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true,
+    "calib_stride": 1
+   }
+  },
+  "eq + minmax": {
+   "accuracy": 0.581,
+   "delta_pp": -21.560000000000002,
+   "ci95_pp": [
+    -22.461848459678233,
+    -20.65815154032177
+   ],
+   "mcnemar_p": 0.0,
+   "regressions": 2369,
+   "fixes": 213,
+   "vs_advised": {
+    "delta_pp": -18.04,
+    "ci95_pp": [
+     -18.919286321367508,
+     -17.160713678632494
+    ],
+    "mcnemar_p": 0.0
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "equalize": true,
+    "calibrate_method": "minmax",
+    "calib_stride": 1
+   }
+  }
+ }
+}
