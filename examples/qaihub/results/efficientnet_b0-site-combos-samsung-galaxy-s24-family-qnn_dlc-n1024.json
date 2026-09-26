@@ -1,0 +1,222 @@
+{
+  "model": "efficientnet_b0",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "qnn_dlc",
+  "n": 1024,
+  "ranking": [
+    [
+      "/features/features.7/features.7.0/block/block.0/block.0.0/Conv",
+      24.36541499241595
+    ],
+    [
+      "/features/features.5/features.5.0/block/block.0/block.0.0/Conv",
+      11.478837974665929
+    ],
+    [
+      "/features/features.6/features.6.0/block/block.0/block.0.0/Conv",
+      8.385236849304075
+    ],
+    [
+      "/features/features.6/features.6.1/block/block.0/block.0.0/Conv",
+      4.364249805397729
+    ],
+    [
+      "/features/features.3/features.3.1/block/block.0/block.0.0/Conv",
+      3.222767830528063
+    ],
+    [
+      "/features/features.6/features.6.2/block/block.0/block.0.0/Conv",
+      2.869659394164997
+    ],
+    [
+      "/features/features.3/features.3.0/block/block.0/block.0.0/Conv",
+      2.6232678754261807
+    ],
+    [
+      "/features/features.4/features.4.2/block/block.0/block.0.0/Conv",
+      2.544278195695108
+    ],
+    [
+      "/features/features.0/features.0.0/Conv",
+      2.378061487228451
+    ],
+    [
+      "/features/features.6/features.6.3/block/block.0/block.0.0/Conv",
+      1.7732578165261588
+    ],
+    [
+      "/features/features.4/features.4.1/block/block.0/block.0.0/Conv",
+      1.6763298549259045
+    ],
+    [
+      "/features/features.5/features.5.1/block/block.0/block.0.0/Conv",
+      1.4089294230496157
+    ],
+    [
+      "/features/features.5/features.5.2/block/block.0/block.0.0/Conv",
+      1.2038583220981838
+    ],
+    [
+      "/features/features.4/features.4.0/block/block.0/block.0.0/Conv",
+      0.978737018128816
+    ],
+    [
+      "/features/features.2/features.2.1/block/block.0/block.0.0/Conv",
+      0.8569464760579625
+    ],
+    [
+      "/features/features.2/features.2.0/block/block.0/block.0.0/Conv",
+      0.852998030913094
+    ]
+  ],
+  "variants": {
+    "fp32": {
+      "inference_job": "jp1nm4rlg",
+      "profile_job": "jprl7vkep",
+      "latency_ms": 0.842,
+      "compute_units": {
+        "NPU": 242
+      },
+      "accuracy": 0.74609375
+    },
+    "all": {
+      "inference_job": "jgddmxjlg",
+      "profile_job": "jpyoy1e45",
+      "latency_ms": 0.544,
+      "compute_units": {
+        "NPU": 260
+      },
+      "accuracy": 0.7392578125,
+      "delta_pp": -0.68359375,
+      "ci95_pp": [
+        -2.2497618487058486,
+        0.8825743487058484
+      ],
+      "mcnemar_p": 0.4638176178968696
+    },
+    "all - 2.1": {
+      "inference_job": "j57e8yzrp",
+      "profile_job": "jp0mxzyeg",
+      "latency_ms": 0.527,
+      "compute_units": {
+        "NPU": 259
+      },
+      "accuracy": 0.740234375,
+      "delta_pp": -0.5859375,
+      "ci95_pp": [
+        -2.0926444591174405,
+        0.9207694591174401
+      ],
+      "mcnemar_p": 0.5257733601756501,
+      "sites": [
+        "/features/features.7/features.7.0/block/block.0/block.0.0/Conv",
+        "/features/features.5/features.5.0/block/block.0/block.0.0/Conv",
+        "/features/features.6/features.6.0/block/block.0/block.0.0/Conv",
+        "/features/features.6/features.6.1/block/block.0/block.0.0/Conv",
+        "/features/features.3/features.3.1/block/block.0/block.0.0/Conv",
+        "/features/features.6/features.6.2/block/block.0/block.0.0/Conv",
+        "/features/features.3/features.3.0/block/block.0/block.0.0/Conv",
+        "/features/features.4/features.4.2/block/block.0/block.0.0/Conv",
+        "/features/features.0/features.0.0/Conv",
+        "/features/features.6/features.6.3/block/block.0/block.0.0/Conv",
+        "/features/features.4/features.4.1/block/block.0/block.0.0/Conv",
+        "/features/features.5/features.5.1/block/block.0/block.0.0/Conv",
+        "/features/features.5/features.5.2/block/block.0/block.0.0/Conv",
+        "/features/features.4/features.4.0/block/block.0/block.0.0/Conv",
+        "/features/features.2/features.2.0/block/block.0/block.0.0/Conv"
+      ],
+      "vs_all": {
+        "delta_pp": 0.09765625,
+        "ci95_pp": [
+          -1.0666071507205097,
+          1.2619196507205097
+        ],
+        "mcnemar_p": 1.0
+      },
+      "latency_saving_ms": 0.017000000000000015
+    },
+    "all - 2.x": {
+      "inference_job": "jpxlzkv9p",
+      "profile_job": "jp8ekqo8p",
+      "latency_ms": 0.496,
+      "compute_units": {
+        "NPU": 258
+      },
+      "accuracy": 0.724609375,
+      "delta_pp": -2.1484375,
+      "ci95_pp": [
+        -3.8553621621102554,
+        -0.4415128378897449
+      ],
+      "mcnemar_p": 0.018316097516916315,
+      "sites": [
+        "/features/features.7/features.7.0/block/block.0/block.0.0/Conv",
+        "/features/features.5/features.5.0/block/block.0/block.0.0/Conv",
+        "/features/features.6/features.6.0/block/block.0/block.0.0/Conv",
+        "/features/features.6/features.6.1/block/block.0/block.0.0/Conv",
+        "/features/features.3/features.3.1/block/block.0/block.0.0/Conv",
+        "/features/features.6/features.6.2/block/block.0/block.0.0/Conv",
+        "/features/features.3/features.3.0/block/block.0/block.0.0/Conv",
+        "/features/features.4/features.4.2/block/block.0/block.0.0/Conv",
+        "/features/features.0/features.0.0/Conv",
+        "/features/features.6/features.6.3/block/block.0/block.0.0/Conv",
+        "/features/features.4/features.4.1/block/block.0/block.0.0/Conv",
+        "/features/features.5/features.5.1/block/block.0/block.0.0/Conv",
+        "/features/features.5/features.5.2/block/block.0/block.0.0/Conv",
+        "/features/features.4/features.4.0/block/block.0/block.0.0/Conv"
+      ],
+      "vs_all": {
+        "delta_pp": -1.46484375,
+        "ci95_pp": [
+          -2.8288100251278863,
+          -0.1008774748721136
+        ],
+        "mcnemar_p": 0.04887389231827033
+      },
+      "latency_saving_ms": 0.04800000000000004
+    },
+    "stem + 3.0 only": {
+      "inference_job": "j5m0lnrqg",
+      "profile_job": "j5qld68mp",
+      "latency_ms": 0.445,
+      "compute_units": {
+        "NPU": 246
+      },
+      "accuracy": 0.6962890625,
+      "delta_pp": -4.98046875,
+      "ci95_pp": [
+        -6.898928169682026,
+        -3.0620093303179736
+      ],
+      "mcnemar_p": 4.945479817326375e-07,
+      "sites": [
+        "/features/features.0/features.0.0/Conv",
+        "/features/features.3/features.3.0/block/block.0/block.0.0/Conv"
+      ],
+      "vs_all": {
+        "delta_pp": -4.296875,
+        "ci95_pp": [
+          -5.988514027424538,
+          -2.605235972575463
+        ],
+        "mcnemar_p": 8.142666624995286e-07
+      },
+      "latency_saving_ms": 0.09900000000000003
+    },
+    "none": {
+      "inference_job": "jgnzw62mg",
+      "profile_job": "jglyqvnl5",
+      "latency_ms": 0.413,
+      "compute_units": {
+        "NPU": 244
+      },
+      "accuracy": 0.6259765625,
+      "delta_pp": -12.01171875,
+      "ci95_pp": [
+        -14.449618205937883,
+        -9.573819294062117
+      ],
+      "mcnemar_p": 7.144231342234899e-22
+    }
+  }
+}
