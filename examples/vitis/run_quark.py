@@ -63,7 +63,10 @@ def qconfig(label: str):
 VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xint8 keep sigmoid",
             "xint8 keep sigmoid + anneal eq", "a8w8", "a8w8 + anneal eq", "a8w8 per-ch w", "a8w8 per-ch w + anneal eq",
             # the HardSigmoid-sum surrogate (anneal.core.surrogate): only HardSigmoids reach the NPU
-            "fp32 surrogate", "xint8 + surrogate", "xint8 + anneal eq + surrogate"]
+            "fp32 surrogate", "xint8 + surrogate", "xint8 + anneal eq + surrogate",
+            # per-tensor-aware equalisation (XINT8 quantizes weights per tensor): squeeze-excite and
+            # residual sites, activation/weight mix t=0.5, ReLU CLE capped at 4x
+            "xint8 + anneal pt-eq", "xint8 + anneal pt-eq + surrogate", "a8w8 + anneal pt-eq"]
 
 
 def hardsigmoid_copy(src: Path, dst: Path) -> None:
@@ -147,7 +150,14 @@ def main() -> None:
         sur, eq_sur = mdir / f"{name}-surrogate.onnx", mdir / f"{name}-equalised-surrogate.onnx"
         replace_sigmoids(src, sur, calib_imgs, k_terms=3)
         replace_sigmoids(eq, eq_sur, calib_imgs, k_terms=3)
-        models = {"plain": src, "eq": eq, "sur": sur, "eq sur": eq_sur}
+        from anneal.core.cle import cross_layer_equalise
+
+        pt = mdir / f"{name}-pt-equalised.onnx"
+        equalise(src, pt, calib_imgs, residual=True, se=True, mix=(0.5, 0.5))
+        cross_layer_equalise(pt, pt, max_scale=4.0)
+        pt_sur = mdir / f"{name}-pt-equalised-surrogate.onnx"
+        replace_sigmoids(pt, pt_sur, calib_imgs, k_terms=3)
+        models = {"plain": src, "eq": eq, "sur": sur, "eq sur": eq_sur, "pt": pt, "pt sur": pt_sur}
 
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)  # batch 1: Quark may fix it
         batches = list(ev.batches())
@@ -167,7 +177,8 @@ def main() -> None:
         preds = {"fp32": predict(src, "fp32")}
         rows, timing = {}, {}
         for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
-            which = ("eq sur" if "anneal eq" in label and "surrogate" in label else "eq" if "anneal eq" in label
+            which = ("pt sur" if "pt-eq" in label and "surrogate" in label else "pt" if "pt-eq" in label
+                     else "eq sur" if "anneal eq" in label and "surrogate" in label else "eq" if "anneal eq" in label
                      else "sur" if "surrogate" in label else "plain")
             dst = mdir / (label.replace(" ", "_").replace("+", "plus") + ".onnx")
             t = time.time()
