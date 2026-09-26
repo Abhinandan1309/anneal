@@ -159,3 +159,29 @@ def test_advice_is_contradicted_only_by_a_significant_difference():
     v.best_vs_recommended_p = 0.01
     assert v.advice_contradicted
     assert not Verification("emulated", 1000, 0.7, None, [], "rec", [], best_vs_recommended_p=1.0).advice_contradicted
+
+
+def _with_attention(src: Path, dst: Path, softmax: bool) -> Path:
+    """The gated model plus an attention-like MatMul on its output (with or without Softmax)."""
+    m = onnx.load(str(src))
+    out = m.graph.output[0].name
+    nodes = [helper.make_node("Transpose", [out], ["zt"], perm=[0, 1, 3, 2]),
+             helper.make_node("MatMul", [out, "zt"], ["att"])]
+    if softmax:
+        nodes.append(helper.make_node("Softmax", ["att"], ["att_s"], axis=-1))
+    m.graph.node.extend(nodes)
+    del m.graph.output[:]
+    m.graph.output.append(helper.make_tensor_value_info("att_s" if softmax else "att", TensorProto.FLOAT, None))
+    onnx.save(m, str(dst))
+    return dst
+
+
+def test_gated_chains_decide_the_family_before_layernorm_and_attention(tmp_path: Path):
+    src = _model(tmp_path / "s.onnx", "silu")
+    # softmax attention between gated blocks (MobileViT): the gated recipe applies
+    assert profile(_with_attention(src, tmp_path / "soft.onnx", softmax=True)).family == "gated-depthwise"
+    # linear attention, no Softmax (EfficientViT): its own recipe, attention MatMuls in float
+    lin = _with_attention(src, tmp_path / "lin.onnx", softmax=False)
+    assert profile(lin).family == "gated-linear-attention"
+    rec = advise(lin, "arm-dotprod").recommended.params
+    assert rec["quantize_ops"] == "conv" and rec["equalize"] and rec["equalize_dense"]

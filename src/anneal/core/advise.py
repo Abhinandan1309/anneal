@@ -13,8 +13,12 @@ evidence is. The two inputs that decide the recipe are:
   ``convnext``          LayerNorm + depthwise convs. No recipe tested here gets within 2pp;
                         the advice says so.
   ``gated-depthwise``   Conv -> SiLU/Hardswish -> depthwise chains (EfficientNet,
-                        MobileNetV3). Per-tensor activation scales collapse these on every
+                        MobileNetV3, and MobileViT, whose softmax attention sits between
+                        such blocks). Per-tensor activation scales collapse these on every
                         CPU; equalisation + asymmetric percentile + float stem fixes them.
+  ``gated-linear-attention``  the same chains plus linear attention (MatMul, no Softmax;
+                        EfficientViT). Every per-tensor recipe loses ~72pp; attention MatMuls
+                        in float + gated and dense equalisation + four 16-bit tensors: -7pp.
   ``cnn``               everything else with convolutions (ResNet, RegNet, MobileNetV2,
                         ShuffleNet, MnasNet). Fine on 32-bit hardware; on x86 without VNNI
                         the stem saturates, which keeping it in float removes. Symmetric
@@ -125,12 +129,16 @@ def profile(model_path: Path) -> ModelProfile:
     convs, matmuls, lns = ops["Conv"], ops["MatMul"] + ops["Gemm"], ops["LayerNormalization"]
     lns += _count_decomposed_layernorm(model)
 
-    if lns and depthwise:
+    # Gated chains decide first: MobileViT and EfficientViT also have LayerNorm and depthwise
+    # convs, and were misfiled as convnext (docs/zoo_gated_predictions.md, prediction 4).
+    if gated and ops["MatMul"] and not ops["Softmax"]:
+        family = "gated-linear-attention"
+    elif gated:
+        family = "gated-depthwise"
+    elif lns and depthwise:
         family = "convnext"
     elif lns and matmuls > convs:
         family = "transformer"
-    elif gated:
-        family = "gated-depthwise"
     elif convs:
         family = "cnn"
     else:
@@ -215,6 +223,30 @@ def advise(model_path: Path, int8_path: str) -> Advice:
         ]
         confidence = "low"
         caveats.append("No validated recipe for this family: verify, and consider keeping the model FP32.")
+    elif prof.family == "gated-linear-attention":
+        rec = Candidate(
+            "attention in float + gated, residual and dense equalisation + 4 tensors at 16 bits",
+            {**BASE, "calibrate_method": "percentile_asym", "calib_percentile": 99.99, "quantize_ops": "conv",
+             "equalize": True, "equalize_residual": True, "equalize_dense": True, "int16_top_k": 4},
+            "Quantize only Conv/Gemm (the linear attention's MatMuls and normaliser stay float), "
+            "equalise the gated chains, the stem's residual one and the dense consumers, and keep "
+            "the four most damaged tensors at 16 bits.",
+        )
+        alts = [
+            Candidate("attention in float + equalisation",
+                      {**BASE, "calibrate_method": "percentile_asym", "calib_percentile": 99.99,
+                       "quantize_ops": "conv", "equalize": True, "equalize_dense": True},
+                      "Without the 16-bit tensors and the residual site: no mixed precision needed."),
+            Candidate("onnxruntime default", {**BASE, "calibrate_method": "minmax"},
+                      "Control: every per-tensor recipe tested lost ~72pp on EfficientViT-B0."),
+        ]
+        evidence = [
+            "EfficientViT-B0, Imagenette 2,048 images: -72pp for every standard recipe; this recipe -7.0pp "
+            "(residual site +5.7pp, p=9e-10).",
+            "EfficientViT-B1, same: -80pp -> -7.0pp; the residual site is neutral there (-0.2pp, p=0.73).",
+        ]
+        confidence = "medium"
+        caveats.append("Measured on Imagenette only, and ~7pp remain: verify; FP16 may be the better target.")
     elif prof.family == "gated-depthwise":
         eq = {**BASE, **P_STEM, "equalize": True}
         # reduce_range helped the SiLU net on non-VNNI x86 (EfficientNet-B0: -3.1 -> -0.6pp)
