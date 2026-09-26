@@ -17,8 +17,9 @@ evidence is. The two inputs that decide the recipe are:
                         CPU; equalisation + asymmetric percentile + float stem fixes them.
   ``cnn``               everything else with convolutions (ResNet, RegNet, MobileNetV2,
                         ShuffleNet, MnasNet). Fine on 32-bit hardware; on x86 without VNNI
-                        full-range weights saturate, which percentile + float stem or
-                        reduce_range removes.
+                        the stem saturates, which keeping it in float removes. Symmetric
+                        99.999 percentile; reduce_range and a 99.99 percentile both cost
+                        ~0.5pp on ImageNet.
 
 * **the INT8 path** (:func:`anneal.core.environment.cpu_features`): ``x86-avx2-16bit`` is the
   one whose 16-bit pair sums saturate; ``x86-vnni`` and ``arm-dotprod`` accumulate in 32 bits.
@@ -256,25 +257,29 @@ def advise(model_path: Path, int8_path: str) -> Advice:
         caveats.append(f"{prof.gated_sites} gated chains will be equalised. EfficientNet-B1 kept ~7pp "
                        "after this recipe; verify.")
     elif prof.family == "cnn":
+        # ImageNet ablation (examples/advise/resnet50_ablation.json, 10,000 images): the earlier
+        # advice, asymmetric 99.99 percentile + float stem (+ reduce_range on this CPU), lost
+        # 0.44pp (0.65pp fused) to plain symmetric 99.999 percentile. 99.99 clips too much, and
+        # reduce_range costs ~0.5pp once the float stem has removed the saturation.
         rec = Candidate(
-            "percentile + float stem" + (" + reduce_range" if saturating else ""),
-            {**BASE, **P_STEM, **({"reduce_range": True} if saturating else {})},
-            "Asymmetric percentile calibration and a float stem"
-            + ("; 7-bit weights so full-range per-channel weights cannot saturate this CPU's "
-               "16-bit pair sums." if saturating else "."),
+            "percentile 99.999 + float stem",
+            {**BASE, "calibrate_method": "percentile", "calib_percentile": 99.999, "float_stem": True},
+            "Symmetric 99.999 percentile calibration, stem kept in float"
+            + ("; the float stem is what removes this CPU's 16-bit pair-sum saturation." if saturating
+               else "; the stem costs nothing measurable here and protects non-VNNI x86."),
         )
-        alts = []
-        if saturating:
-            alts.append(Candidate("percentile + float stem", {**BASE, **P_STEM},
-                                  "Without reduce_range: the float stem alone removed ResNet-50's saturation."))
+        alts = [Candidate("minmax + float stem", {**BASE, "calibrate_method": "minmax", "float_stem": True},
+                          "Within noise of the recommendation on ResNet-50 (ImageNet).")]
         alts.append(Candidate("onnxruntime default", {**BASE, "calibrate_method": "minmax"},
                               "Control: fine on 32-bit hardware, 8-18pp worse on non-VNNI x86."))
         evidence = [
+            "ResNet-50, ImageNet (10,000 images): -0.14pp emulated, -0.04pp on non-VNNI x86 (real kernels); "
+            "adding reduce_range: -0.63pp; asymmetric 99.99 percentile: -0.54pp.",
             "ResNet-50, MobileNetV2, RegNetY, ShuffleNetV2, MnasNet (1,024 images): default -8 to -18pp "
-            "on non-VNNI x86, ~0 emulated; this recipe within ~2.6pp on the laptop.",
+            "on non-VNNI x86, ~0 emulated.",
             "ResNet-18 on five CPUs: the loss appears only on x86 without VNNI; the stem is the saturating layer.",
         ]
-        confidence = "high" if saturating else "medium"
+        confidence = "high"
     else:
         rec = Candidate("onnxruntime default", {**BASE, "calibrate_method": "minmax"},
                         "No convolutions or recognised structure; nothing measured here applies.")

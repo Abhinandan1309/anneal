@@ -20,11 +20,12 @@ accumulation as on ARM and NPUs). Accuracy change vs FP32:
 | MobileNetV3-Large (49,000) | −5.4pp | −2.7pp | **−1.01pp** |
 | ViT-B/16 (10,000) | −6.7pp | −6.7pp | **−0.73pp** |
 | ConvNeXt-Tiny (10,000) | −0.9pp | −0.9pp | **−0.53pp** |
-| ResNet-50 (10,000) | −0.2pp | **−0.1pp** | −0.54pp ¹ |
+| ResNet-50 (10,000) | −0.2pp | −0.1pp | −0.14pp ¹ |
 
 Published post-training results for EfficientNet-B0: −4.8pp (NVIDIA, entropy), −3.0pp (HPTQ).
-¹ The advisor's recipe lost to plain percentile calibration here; the rule for plain ReLU
-networks is being corrected.
+¹ Corrected advice. The first rule (asymmetric 99.99 percentile) lost 0.44pp to plain
+percentile here; an [ablation](examples/advise/resnet50_ablation.json) traced it to over-clipping
+and to `reduce_range`, and the rule for plain ReLU networks was changed. All three are within noise.
 
 **Real edge devices** (Qualcomm AI Hub, Qualcomm's own quantizer, EfficientNet-B0):
 

@@ -75,11 +75,14 @@ def test_hardswish_nets_keep_full_range_weights_even_on_saturating_x86(tmp_path:
     assert any(c.params.get("reduce_range") for c in a.alternatives)
 
 
-def test_relu_cnns_get_percentile_and_float_stem(tmp_path: Path):
-    a = advise(_model(tmp_path / "r.onnx", "relu"), "x86-avx2-16bit")
-    assert a.recommended.params["calibrate_method"] == "percentile_asym"
+@pytest.mark.parametrize("path", ["x86-avx2-16bit", "arm-dotprod"])
+def test_relu_cnns_get_symmetric_percentile_and_float_stem_without_reduce_range(tmp_path: Path, path):
+    # ImageNet ablation: 99.99 clipped too much and reduce_range cost ~0.5pp on ResNet-50.
+    a = advise(_model(tmp_path / "r.onnx", "relu"), path)
+    assert a.recommended.params["calibrate_method"] == "percentile"
+    assert a.recommended.params["calib_percentile"] == 99.999
     assert a.recommended.params["float_stem"] is True
-    assert a.recommended.params["reduce_range"] is True
+    assert not a.recommended.params.get("reduce_range")
     assert "equalize" not in a.recommended.params
 
 
