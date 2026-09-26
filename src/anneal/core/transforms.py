@@ -1549,7 +1549,7 @@ REGISTRY: dict[str, TransformSpec] = {
                     "of this many such HardSigmoids, sum_i w_i h(k_i x + b_i) with exact 0/1 "
                     "asymptotes, fitted per gate on its calibration inputs (x^2-weighted for SiLU). "
                     "AMD's plain swap costs EfficientNet-B0 48.8pp and B1 75.7pp top-1 in float; "
-                    "3 terms: +0.00pp and -2.0pp vs FP32. Applied after equalisation; 0 = off."
+                    "3 terms: +0.2pp and -0.5pp vs FP32 (Imagenette 1000). Applied after equalisation; 0 = off."
                 ),
             },
             "float_gates": {

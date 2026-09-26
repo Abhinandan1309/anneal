@@ -19,7 +19,7 @@ k, b, w are scalars fitted *per gate* on that gate's own input distribution, mea
 calibration images. A SiLU gate (a Sigmoid whose output multiplies its own input) propagates
 ``x * (sigmoid(x) - s(x))``, so its loss is weighted by x^2; a squeeze-excite gate propagates the
 error itself, unweighted. Measured in float on Imagenette against FP32 (examples/vitis/
-surrogate_float.py): K=3 recovers EfficientNet-B0 to +0.00pp and EfficientNet-B1 to -2.0pp,
+surrogate_float.py): K=3 recovers EfficientNet-B0 to +0.2pp and EfficientNet-B1 to -0.5pp (LM fit, Imagenette 1000),
 from AMD's -48.8pp and -75.7pp.
 """
 
