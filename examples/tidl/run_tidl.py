@@ -63,6 +63,11 @@ VARIANTS = {
     "tidl 8-bit + cle (max scale 4)": ("cle4", COMMON),
     # activation-aware CLE: s_act^0.5 * s_cle^0.5 (best in the local TIDL emulation, +6.5pp on MobileNetV2)
     "tidl 8-bit + cle (activation-aware)": ("cle_t05", COMMON),
+    # 16-bit feature maps for the tensors Anneal ranks most damaging at 8 bits (noise injection on
+    # calibration images, anneal.core.activation_sensitivity), through TIDL's own 16-bit list
+    "tidl 8-bit + anneal 16-bit top4": ("plain", {**COMMON, "_top16": 4}),
+    "tidl 8-bit + anneal 16-bit top8": ("plain", {**COMMON, "_top16": 8}),
+    "tidl 8-bit + equalised + anneal 16-bit top4": ("equalised", {**COMMON, "_top16": 4}),
 }
 
 
@@ -154,7 +159,7 @@ def main() -> None:
             return np.array(out)
 
         preds = {"fp32": predict(session(src, ["CPUExecutionProvider"], None))}
-        rows, timing = {}, {}
+        rows, timing, rankings = {}, {}, {}
         for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
             which, opts = VARIANTS[label]
             art = mdir / "artifacts" / re.sub(r"[^A-Za-z0-9]+", "_", label.replace("+", "plus")).strip("_")  # TI tools run shell commands on this path
@@ -162,13 +167,24 @@ def main() -> None:
             art.mkdir(parents=True)
             t = time.time()
             try:
+                opts = dict(opts)
+                k16 = opts.pop("_top16", None)
+                if k16:
+                    from anneal.core.activation_sensitivity import rank_activation_tensors
+
+                    if which not in rankings:
+                        rankings[which] = rank_activation_tensors(models[which], calib_imgs[:32], calib_imgs[32:])
+                    top = [r.tensor for r in rankings[which][:k16]]
+                    opts["advanced_options:output_feature_16bit_names_list"] = ",".join(top)
+                    timing.setdefault(label, {})["int16_tensors"] = top
+                    print(f"  {name} {label}: 16-bit {top}", flush=True)
                 comp = session(models[which], ["TIDLCompilationProvider", "CPUExecutionProvider"],
                                {**opts, "artifacts_folder": str(art), "tidl_tools_path": tools})
                 inp = comp.get_inputs()[0].name
                 for x in calib_imgs[: opts["advanced_options:calibration_frames"]]:
                     comp.run(None, {inp: x})
                 del comp
-                timing[label] = {"compile_s": time.time() - t}
+                timing.setdefault(label, {})["compile_s"] = time.time() - t
                 t = time.time()
                 preds[label] = predict(session(models[which], ["TIDLExecutionProvider", "CPUExecutionProvider"],
                                                {"artifacts_folder": str(art), "debug_level": 0}), label)
