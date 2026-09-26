@@ -396,3 +396,36 @@ def test_activation_aware_cle_stays_exact(tmp_path, t):
     before = s.run(None, {name: batches[0]})[0]
     after = ort.InferenceSession(str(dst), providers=["CPUExecutionProvider"]).run(None, {name: batches[0]})[0]
     assert np.abs(after - before).max() <= 1e-4 * max(1.0, np.abs(before).max())
+
+
+def test_cle_max_scale_caps_the_scales_and_is_recorded_only_when_set(tmp_path: Path):
+    src = _model(tmp_path / "m.onnx", "chain")
+    calib = SyntheticEvalSet(shape=(C_IN, 8, 8), n=16, batch_size=8, n_classes=4)
+
+    def run(params, name):
+        return apply_transform("quantize_static_int8", {"per_channel": False, "cle": True, **params},
+                               ModelArtifact(path=src), TransformContext(workdir=tmp_path / name, calibset=calib))
+
+    free = run({}, "free")
+    assert "cle_max_scale" not in free.lineage[-1].params
+    capped = run({"cle_max_scale": 1.5}, "capped")
+    assert capped.lineage[-1].params["cle_max_scale"] == 1.5
+    assert capped.meta["cle"]["max_scale"] <= 1.5 + 1e-3 < free.meta["cle"]["max_scale"]
+    assert capped.lineage_key != free.lineage_key
+
+
+@pytest.mark.parametrize("params", [
+    {"cle": True, "cle_max_scale": 0.5},
+    {"cle": True, "cle_max_scale": True},
+    {"cle": True, "cle_max_scale": "4"},
+    {"cle": True, "cle_max_scale": float("inf")},
+    {"cle_max_scale": 4},  # without cle
+])
+def test_cle_max_scale_is_validated(tmp_path: Path, params):
+    from anneal.core.transforms import TransformError
+
+    calib = SyntheticEvalSet(shape=(C_IN, 8, 8), n=8, batch_size=8, n_classes=4)
+    with pytest.raises(TransformError):
+        apply_transform("quantize_static_int8", {"per_channel": False, **params},
+                        ModelArtifact(path=_model(tmp_path / "m.onnx", "chain")),
+                        TransformContext(workdir=tmp_path / "w", calibset=calib))

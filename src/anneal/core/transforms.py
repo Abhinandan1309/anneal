@@ -792,6 +792,8 @@ def quantize_static_int8(
     ``cle`` first applies data-free cross-layer weight equalisation
     (:mod:`anneal.core.cle`) across Conv/Gemm -> ReLU/ReLU6 -> Conv/Gemm pairs, for targets whose
     weights are quantized per tensor; it runs before ``equalize`` when both are set.
+    ``cle_max_scale`` caps each pair's cumulative scale (default 1000); 4 kept MobileNetV2 on
+    TI's TDA4VM at -1.2pp where uncapped CLE lost 16.7pp through its unfused ReLU6 ceilings.
     ``sigmoid_surrogate`` (K > 0) then replaces every Sigmoid by a per-gate fitted sum of K
     fixed HardSigmoids (see :mod:`anneal.core.surrogate`), the only gate AMD's NPUs run.
 
@@ -822,6 +824,14 @@ def quantize_static_int8(
     guard = bool(params.get("guard_saturation", False))
     tolerance = float(params.get("saturation_tolerance", SATURATION_TOLERANCE))
     cle = bool(params.get("cle", False))
+    cle_max_scale = params.get("cle_max_scale")
+    if cle_max_scale is not None:
+        if not cle:
+            raise TransformError("cle_max_scale only applies together with cle")
+        if (isinstance(cle_max_scale, bool) or not isinstance(cle_max_scale, (int, float))
+                or not np.isfinite(cle_max_scale) or cle_max_scale < 1):
+            raise TransformError(f"cle_max_scale must be a number >= 1, got {cle_max_scale!r}")
+        cle_max_scale = float(cle_max_scale)
     equalize = bool(params.get("equalize", False))
     equalize_dense = bool(params.get("equalize_dense", False))
     equalize_residual = bool(params.get("equalize_residual", False))
@@ -925,6 +935,8 @@ def quantize_static_int8(
             # Recorded only when on, so recipes without the guard keep their lineage keys.
             **({"guard_saturation": True, "saturation_tolerance": tolerance} if guard else {}),
             **({"cle": True} if cle else {}),
+            # Recorded only when set, so uncapped (default 1000x) CLE recipes keep their keys.
+            **({"cle_max_scale": cle_max_scale} if cle_max_scale is not None else {}),
             **(
                 {"equalize": True, "equalize_slack": slack, "float_gates": float_gates}
                 if equalize
@@ -967,7 +979,8 @@ def quantize_static_int8(
 
         cle_path = out.with_name(out.stem + "-cle-fp32.onnx")
         cle_result = cross_layer_equalise(
-            src, cle_path, check_batch=next(iter(calib_source.calibration_batches(1)), None)
+            src, cle_path, check_batch=next(iter(calib_source.calibration_batches(1)), None),
+            **({"max_scale": cle_max_scale} if cle_max_scale is not None else {}),
         )
         src = cle_path
         eq_meta["cle"] = cle_result.summary()
@@ -1349,6 +1362,17 @@ REGISTRY: dict[str, TransformSpec] = {
                     "(+ MaxPool/zero Pad) -> Conv/depthwise Conv/Gemm, so each weight tensor's "
                     "channels share one range. Exact in float. For targets that quantize weights "
                     "per tensor (TI TIDL, AMD XINT8; per_channel false); ReLU6/Clip is left alone."
+                ),
+            },
+            "cle_max_scale": {
+                "type": "number",
+                "minimum": 1,
+                "description": (
+                    "With cle: clamp each pair's cumulative scale to [1/m, m] (default 1000). "
+                    "Small caps matter through ReLU6: the exact rewrite adds unfused per-channel "
+                    "Min ceilings whose inputs are quantized before clipping. On TI TDA4VM, "
+                    "MobileNetV2 with CLE lost 16.7pp uncapped, 12.9pp at 16 and only 1.2pp at 4 "
+                    "(8-bit baseline -10.7pp)."
                 ),
             },
             "equalize": {

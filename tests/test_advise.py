@@ -185,3 +185,86 @@ def test_gated_chains_decide_the_family_before_layernorm_and_attention(tmp_path:
     assert profile(lin).family == "gated-linear-attention"
     rec = advise(lin, "arm-dotprod").recommended.params
     assert rec["quantize_ops"] == "conv" and rec["equalize"] and rec["equalize_dense"]
+
+
+# ---------------------------------------------------------------------------
+# Accelerator targets (TI TIDL, AMD XINT8): per-tensor weights, pow2 symmetric feature maps
+# ---------------------------------------------------------------------------
+
+EMULATION = {"per_channel": False, "activation_type": "int8", "activation_symmetric": True,
+             "pow2_activation_scales": True}
+
+
+def _emulates(params: dict) -> bool:
+    return all(params.get(k) == v for k, v in EMULATION.items())
+
+
+@pytest.mark.parametrize("target", ["tidl", "amd-xint8"])
+def test_gated_nets_get_per_tensor_equalisation_with_se_sites_and_capped_cle(tmp_path: Path, target):
+    a = advise(_model(tmp_path / "s.onnx", "silu"), "arm-dotprod", target=target)
+    rec = a.recommended.params
+    assert a.target == target and a.to_dict()["target"] == target
+    assert rec["equalize"] and rec["equalize_se"] and rec["equalize_mix"] == 0.5
+    assert rec["cle"] and rec["cle_max_scale"] == 4
+    assert all(_emulates(c.params) for c in a.candidates())
+    assert any(c.label == "8-bit control" and not c.params.get("equalize") for c in a.alternatives)
+    assert any("16" in c and "tensor_bits" in c for c in a.caveats)
+    # AMD's NPU runs HardSigmoid only: SiLU nets get the surrogate there, not on TIDL.
+    assert rec.get("sigmoid_surrogate") == (3 if target == "amd-xint8" else None)
+    if target == "amd-xint8":
+        assert a.confidence == "low" and any("35.1pp" in c for c in a.caveats)
+    json.dumps(a.to_dict())
+
+
+def test_hardswish_nets_get_no_sigmoid_surrogate_on_amd(tmp_path: Path):
+    a = advise(_model(tmp_path / "h.onnx", "hardswish"), "unknown", target="amd-xint8")
+    assert "sigmoid_surrogate" not in a.recommended.params
+
+
+@pytest.mark.parametrize("target", ["tidl", "amd-xint8"])
+def test_relu_cnns_get_cle_capped_at_4_on_accelerators(tmp_path: Path, target):
+    a = advise(_model(tmp_path / "r.onnx", "relu"), target=target)
+    rec = a.recommended.params
+    assert rec["cle"] is True and rec["cle_max_scale"] == 4 and "equalize" not in rec
+    assert "float_stem" not in rec  # the whole net runs on the accelerator
+    assert all(_emulates(c.params) for c in a.candidates())
+    assert any(c.params.get("cle") and "cle_max_scale" not in c.params for c in a.alternatives)
+    assert not any("x86" in c for c in a.caveats)
+
+
+def test_other_families_keep_the_cpu_recipe_with_emulation_flags_and_say_so(tmp_path: Path):
+    a = advise(_transformer(tmp_path / "t.onnx"), "arm-dotprod", target="tidl")
+    assert a.recommended.params["quantize_ops"] == "compute"
+    assert all(_emulates(c.params) for c in a.candidates())
+    assert a.confidence == "low" and any("unvalidated" in c for c in a.caveats)
+
+
+def test_an_unknown_target_is_rejected(tmp_path: Path):
+    with pytest.raises(ValueError):
+        advise(_model(tmp_path / "r.onnx", "relu"), "arm-dotprod", target="hexagon")
+
+
+def test_a_target_recipe_builds_and_verifies_emulated(tmp_path: Path):
+    model = _classifier(tmp_path / "s.onnx")
+    data = SyntheticEvalSet(shape=(C_IN, 8, 8), n=16, batch_size=8, n_classes=4)
+    a = advise(model, "x86-vnni", target="tidl")
+    result = verify(a, model, data, data, tmp_path / "w", local_path="x86-vnni")
+    assert result.mode == "emulated"  # never this CPU's kernels, even when int8_path matches
+    for r in result.rows:
+        assert r.error is None, r.error
+    rec = next(r for r in result.rows if r.candidate.label == a.recommended.label)
+    art = onnx.load(rec.path)
+    scales = [numpy_helper.to_array(i) for i in art.graph.initializer if i.name.endswith("_scale")]
+    assert scales  # power-of-two activation scales were applied somewhere
+    assert any(np.all(np.log2(s) == np.round(np.log2(s))) for s in scales if s.size == 1)
+
+
+def test_advise_command_records_the_target(tmp_path: Path):
+    from anneal.cli import main
+
+    out = tmp_path / "advice.json"
+    assert main(["advise", str(_model(tmp_path / "r.onnx", "relu")), "--target", "tidl",
+                 "--out", str(out)]) == 0
+    report = json.loads(out.read_text(encoding="utf-8"))
+    assert report["target"] == "tidl" and report["advice"]["target"] == "tidl"
+    assert report["advice"]["recommended"]["params"]["cle_max_scale"] == 4

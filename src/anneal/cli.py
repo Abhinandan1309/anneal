@@ -1245,15 +1245,18 @@ def cmd_advise(args: argparse.Namespace) -> int:
         return 2
     local = cpu_features()["int8_path"]
     target_path = local if args.int8_path == "auto" else args.int8_path
-    advice = advise(path, target_path)
+    advice = advise(path, target_path, target=args.target)
     p = advice.profile
 
     console.print(f"[bold]{path.name}[/bold]: family [cyan]{p.family}[/cyan] - {p.convs} conv "
                   f"({p.depthwise} depthwise), {p.matmuls} matmul/gemm, {p.layernorms} layernorm; "
                   f"activations {p.activations or '-'}; {p.gated_sites} gated + {p.relu_sites} ReLU "
                   f"equalisable chains")
-    console.print(f"INT8 path: [cyan]{target_path}[/cyan]"
-                  + (" (this machine)" if args.int8_path == "auto" else f" (this machine: {local})"))
+    if args.target:
+        console.print(f"Target: [cyan]{args.target}[/cyan] (accelerator; recipes carry its emulation flags)")
+    else:
+        console.print(f"INT8 path: [cyan]{target_path}[/cyan]"
+                      + (" (this machine)" if args.int8_path == "auto" else f" (this machine: {local})"))
     console.print()
     console.print(f"[bold green]Recommended:[/bold green] {advice.recommended.label}  "
                   f"[dim](confidence: {advice.confidence})[/dim]")
@@ -1269,7 +1272,8 @@ def cmd_advise(args: argparse.Namespace) -> int:
         for alt in advice.alternatives:
             console.print(f"  - {alt.label}: {alt.why}")
 
-    report = {"model": path.name, "local_int8_path": local, "advice": advice.to_dict()}
+    report = {"model": path.name, "local_int8_path": local, "target": args.target,
+              "advice": advice.to_dict()}
     code = 0
     if args.verify:
         from anneal.core.artifact import sample_shape
@@ -1289,7 +1293,7 @@ def cmd_advise(args: argparse.Namespace) -> int:
                 console.print(f"[bold red]environment:[/bold red] {warning} Speeds below are not reliable.")
         console.print(f"Verifying on {len(evalset)} images …")
         result = verify(advice, path, evalset, calibset, Path(args.workdir), local_path=local,
-                        time_target=get_target(args.target) if args.time else None)
+                        time_target=get_target(args.time_target) if args.time else None)
         table = Table(title=f"measured ({result.mode}; FP32 {result.fp32_accuracy * 100:.2f}% on {result.n})",
                       header_style="bold")
         for col in ("recipe", "top-1", "change", "95% CI", "McNemar p", "agrees with FP32"):
@@ -1544,7 +1548,10 @@ def build_parser() -> argparse.ArgumentParser:
     adv.add_argument("--eval", default="imagenette")
     adv.add_argument("--eval-limit", type=int, default=1024)
     adv.add_argument("--time", action="store_true", help="also time each candidate (only when verifying on the target CPU)")
-    adv.add_argument("--target", default="cpu-1t", help="target used by --time")
+    adv.add_argument("--target", default=None, choices=["tidl", "amd-xint8"],
+                     help="an accelerator instead of a CPU: per-tensor weights, symmetric power-of-two "
+                          "feature maps (TI TIDL, AMD XINT8); every recipe carries its emulation flags")
+    adv.add_argument("--time-target", default="cpu-1t", help="timing target used by --time")
     adv.add_argument("--workdir", default="runs/advise")
     adv.add_argument("--out", default=None, help="write the advice (and verification) as JSON")
     adv.add_argument("--cache", default=str(DEFAULT_CACHE))

@@ -28,6 +28,11 @@ evidence is. The two inputs that decide the recipe are:
 * **the INT8 path** (:func:`anneal.core.environment.cpu_features`): ``x86-avx2-16bit`` is the
   one whose 16-bit pair sums saturate; ``x86-vnni`` and ``arm-dotprod`` accumulate in 32 bits.
 
+* optionally **an accelerator target** (:data:`ACCELERATOR_TARGETS`): ``tidl`` (TI TDA4VM) and
+  ``amd-xint8`` (AMD NPUs) quantize weights per tensor and feature maps symmetrically with
+  power-of-two scales. Every candidate then carries those emulation flags, so :func:`verify`
+  scores something close to the hardware, and the recipe is the per-tensor one measured there.
+
 The advice is a starting point with stated confidence. :func:`verify` measures it — the
 recommended recipe, its alternatives and onnxruntime's default side by side — because a rule
 learned on eleven models can be wrong on the twelfth.
@@ -45,6 +50,17 @@ import numpy as np
 INT8_PATHS = ("x86-avx2-16bit", "x86-vnni", "arm-dotprod", "unknown")
 BASE = {"per_channel": True, "activation_type": "uint8", "calib_samples": 64}
 P_STEM = {"calibrate_method": "percentile_asym", "float_stem": True}
+
+ACCELERATOR_TARGETS = ("tidl", "amd-xint8")
+#: How TI TIDL and AMD XINT8 quantize: per-tensor weights, symmetric int8 feature maps with
+#: power-of-two scales. Added to every candidate for such a target so verify emulates it.
+ACCELERATOR_EMULATION = {
+    "per_channel": False,
+    "activation_type": "int8",
+    "activation_symmetric": True,
+    "pow2_activation_scales": True,
+}
+TARGET_NAMES = {"tidl": "TI TIDL (TDA4VM)", "amd-xint8": "AMD XINT8 (Ryzen AI / Vitis AI NPU)"}
 
 
 @dataclass
@@ -78,6 +94,8 @@ class Advice:
     confidence: str  # "high", "medium", "low"
     evidence: list[str]
     caveats: list[str] = field(default_factory=list)
+    #: An accelerator from :data:`ACCELERATOR_TARGETS`, or None for a CPU.
+    target: str | None = None
 
     def candidates(self) -> list[Candidate]:
         return [self.recommended, *self.alternatives]
@@ -86,6 +104,7 @@ class Advice:
         return {
             "profile": self.profile.to_dict(),
             "int8_path": self.int8_path,
+            "target": self.target,
             "recommended": self.recommended.__dict__,
             "alternatives": [c.__dict__ for c in self.alternatives],
             "confidence": self.confidence,
@@ -176,10 +195,23 @@ def _count_decomposed_layernorm(model) -> int:
 # ---------------------------------------------------------------------------
 
 
-def advise(model_path: Path, int8_path: str) -> Advice:
+def advise(model_path: Path, int8_path: str = "unknown", target: str | None = None) -> Advice:
+    """The recipe for this model on a CPU with ``int8_path``, or on an accelerator ``target``.
+
+    With a ``target`` the CPU's INT8 path does not matter (the accelerator does the arithmetic)
+    and the per-tensor-weight recipe measured on that target replaces the CPU one.
+    """
     if int8_path not in INT8_PATHS:
         raise ValueError(f"int8_path must be one of {INT8_PATHS}, got {int8_path!r}")
+    if target is not None and target not in ACCELERATOR_TARGETS:
+        raise ValueError(f"target must be one of {ACCELERATOR_TARGETS} or None, got {target!r}")
     prof = profile(model_path)
+    if target is not None:
+        return _advise_target(prof, int8_path, target)
+    return _advise_cpu(prof, int8_path)
+
+
+def _advise_cpu(prof: ModelProfile, int8_path: str) -> Advice:
     saturating = int8_path == "x86-avx2-16bit"
     caveats: list[str] = []
     if int8_path == "unknown":
@@ -333,6 +365,102 @@ def advise(model_path: Path, int8_path: str) -> Advice:
     return Advice(prof, int8_path, rec, alts, confidence, evidence, caveats)
 
 
+def _emulated(c: Candidate) -> Candidate:
+    """The same recipe with the accelerator's quantization flags (which override its own)."""
+    params = {**c.params, **ACCELERATOR_EMULATION}
+    if params.pop("equalize_dense", False) and not params.get("equalize"):
+        # equalize_dense needs per-channel weights, which these accelerators do not have
+        params.pop("float_gates", None)
+    return Candidate(c.label, params, c.why)
+
+
+def _advise_target(prof: ModelProfile, int8_path: str, target: str) -> Advice:
+    """Per-tensor weights, symmetric power-of-two feature maps: TIDL and AMD XINT8."""
+    name = TARGET_NAMES[target]
+    base = {"calib_samples": BASE["calib_samples"], "calibrate_method": "minmax", **ACCELERATOR_EMULATION}
+    control = Candidate(
+        "8-bit control", dict(base),
+        f"Control: {name}'s plain 8-bit quantization, per-tensor weights, no equalisation.",
+    )
+    caveats = [
+        f"Scored by emulating {name} in onnxruntime (per-tensor weights, symmetric int8 feature "
+        "maps, power-of-two scales); the accelerator's own calibration and layer fusion differ, "
+        "so confirm on the device before trusting a difference of a point or two.",
+        "16-bit feature maps: TIDL's tensor_bits 16 lost ~0pp on these models. It is not a "
+        "parameter of this transform; set it in the target's toolchain if 8 bits are not enough.",
+    ]
+    silu = prof.activations.get("SiLU (Sigmoid*x)", 0) > 0
+    if prof.family == "gated-depthwise":
+        params = {**base, "equalize": True, "equalize_se": True, "equalize_mix": 0.5,
+                  "cle": True, "cle_max_scale": 4}
+        alts = [
+            Candidate("per-tensor equalisation (old)", {**base, "equalize": True, "equalize_mix": 0.5},
+                      "Gated sites only: no squeeze-excite sites, no CLE. The earlier recipe."),
+            control,
+        ]
+        evidence = [
+            "TIDL (TDA4VM emulator, Imagenette 1,500, paired): MobileNetV3-Small 8-bit -65.8pp, "
+            "old equalisation -62.9pp, this recipe -9.7pp (+53.3pp vs old, p=8e-235).",
+            "TIDL: MobileNetV3-Large -15.5pp -> -4.1pp.",
+            "AMD A8W8 (per-tensor weights): EfficientNet-B0 -15.1pp (old equalisation) -> -2.8pp.",
+        ]
+        confidence = "medium"
+        why = ("Equalise the gated and squeeze-excite chains with a 0.5 blend of cross-layer weight "
+               "equalisation (weights share one scale per tensor), plus CLE capped at 4x across "
+               "the ReLU pairs.")
+        label = "per-tensor equalisation + SE sites + CLE cap 4"
+        if target == "amd-xint8" and silu:
+            alts.insert(0, Candidate(
+                label + ", no surrogate", dict(params),
+                "Without the HardSigmoid surrogate: what the float Sigmoid would give if the NPU kept it."))
+            params["sigmoid_surrogate"] = 3
+            label += " + sigmoid surrogate"
+            why += (" Each Sigmoid becomes a fitted sum of 3 HardSigmoids, because AMD's NPU "
+                    "replaces Sigmoid by HardSigmoid.")
+            evidence.append("AMD's Sigmoid -> HardSigmoid swap in float: EfficientNet-B0 -48.8pp, "
+                            "B1 -75.7pp; with sigmoid_surrogate 3: +0.2pp / -0.5pp.")
+            caveats.append(
+                "AMD's NPU replaces Sigmoid by HardSigmoid, hence sigmoid_surrogate 3. Even with the "
+                "surrogate and equalisation, full XINT8 (power-of-two scales) still cost "
+                "EfficientNet-B0 35.1pp: no recipe here makes SiLU nets accurate on XINT8 yet.")
+            confidence = "low"
+        rec = Candidate(label, params, why)
+    elif prof.family == "cnn":
+        rec = Candidate(
+            "CLE capped at 4x", {**base, "cle": True, "cle_max_scale": 4},
+            "Cross-layer weight equalisation so each per-tensor weight scale serves every channel, "
+            "each pair's scale capped at 4x: through ReLU6 the exact rewrite adds unfused "
+            "per-channel Min ceilings whose inputs are quantized before clipping, and large "
+            "scales widen them.",
+        )
+        alts = [
+            Candidate("CLE uncapped", {**base, "cle": True},
+                      "Default cap (1000x): lost more than no CLE at all on MobileNetV2 (ReLU6)."),
+            control,
+        ]
+        evidence = [
+            "TIDL (TDA4VM emulator, Imagenette 1,500, paired): MobileNetV2 8-bit -10.7pp, "
+            "this recipe -1.2pp (+9.5pp, p=5e-21).",
+            "Same: uncapped CLE -16.7pp, cap 16 -12.9pp.",
+        ]
+        confidence = "medium" if target == "tidl" else "low"
+        caveats.append("Measured on one CNN (MobileNetV2), on TIDL"
+                       + ("." if target == "tidl" else "; unmeasured on AMD XINT8."))
+    else:
+        cpu = _advise_cpu(prof, int8_path)
+        rec = _emulated(cpu.recommended)
+        alts = [_emulated(c) for c in cpu.alternatives] + [control]
+        evidence = list(cpu.evidence)
+        confidence = "low"
+        caveats.append(f"The {target} recipe is unvalidated for the {prof.family} family: this is the "
+                       f"CPU recipe with {name}'s quantization flags added. Verify.")
+        caveats.extend(c for c in cpu.caveats if "x86" not in c)
+        if target == "amd-xint8" and silu:
+            caveats.append("AMD's NPU replaces Sigmoid by HardSigmoid; consider sigmoid_surrogate 3 "
+                           "(EfficientNet-B0 in float: -48.8pp swapped, +0.2pp with the surrogate).")
+    return Advice(prof, int8_path, rec, alts, confidence, evidence, caveats, target=target)
+
+
 # ---------------------------------------------------------------------------
 # Measuring it
 # ---------------------------------------------------------------------------
@@ -417,7 +545,11 @@ def verify(
     from anneal.core.audit import mcnemar_exact, paired_delta_ci
     from anneal.core.transforms import TransformContext, apply_transform
 
-    mode, notes = verification_mode(advice.int8_path, local_path)
+    if advice.target is not None:
+        mode, notes = "emulated", [f"Target {advice.target}: scored by emulating its arithmetic "
+                                   "(QDQ graph run in float) on this machine."]
+    else:
+        mode, notes = verification_mode(advice.int8_path, local_path)
 
     def predict(path: Path) -> np.ndarray:
         opts = ort.SessionOptions()
