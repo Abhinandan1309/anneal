@@ -55,6 +55,9 @@ def qconfig(label: str):
     cfg = copy.deepcopy(XINT8_QCONFIG)
     if "keep sigmoid" in label:
         cfg.extra_options["ConvertSigmoidToHardSigmoid"] = False
+    if "exact pool" in label:  # isolate the DPU's approximations of average pooling / ReduceMean
+        cfg.extra_options["ConvertAvgPoolToDPUVersion"] = False
+        cfg.extra_options["ConvertReduceMeanToDPUVersion"] = False
     if "cle" in label:
         cfg.algo_config = [CLEConfig()]
     return cfg
