@@ -71,13 +71,14 @@ def main() -> None:
     ap.add_argument("--src", help="an ONNX model to use instead of examples/models/<model>-fp32.onnx")
     ap.add_argument("--only", help="comma-separated variant labels")
     ap.add_argument("--tag", default="", help="suffix of the output JSON")
+    ap.add_argument("--dataset", default="imagenette", help="imagenette or imagenet (local)")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
     src = Path(args.src) if args.src else ROOT / "examples" / "models" / f"{args.model}-fp32.onnx"
     variants = {k: v for k, v in VARIANTS.items() if not args.only or k in args.only.split(",")}
     shape = sample_shape(src)
-    calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=8, limit=64, sample_shape=shape)
-    ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=32, limit=args.images, sample_shape=shape)
+    calib = load_calibset(args.dataset, cache_dir=CACHE, batch_size=8, limit=64, sample_shape=shape)
+    ev = load_evalset(args.dataset, cache_dir=CACHE, batch_size=32, limit=args.images, sample_shape=shape)
     ctx = TransformContext(workdir=ROOT / "scratch" / "efficientvit_fix" / (args.model + args.tag), calibset=calib)
     built = {}
     for k, params in variants.items():
