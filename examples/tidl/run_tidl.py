@@ -93,7 +93,7 @@ def main() -> None:
         calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=1, limit=64, sample_shape=shape)
         calib_imgs = list(calib.calibration_batches(64))
         eq = mdir / f"{name}-equalised.onnx"
-        equalise(src, eq, [np.concatenate(calib_imgs[i:i + 8]) for i in range(0, 64, 8)])
+        equalise(src, eq, calib_imgs)  # the exported graph now has batch 1
         models = {"plain": src, "equalised": eq}
         for p in models.values():
             onnx.shape_inference.infer_shapes_path(str(p), str(p))
