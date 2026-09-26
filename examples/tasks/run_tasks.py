@@ -289,6 +289,9 @@ def main() -> None:
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--calib-images", type=int, default=CALIB_IMAGES,
                     help="fewer for large inputs: calibration keeps every activation of every image in RAM")
+    ap.add_argument("--shared-concat", action="store_true",
+                    help="emulate accelerators that give a Concat's inputs one scale (TIDL, Hexagon HTP)")
+    ap.add_argument("--only", help="recipe labels to build, separated by ';'")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
 
@@ -305,6 +308,12 @@ def main() -> None:
     # Build every model first: calibration holds all activations, and open sessions on top of
     # that exhausted this laptop's RAM in an earlier run.
     recipes, adv = recipes_for(path, args.calib_images)
+    if args.only:
+        recipes = {k: v for k, v in recipes.items() if any(o.strip() and o.strip() in k for o in args.only.split(";"))}
+    if args.shared_concat:
+        recipes = {f"{k} [shared concat scale]": {**v, "concat_shared_scale": True} for k, v in recipes.items()}
+        work = work / "shared-concat"
+        work.mkdir(parents=True, exist_ok=True)
     built, failed = {}, {}
     for label, params in recipes.items():
         t = time.time()
@@ -372,7 +381,8 @@ def main() -> None:
                                     "params": recipes[k], "model_path": built[k]}
     out = HERE / "results"
     out.mkdir(exist_ok=True)
-    (out / f"{args.model}.json").write_text(json.dumps(result, indent=1), encoding="utf-8")
+    suffix = "_shared_concat" if args.shared_concat else ""
+    (out / f"{args.model}{suffix}.json").write_text(json.dumps(result, indent=1), encoding="utf-8")
     print(f"\n{args.model}: FP32 {result['metric']} {100 * result['fp32']:.2f} on {len(ids)} images")
     for k, r in result["recipes"].items():
         print(f"  {k:70s} {r['delta_pts']:+6.2f} pts [{r['ci95_pts'][0]:+.2f},{r['ci95_pts'][1]:+.2f}]", flush=True)

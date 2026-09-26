@@ -1,0 +1,87 @@
+{
+ "model": "yolov8n (Ultralytics export, 1x84x8400)",
+ "n": 300,
+ "fp32_map": 0.419652140187511,
+ "recipes": {
+  "onnxruntime default, safeguard off": {
+   "map": 0.0,
+   "delta_pts": -41.9652140187511,
+   "ci95_pts": [
+    -51.580988164382,
+    -45.373574794339625
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 16,
+    "calibrate_method": "minmax",
+    "float_mixed_outputs": false
+   },
+   "flagged": null
+  },
+  "onnxruntime default + safeguard": {
+   "map": 0.40210147466581064,
+   "delta_pts": -1.755066552170037,
+   "ci95_pts": [
+    -2.468268399304889,
+    -1.0469717142536856
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 16,
+    "calibrate_method": "minmax"
+   },
+   "flagged": [
+    {
+     "output": "output0",
+     "concat": "/model.22/Concat_3",
+     "range_ratio": 671.0,
+     "float_nodes": 16
+    }
+   ]
+  },
+  "anneal advised, safeguard off": {
+   "map": 0.0,
+   "delta_pts": -41.9652140187511,
+   "ci95_pts": [
+    -51.580988164382,
+    -45.373574794339625
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 16,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999,
+    "float_stem": true,
+    "float_mixed_outputs": false
+   },
+   "flagged": null
+  },
+  "anneal advised + safeguard (default)": {
+   "map": 0.4111302811663659,
+   "delta_pts": -0.8521859021145106,
+   "ci95_pts": [
+    -2.354137584251199,
+    -0.1612315960703936
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 16,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999,
+    "float_stem": true
+   },
+   "flagged": [
+    {
+     "output": "output0",
+     "concat": "/model.22/Concat_3",
+     "range_ratio": 671.0,
+     "float_nodes": 16
+    }
+   ]
+  }
+ }
+}

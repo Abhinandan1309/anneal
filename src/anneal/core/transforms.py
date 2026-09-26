@@ -70,6 +70,128 @@ class TransformContext:
         return self.workdir / f"{stem}-{digest}.onnx"
 
 
+#: Concatenated inputs whose ranges differ by this factor cannot share one 8-bit scale: the
+#: smallest keeps fewer than ~13 of 256 levels.
+MIXED_OUTPUT_RATIO = 20.0
+MIXED_CHECK_IMAGES = 16
+_SHAPE_OPS = {"Reshape", "Transpose", "Squeeze", "Unsqueeze", "Identity", "Flatten", "Cast"}
+_COMPUTE_OPS = {"Conv", "Gemm", "MatMul", "ConvTranspose"}
+
+
+def _output_concat(model, output: str):
+    """The Concat an output is made of, looking through shape-only ops; None if there is none."""
+    producer = {o: n for n in model.graph.node for o in n.output}
+    node = producer.get(output)
+    while node is not None and node.op_type in _SHAPE_OPS:
+        node = producer.get(node.input[0])
+    return node if node is not None and node.op_type == "Concat" else None
+
+
+def outputs_fed_by_concat(model_path: Path) -> bool:
+    import onnx
+
+    m = onnx.load(str(model_path))
+    return any(_output_concat(m, o.name) is not None for o in m.graph.output)
+
+
+def mixed_range_outputs(model_path: Path, batches, ratio: float = MIXED_OUTPUT_RATIO) -> list[dict[str, Any]]:
+    """Outputs concatenating tensors whose ranges differ by ``ratio`` or more, with their tails.
+
+    The tail is every node on a path from the output back to the nearest compute op
+    (Conv/Gemm/MatMul), which it does not include: keeping it float leaves every compute op INT8.
+    """
+    import onnx
+    import onnxruntime as ort
+    from onnx import helper
+
+    model = onnx.load(str(model_path))
+    inits = {i.name for i in model.graph.initializer}
+    producer = {o: n for n in model.graph.node for o in n.output}
+    found = []
+    for out in model.graph.output:
+        cat = _output_concat(model, out.name)
+        if cat is not None:
+            found.append((out.name, cat))
+    if not found:
+        return []
+    probe = onnx.ModelProto()
+    probe.CopyFrom(model)
+    known = {o.name for o in probe.graph.output}
+    wanted = sorted({i for _, cat in found for i in cat.input if i not in inits})
+    probe.graph.output.extend([helper.make_tensor_value_info(t, onnx.TensorProto.FLOAT, None)
+                               for t in wanted if t not in known])
+    opts = ort.SessionOptions()
+    opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
+    opts.enable_cpu_mem_arena = False
+    session = ort.InferenceSession(probe.SerializeToString(), opts, providers=["CPUExecutionProvider"])
+    input_name = session.get_inputs()[0].name
+    lo = dict.fromkeys(wanted, 0.0)
+    hi = dict.fromkeys(wanted, 0.0)
+    for batch in batches:
+        for t, v in zip(wanted, session.run(wanted, {input_name: batch})):
+            lo[t], hi[t] = min(lo[t], float(v.min())), max(hi[t], float(v.max()))
+    flagged = []
+    for name, cat in found:
+        spans = [hi[i] - lo[i] for i in cat.input if i in hi and hi[i] - lo[i] > 0]
+        if len(spans) < 2 or max(spans) / min(spans) < ratio:
+            continue
+        tail, stack = [], [name]
+        while stack:
+            node = producer.get(stack.pop())
+            if node is None or node.op_type in _COMPUTE_OPS or node.name in tail:
+                continue
+            tail.append(node.name)
+            stack += [i for i in node.input if i not in inits]
+        flagged.append({"output": name, "concat": cat.name, "range_ratio": round(max(spans) / min(spans), 1),
+                        "tail_nodes": tail})
+    return flagged
+
+
+def concat_groups(quantized: Path) -> list[tuple[list[str], tuple[float, float]]]:
+    """Each Concat of a QDQ model: its float input and output tensor names and their union range.
+
+    Ranges come from the QuantizeLinear nodes' scale and zero point (uint8 or int8 grids)."""
+    import onnx
+    from onnx import numpy_helper
+
+    m = onnx.load(str(quantized))
+    inits = {i.name: numpy_helper.to_array(i) for i in m.graph.initializer}
+    producer = {o: n for n in m.graph.node for o in n.output}
+    consumers: dict[str, list] = {}
+    for n in m.graph.node:
+        for i in n.input:
+            consumers.setdefault(i, []).append(n)
+
+    def q_range(q) -> tuple[float, float] | None:
+        if len(q.input) < 3 or q.input[1] not in inits or q.input[2] not in inits:
+            return None
+        scale, zp = inits[q.input[1]], inits[q.input[2]]
+        if np.size(scale) != 1:
+            return None
+        qmin, qmax = (0, 255) if zp.dtype == np.uint8 else (-128, 127) if zp.dtype == np.int8 else (0, 65535)
+        return float((qmin - int(zp)) * float(scale)), float((qmax - int(zp)) * float(scale))
+
+    groups = []
+    for n in m.graph.node:
+        if n.op_type != "Concat":
+            continue
+        names, ranges = [], []
+        for i in n.input:  # Concat <- DequantizeLinear <- QuantizeLinear(float tensor)
+            dq = producer.get(i)
+            q = producer.get(dq.input[0]) if dq is not None and dq.op_type == "DequantizeLinear" else None
+            if q is None or q.op_type != "QuantizeLinear" or q_range(q) is None:
+                continue
+            names.append(q.input[0])
+            ranges.append(q_range(q))
+        outs = [c for c in consumers.get(n.output[0], []) if c.op_type == "QuantizeLinear"]
+        if outs and q_range(outs[0]) is not None:
+            names.append(n.output[0])
+            ranges.append(q_range(outs[0]))
+        if len(names) >= 2:
+            groups.append((names, (min(r[0] for r in ranges), max(r[1] for r in ranges))))
+    return groups
+
+
 def mean_minmax_ranges(model_path: Path, batches) -> dict[str, tuple[float, float]]:
     """Per activation tensor: the mean over images of each image's min and max (0 included).
 
@@ -683,6 +805,8 @@ def quantize_static_int8(
         raise TransformError(f"calib_stride must be a positive integer, got {calib_stride!r}")
     float_gates = bool(params.get("float_gates", False))
     float_stem = bool(params.get("float_stem", False))
+    concat_shared = bool(params.get("concat_shared_scale", False))
+    float_mixed = bool(params.get("float_mixed_outputs", True))
     quantize_ops = params.get("quantize_ops", "default")
     if quantize_ops not in COMPUTE_OP_SETS:
         raise TransformError(f"quantize_ops must be one of {sorted(COMPUTE_OP_SETS)}, got {quantize_ops!r}")
@@ -760,6 +884,9 @@ def quantize_static_int8(
             **({"int16_tensors": list(int16_tensors)} if int16_tensors else {}),
             **({"int16_top_k": int16_top_k} if int16_top_k is not None else {}),
             **({"float_stem": True} if float_stem else {}),
+            **({"concat_shared_scale": True} if concat_shared else {}),
+            # On by default and recorded only when switched off, so earlier lineages are unchanged.
+            **({"float_mixed_outputs": False} if not float_mixed else {}),
             **({"equalize_dense": True, "equalize_slack": slack, "float_gates": float_gates}
                if equalize_dense else {}),
             **({"quantize_ops": quantize_ops} if quantize_ops != "default" else {}),
@@ -914,7 +1041,30 @@ def quantize_static_int8(
     if float_stem:
         src = _with_named_nodes(src)
         base_exclude = base_exclude + [n for n in stem_nodes(src) if n not in base_exclude]
+    mixed_meta: dict[str, Any] = {}
+    if float_mixed and outputs_fed_by_concat(src):
+        # A model output that concatenates tensors of very different ranges (a detector's pixel
+        # boxes with its 0-1 scores) cannot share one 8-bit scale: Ultralytics' YOLOv8n export
+        # scored 0 mAP. Keep that output's tail (everything after its last Conv/Gemm/MatMul) float.
+        src = _with_named_nodes(src)
+        flagged = mixed_range_outputs(src, calib_source.calibration_batches(MIXED_CHECK_IMAGES))
+        for f in flagged:
+            base_exclude = base_exclude + [n for n in f["tail_nodes"] if n not in base_exclude]
+        mixed_meta = {"mixed_range_outputs": [{k: v for k, v in f.items() if k != "tail_nodes"} | {
+            "float_nodes": len(f["tail_nodes"])} for f in flagged]}
     run_quantizer(base_exclude)
+    concat_meta: dict[str, Any] = {}
+    if concat_shared:
+        # Accelerators (TIDL, Hexagon HTP, ...) give a Concat's inputs and output one scale;
+        # onnxruntime gives each its own. Emulate the accelerator: read every range back from the
+        # quantized model, take each Concat group's union, and quantize again with it pinned.
+        groups = concat_groups(out)
+        overrides = extra.setdefault("TensorQuantOverrides", {})
+        for names, (lo, hi) in groups:
+            for t in names:
+                overrides.setdefault(t, [{}])[0].update({"rmin": np.float32(lo), "rmax": np.float32(hi)})
+        concat_meta = {"concat_groups_shared": len(groups)}
+        run_quantizer(base_exclude)
     guard_meta: dict[str, Any] = {}
     if guard:
         # Emulate the 16-bit pair arithmetic of x86 CPUs without VNNI on this very model and
@@ -937,6 +1087,8 @@ def quantize_static_int8(
         **guard_meta,
         **eq_meta,
         **int16_meta,
+        **concat_meta,
+        **mixed_meta,
         calib_samples=n_calib,
         calibration_source=(
             "eval set (overlaps evaluation images; accuracy is optimistic)"
@@ -1178,6 +1330,23 @@ REGISTRY: dict[str, TransformSpec] = {
                     "With equalize: also rewrite gated sites whose output feeds a residual Add "
                     "as well as a depthwise Conv (EfficientViT's and MobileNetV3-Large's stems). "
                     "The branch joining the Add and the Add's consumers take the scale too."
+                ),
+            },
+            "float_mixed_outputs": {
+                "type": "boolean",
+                "description": (
+                    "On by default. If a model output concatenates tensors whose ranges differ 20x "
+                    "or more (a detector's pixel boxes and 0-1 scores), keep that output's tail "
+                    "after the last Conv/Gemm/MatMul in float; one 8-bit scale on it rounds every "
+                    "score to zero (Ultralytics' YOLOv8n export: 0 mAP)."
+                ),
+            },
+            "concat_shared_scale": {
+                "type": "boolean",
+                "description": (
+                    "Emulate accelerators (TIDL, Hexagon HTP) that give a Concat's inputs and output "
+                    "one shared scale: the union of their calibrated ranges. onnxruntime alone gives "
+                    "each its own, which hides the loss detection and U-Net necks suffer on NPUs."
                 ),
             },
             "equalize_min_damage": {

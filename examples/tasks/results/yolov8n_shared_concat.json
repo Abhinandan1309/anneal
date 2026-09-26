@@ -1,0 +1,124 @@
+{
+ "model": "yolov8n",
+ "n": 300,
+ "calibration": "16 highest-id COCO val2017 images of this task, disjoint from the scored ones",
+ "mode": "emulated (32-bit accumulation)",
+ "advice": {
+  "profile": {
+   "convs": 63,
+   "depthwise": 0,
+   "matmuls": 0,
+   "layernorms": 0,
+   "gated_sites": 0,
+   "relu_sites": 0,
+   "activations": {
+    "SiLU (Sigmoid*x)": 57
+   },
+   "family": "cnn"
+  },
+  "int8_path": "arm-dotprod",
+  "recommended": {
+   "label": "percentile 99.999 + float stem",
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999,
+    "float_stem": true
+   },
+   "why": "Symmetric 99.999 percentile calibration, stem kept in float; the stem costs nothing measurable here and protects non-VNNI x86."
+  },
+  "alternatives": [
+   {
+    "label": "minmax + float stem",
+    "params": {
+     "per_channel": true,
+     "activation_type": "uint8",
+     "calib_samples": 64,
+     "calibrate_method": "minmax",
+     "float_stem": true
+    },
+    "why": "Within noise of the recommendation on ResNet-50 (ImageNet)."
+   },
+   {
+    "label": "onnxruntime default",
+    "params": {
+     "per_channel": true,
+     "activation_type": "uint8",
+     "calib_samples": 64,
+     "calibrate_method": "minmax"
+    },
+    "why": "Control: fine on 32-bit hardware, 8-18pp worse on non-VNNI x86."
+   }
+  ],
+  "confidence": "high",
+  "evidence": [
+   "ResNet-50, ImageNet (10,000 images): -0.14pp emulated, -0.04pp on non-VNNI x86 (real kernels); adding reduce_range: -0.63pp; asymmetric 99.99 percentile: -0.54pp.",
+   "ResNet-50, MobileNetV2, RegNetY, ShuffleNetV2, MnasNet (1,024 images): default -8 to -18pp on non-VNNI x86, ~0 emulated.",
+   "ResNet-18 on five CPUs: the loss appears only on x86 without VNNI; the stem is the saturating layer."
+  ],
+  "caveats": []
+ },
+ "failed_to_build": {},
+ "recipes": {
+  "minmax (onnxruntime default) [shared concat scale]": {
+   "metric": 0.4084052688371799,
+   "delta_pts": -1.124691871992789,
+   "fold_mean_delta_pts": -1.1006816698830635,
+   "ci95_pts": [
+    -1.8947450614599997,
+    -0.30661827830612726
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 16,
+    "calibrate_method": "minmax",
+    "concat_shared_scale": true
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\yolov8n\\quantize-static-int8-activation-type-uint8-calib-samples-16--45be559e25.onnx"
+  },
+  "anneal advised [cnn]: percentile 99.999 + float stem [shared concat scale]": {
+   "metric": 0.41557876491602297,
+   "delta_pts": -0.4073422641084845,
+   "fold_mean_delta_pts": -0.7881296679281325,
+   "ci95_pts": [
+    -1.847177602296029,
+    0.2709182664397637
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 16,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999,
+    "float_stem": true,
+    "concat_shared_scale": true
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\yolov8n\\quantize-static-int8-activation-type-uint8-calib-percentile--58e0fd61a8.onnx"
+  },
+  "anneal advised + dense equalisation [shared concat scale]": {
+   "metric": 0.41573437991460654,
+   "delta_pts": -0.391780764250127,
+   "fold_mean_delta_pts": -0.8328278712817095,
+   "ci95_pts": [
+    -1.744022306175446,
+    0.07836656361202704
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 16,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999,
+    "float_stem": true,
+    "equalize_dense": true,
+    "concat_shared_scale": true
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\yolov8n\\quantize-static-int8-activation-type-uint8-calib-percentile--52a6d5e01e.onnx"
+  }
+ },
+ "metric": "COCO box mAP@[.5:.95]",
+ "fp32": 0.4196521875571078
+}

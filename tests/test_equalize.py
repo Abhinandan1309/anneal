@@ -712,3 +712,84 @@ def test_mean_minmax_ranges_sit_inside_the_extremes_and_quantize(tmp_path: Path,
     assert min(z.min(), 0) <= lo <= 0 <= hi <= max(z.max(), 0)  # mean of per-image extremes
     out = _static(tmp_path, calib, src, "mm", calibrate_method="mean_minmax", equalize=True)
     assert out.lineage[-1].params["calibrate_method"] == "mean_minmax"
+
+
+def _concat_model(path: Path) -> Path:
+    """Two conv branches with ranges ~100x apart, concatenated, then a 1x1 conv."""
+    rng = np.random.default_rng(4)
+    w1 = rng.standard_normal((3, C_IN, 1, 1)).astype(np.float32) * 10
+    w2 = rng.standard_normal((3, C_IN, 1, 1)).astype(np.float32) * 0.1
+    w3 = rng.standard_normal((4, 6, 1, 1)).astype(np.float32)
+    nodes = [helper.make_node("Conv", ["input", "w1"], ["a"], name="c1"),
+             helper.make_node("Conv", ["input", "w2"], ["b"], name="c2"),
+             helper.make_node("Concat", ["a", "b"], ["cat"], name="cat", axis=1),
+             helper.make_node("Conv", ["cat", "w3"], ["out"], name="c3")]
+    graph = helper.make_graph(
+        nodes, "cat", [helper.make_tensor_value_info("input", TensorProto.FLOAT, ["N", C_IN, 8, 8])],
+        [helper.make_tensor_value_info("out", TensorProto.FLOAT, ["N", 4, 8, 8])],
+        [numpy_helper.from_array(w, n) for w, n in ((w1, "w1"), (w2, "w2"), (w3, "w3"))])
+    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
+    model.ir_version = 8
+    onnx.save(model, str(path))
+    return path
+
+
+def test_concat_shared_scale_gives_every_concat_input_one_scale(tmp_path: Path, calib):
+    from anneal.core.transforms import concat_groups
+
+    src = _concat_model(tmp_path / "c.onnx")
+    plain = _static(tmp_path, calib, src, "p")
+    [(names, _)] = concat_groups(plain.path)
+    q = onnx.load(str(plain.path))
+
+    def scales(model):
+        inits = {i.name: numpy_helper.to_array(i) for i in model.graph.initializer}
+        return {n.input[0]: float(inits[n.input[1]]) for n in model.graph.node if n.op_type == "QuantizeLinear"}
+
+    before = scales(q)
+    assert before["a"] > 10 * before["b"]  # onnxruntime: one scale per input
+    shared = _static(tmp_path, calib, src, "s", concat_shared_scale=True)
+    after = scales(onnx.load(str(shared.path)))
+    assert after["a"] == pytest.approx(after["b"]) == pytest.approx(after["cat"])
+    assert shared.meta["concat_groups_shared"] == 1
+
+
+def _detector_like(path: Path) -> Path:
+    """A detector-style output: pixel boxes (0-640) concatenated with sigmoid scores (0-1)."""
+    rng = np.random.default_rng(6)
+    wb = rng.standard_normal((4, C_IN, 1, 1)).astype(np.float32)
+    ws = rng.standard_normal((3, C_IN, 1, 1)).astype(np.float32)
+    nodes = [helper.make_node("Conv", ["input", "wb"], ["b"], name="box_conv"),
+             helper.make_node("Sigmoid", ["b"], ["bs"], name="box_sig"),
+             helper.make_node("Mul", ["bs", "img"], ["boxes"], name="to_pixels"),
+             helper.make_node("Conv", ["input", "ws"], ["s"], name="cls_conv"),
+             helper.make_node("Sigmoid", ["s"], ["scores"], name="cls_sig"),
+             helper.make_node("Concat", ["boxes", "scores"], ["cat"], name="cat", axis=1),
+             helper.make_node("Reshape", ["cat", "shape"], ["out"], name="flat")]
+    graph = helper.make_graph(
+        nodes, "det", [helper.make_tensor_value_info("input", TensorProto.FLOAT, ["N", C_IN, 8, 8])],
+        [helper.make_tensor_value_info("out", TensorProto.FLOAT, ["N", 7, 64])],
+        [numpy_helper.from_array(wb, "wb"), numpy_helper.from_array(ws, "ws"),
+         numpy_helper.from_array(np.array(640.0, np.float32), "img"),
+         numpy_helper.from_array(np.array([0, 7, 64], np.int64), "shape")])
+    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
+    model.ir_version = 8
+    onnx.save(model, str(path))
+    return path
+
+
+def test_a_mixed_range_output_keeps_its_tail_float_by_default(tmp_path: Path, calib):
+    src = _detector_like(tmp_path / "d.onnx")
+    out = _static(tmp_path, calib, src, "auto")
+    [flag] = out.meta["mixed_range_outputs"]
+    assert flag["output"] == "out" and flag["range_ratio"] >= 20
+    q = onnx.load(str(out.path))
+    quantized_inputs = {n.input[0] for n in q.graph.node if n.op_type == "QuantizeLinear"}
+    assert "scores" not in quantized_inputs and "boxes" not in quantized_inputs  # tail stays float
+    assert "input" in quantized_inputs  # the convolutions are still INT8
+    off = _static(tmp_path, calib, src, "off", float_mixed_outputs=False)
+    assert "mixed_range_outputs" not in off.meta
+    assert off.lineage[-1].params["float_mixed_outputs"] is False
+    # a classifier (no Concat output) is never touched and its lineage is unchanged
+    plain = _static(tmp_path, calib, _model(tmp_path / "m.onnx", "silu"), "cls")
+    assert "mixed_range_outputs" not in plain.meta and "float_mixed_outputs" not in plain.lineage[-1].params
