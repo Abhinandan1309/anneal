@@ -13,7 +13,7 @@ on:
         default: "512"
       variants:
         description: "comma-separated variant labels (see examples/tidl/run_tidl.py)"
-        default: "tidl 8-bit,tidl 8-bit + equalised,tidl 16-bit,tidl auto mixed"
+        default: "tidl 8-bit,tidl 8-bit + equalised,tidl 16-bit"
 
 jobs:
   tidl:
@@ -29,7 +29,10 @@ jobs:
           git clone https://github.com/TexasInstruments/edgeai-tidl-tools.git
           cd edgeai-tidl-tools
           git checkout a6beeffd66544925c371ec308ede4885f6e1bd1f
-          ./scripts/setup/setup.sh --skip_tflite --skip_tvm
+          sudo apt-get install -y -q graphviz libgraphviz-dev   # libcgraph for TIDL's graph visualiser
+          # Not --skip_tvm: the TVM step is what installs TI's C7x code-generation tools (cl7x),
+          # which 8-bit calibration needs.
+          ./scripts/setup/setup.sh --skip_tflite
       - name: Anneal
         run: |
           python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu

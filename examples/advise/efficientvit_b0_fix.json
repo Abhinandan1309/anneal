@@ -1,0 +1,179 @@
+{
+ "model": "efficientvit_b0",
+ "n": 512,
+ "fp32_accuracy": 0.69921875,
+ "rows": {
+  "all ops (percentile)": {
+   "accuracy": 0.0,
+   "delta_pp": -69.921875,
+   "ci95_pp": [
+    -73.89427527819255,
+    -65.94947472180745
+   ],
+   "mcnemar_p": 3.4063678720065206e-108,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99
+   }
+  },
+  "compute ops only": {
+   "accuracy": 0.001953125,
+   "delta_pp": -69.7265625,
+   "ci95_pp": [
+    -73.70626939065656,
+    -65.74685560934344
+   ],
+   "mcnemar_p": 6.812735744013041e-108,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "quantize_ops": "compute"
+   }
+  },
+  "conv only (attention float)": {
+   "accuracy": 0.017578125,
+   "delta_pp": -68.1640625,
+   "ci95_pp": [
+    -72.19919356479522,
+    -64.12893143520478
+   ],
+   "mcnemar_p": 1.7440603504673385e-105,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "quantize_ops": "conv"
+   }
+  },
+  "compute ops only + eq": {
+   "accuracy": 0.2578125,
+   "delta_pp": -44.140625,
+   "ci95_pp": [
+    -48.57600282240247,
+    -39.70524717759753
+   ],
+   "mcnemar_p": 8.974779698880702e-63,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "quantize_ops": "compute",
+    "equalize": true
+   }
+  },
+  "conv only + eq": {
+   "accuracy": 0.361328125,
+   "delta_pp": -33.7890625,
+   "ci95_pp": [
+    -38.16293482552432,
+    -29.415190174475686
+   ],
+   "mcnemar_p": 9.262560194799192e-44,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "quantize_ops": "conv",
+    "equalize": true
+   }
+  },
+  "conv only + eq + int16 top4 (auto)": {
+   "accuracy": 0.498046875,
+   "delta_pp": -20.1171875,
+   "ci95_pp": [
+    -24.173542466296986,
+    -16.060832533703014
+   ],
+   "mcnemar_p": 5.094764728491509e-21,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "quantize_ops": "conv",
+    "equalize": true,
+    "int16_top_k": 4
+   }
+  },
+  "conv only + eq + int16 top12 (auto)": {
+   "accuracy": 0.53125,
+   "delta_pp": -16.796875,
+   "ci95_pp": [
+    -20.61646693012353,
+    -12.977283069876469
+   ],
+   "mcnemar_p": 3.4879161622294266e-17,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "quantize_ops": "conv",
+    "equalize": true,
+    "int16_top_k": 12
+   }
+  },
+  "conv only + eq + dense eq": {
+   "accuracy": 0.546875,
+   "delta_pp": -15.234375,
+   "ci95_pp": [
+    -19.429922939066206,
+    -11.038827060933794
+   ],
+   "mcnemar_p": 4.65686863837048e-12,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "quantize_ops": "conv",
+    "equalize": true,
+    "equalize_dense": true
+   }
+  },
+  "conv only + eq + dense eq + int16 top4": {
+   "accuracy": 0.591796875,
+   "delta_pp": -10.7421875,
+   "ci95_pp": [
+    -14.514236968903369,
+    -6.970138031096631
+   ],
+   "mcnemar_p": 4.9807629682571775e-08,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "quantize_ops": "conv",
+    "equalize": true,
+    "equalize_dense": true,
+    "int16_top_k": 4
+   }
+  }
+ }
+}

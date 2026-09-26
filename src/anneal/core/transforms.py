@@ -516,6 +516,8 @@ def load_measured_ranking(path: Path) -> list[str]:
 COMPUTE_OP_SETS: dict[str, list[str] | None] = {
     "default": None,
     "compute": ["Conv", "MatMul", "Gemm"],
+    # Convolutions and the classifier only: activation-activation MatMuls (attention) stay float.
+    "conv": ["Conv", "Gemm"],
 }
 
 #: Element-wise ops that belong to a convolution's activation (the stem's SiLU, Hardswish...).
@@ -1059,7 +1061,7 @@ REGISTRY: dict[str, TransformSpec] = {
             },
             "quantize_ops": {
                 "type": "string",
-                "enum": ["default", "compute"],
+                "enum": ["default", "compute", "conv"],
                 "description": (
                     "'compute' quantizes only Conv/MatMul/Gemm and leaves LayerNorm, residual "
                     "adds and softmax in float. The fix for transformers, whose residual stream "
