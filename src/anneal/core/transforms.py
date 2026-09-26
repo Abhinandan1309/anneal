@@ -756,6 +756,10 @@ def quantize_static_int8(
     inserted Mul and the Sigmoid/HardSigmoid) out of quantization. ``equalize_top_k`` limits the
     rewrite to the k sites :func:`anneal.core.equalize.rank_sites` predicts gain most.
 
+    ``cle`` first applies data-free cross-layer weight equalisation
+    (:mod:`anneal.core.cle`) across Conv/Gemm -> ReLU -> Conv/Gemm pairs, for targets whose
+    weights are quantized per tensor; it runs before ``equalize`` when both are set.
+
     ``int16_top_k`` keeps the k activation tensors that are most damaging at 8 bits in 16 bits,
     ranked by :func:`anneal.core.activation_sensitivity.rank_activation_tensors` on the model
     being quantized (after equalisation), with a probe of the first :data:`INT16_PROBE_IMAGES`
@@ -782,6 +786,7 @@ def quantize_static_int8(
     n_calib = int(params.get("calib_samples", ctx.calib_samples))
     guard = bool(params.get("guard_saturation", False))
     tolerance = float(params.get("saturation_tolerance", SATURATION_TOLERANCE))
+    cle = bool(params.get("cle", False))
     equalize = bool(params.get("equalize", False))
     equalize_dense = bool(params.get("equalize_dense", False))
     equalize_residual = bool(params.get("equalize_residual", False))
@@ -870,6 +875,7 @@ def quantize_static_int8(
             "activation_type": activation_type,
             # Recorded only when on, so recipes without the guard keep their lineage keys.
             **({"guard_saturation": True, "saturation_tolerance": tolerance} if guard else {}),
+            **({"cle": True} if cle else {}),
             **(
                 {"equalize": True, "equalize_slack": slack, "float_gates": float_gates}
                 if equalize
@@ -898,6 +904,18 @@ def quantize_static_int8(
 
     base_exclude: list[str] = []
     eq_meta: dict[str, Any] = {}
+    if cle:
+        # Cross-layer weight equalisation first: it changes weights only, so the activation
+        # equalisation below (and its joint-damage switch) sees the model being quantized.
+        from anneal.core.cle import cross_layer_equalise
+
+        cle_path = out.with_name(out.stem + "-cle-fp32.onnx")
+        cle_result = cross_layer_equalise(
+            src, cle_path, check_batch=next(iter(calib_source.calibration_batches(1)), None)
+        )
+        src = cle_path
+        eq_meta["cle"] = cle_result.summary()
+        eq_meta["cle_pairs"] = [p.to_dict() for p in cle_result.pairs]
     if equalize and min_damage is not None:
         # The model-level switch: equalise only if rounding every site tensor to 8 bits at once
         # flips enough of the calibration images' top-1 predictions (no labels needed). The
@@ -1236,6 +1254,16 @@ REGISTRY: dict[str, TransformSpec] = {
                     "Activation precision. uint8 with int8 weights (U8S8) is the classic x86 "
                     "pairing; int8 activations (S8S8) avoid the intermediate saturation U8S8 "
                     "can hit on CPUs without VNNI."
+                ),
+            },
+            "cle": {
+                "type": "boolean",
+                "description": (
+                    "Before quantizing (and before equalize), apply data-free cross-layer weight "
+                    "equalisation (Nagel et al. 2019) across Conv/Gemm -> ReLU/LeakyReLU "
+                    "(+ MaxPool/zero Pad) -> Conv/depthwise Conv/Gemm, so each weight tensor's "
+                    "channels share one range. Exact in float. For targets that quantize weights "
+                    "per tensor (TI TIDL, AMD XINT8; per_channel false); ReLU6/Clip is left alone."
                 ),
             },
             "equalize": {
