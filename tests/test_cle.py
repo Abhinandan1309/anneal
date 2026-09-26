@@ -376,3 +376,23 @@ def test_gemm_pairs_are_exact_and_balanced(tmp_path: Path, trans_b):
     run = lambda p: ort.InferenceSession(str(p), providers=["CPUExecutionProvider"]).run(None, {"input": xin})[0]  # noqa: E731
     ref = run(src)
     assert np.abs(run(dst) - ref).max() <= 1e-4 * np.abs(ref).max()
+
+
+@pytest.mark.parametrize("t", [0.0, 0.5])
+def test_activation_aware_cle_stays_exact(tmp_path, t):
+    import onnxruntime as ort
+
+    from anneal.core.cle import cross_layer_equalise
+
+    src = _model(tmp_path / "m.onnx", "relu")
+    rng = np.random.default_rng(9)
+    s = ort.InferenceSession(str(src), providers=["CPUExecutionProvider"])
+    name = s.get_inputs()[0].name
+    shape = [d if isinstance(d, int) else 2 for d in s.get_inputs()[0].shape]
+    batches = [rng.standard_normal(shape).astype(np.float32) for _ in range(3)]
+    dst = tmp_path / "cle.onnx"
+    res = cross_layer_equalise(src, dst, batches=batches, t=t)
+    assert res.pairs
+    before = s.run(None, {name: batches[0]})[0]
+    after = ort.InferenceSession(str(dst), providers=["CPUExecutionProvider"]).run(None, {name: batches[0]})[0]
+    assert np.abs(after - before).max() <= 1e-4 * max(1.0, np.abs(before).max())

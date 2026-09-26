@@ -384,6 +384,8 @@ def cross_layer_equalise(
     threshold: float = DEFAULT_THRESHOLD,
     max_scale: float = DEFAULT_MAX_SCALE,
     check_batch: np.ndarray | None = None,
+    batches: list[np.ndarray] | None = None,
+    t: float = 1.0,
 ) -> CLEResult:
     """Write a cross-layer-equalised copy of ``src`` to ``dst`` and describe what changed.
 
@@ -395,6 +397,13 @@ def cross_layer_equalise(
     rewritten as ``Relu -> Min(., M * s)`` with a per-channel ceiling (listed in
     ``clips_converted``), which keeps the float function exact. With ``check_batch`` the float outputs of both
     models are compared on it and the largest change recorded.
+
+    ``t < 1`` (needs ``batches``) makes it activation-aware. Weight-only CLE balances the two
+    weight tensors but can widen a channel's activation range hundreds of times; on TI's TDA4VM,
+    whose feature maps are per tensor with power-of-two scales, it cost MobileNetV2 6.3pp (-10.5
+    -> -16.7pp). The scale becomes ``s_act ** (1 - t) * s_cle ** t``, where ``s_act`` fills the
+    producer output's shared range (:func:`anneal.core.equalize.choose_scales`, positive) and
+    ``s_cle`` is the converged weight balance: the same geometric mix as ``equalise(mix=...)``.
     """
     import onnx
     from onnx import numpy_helper
@@ -428,6 +437,11 @@ def cross_layer_equalise(
 
     arrays = {n: numpy_helper.to_array(inits[n]).astype(np.float64)
               for p in pairs for n in (p.producer_weight.name, p.consumer_weight.name, p.producer_bias) if n}
+    original = {n: a.copy() for n, a in arrays.items()}
+    if not 0.0 <= t <= 1.0:
+        raise ValueError(f"t must be in [0, 1], got {t!r}")
+    if t < 1.0 and batches is None:
+        raise ValueError("activation-aware CLE (t < 1) needs calibration batches")
 
     def ranges(p: CLEPairSpec) -> tuple[np.ndarray, np.ndarray]:
         return (
@@ -458,6 +472,20 @@ def cross_layer_equalise(
             result.converged = True
             break
 
+    if t < 1.0 and pairs:
+        from anneal.core.equalize import DEFAULT_SLACK, channel_ranges, choose_scales
+
+        outs = [p.producer.output[0] for p in pairs]
+        ranges_act = channel_ranges(model, sorted(set(outs)), batches)
+        arrays = {n: a.copy() for n, a in original.items()}
+        for k, p in enumerate(pairs):
+            s_act = choose_scales([ranges_act[p.producer.output[0]]], slack=DEFAULT_SLACK, allow_negative=False,
+                                  max_scale=max_scale).astype(np.float64)
+            total[k] = np.clip(s_act ** (1.0 - t) * total[k] ** t, lo, hi)
+            arrays[p.producer_weight.name] = _scale(arrays[p.producer_weight.name], p.producer_weight, total[k], divide=False)
+            if p.producer_bias:
+                arrays[p.producer_bias] = arrays[p.producer_bias] * total[k]
+            arrays[p.consumer_weight.name] = _scale(arrays[p.consumer_weight.name], p.consumer_weight, total[k], divide=True)
     for name, arr in arrays.items():
         inits[name].CopyFrom(numpy_helper.from_array(arr.astype(np.float32), name))
     for k, p in enumerate(pairs):
