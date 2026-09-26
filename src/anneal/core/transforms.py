@@ -1493,7 +1493,10 @@ REGISTRY: dict[str, TransformSpec] = {
                 "description": (
                     "Emulate accelerators (TIDL, Hexagon HTP) that give a Concat's inputs and output "
                     "one shared scale: the union of their calibrated ranges. onnxruntime alone gives "
-                    "each its own, which hides the loss detection and U-Net necks suffer on NPUs."
+                    "each its own. Experimental: with asymmetric activations onnxruntime applies "
+                    "the pinned ranges only to some Concat inputs, and a Carvana U-Net then "
+                    "collapsed (IoU 0.08) while symmetric emulation held (0.95-0.98); trust it with "
+                    "activation_symmetric only."
                 ),
             },
             "equalize_min_damage": {
