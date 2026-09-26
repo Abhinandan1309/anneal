@@ -40,6 +40,11 @@ VARIANTS = {
     "no eq + compute ops only": {**BASE, "quantize_ops": "compute"},
     "no eq + compute ops + minmax": {**BASE, "quantize_ops": "compute", "calibrate_method": "minmax"},
     "eq + compute ops only": {**BASE, "quantize_ops": "compute", "equalize": True},
+    # NNCF's range estimator (mean of per-image min/max), with and without equalisation
+    "no eq + mean minmax": {**BASE, "calibrate_method": "mean_minmax"},
+    "eq + mean minmax": {**BASE, "calibrate_method": "mean_minmax", "equalize": True},
+    "eq + mean minmax + stem": {**BASE, "calibrate_method": "mean_minmax", "equalize": True, "float_stem": True},
+    "eq + stem (advised)": {**BASE, "equalize": True, "float_stem": True},
     # every op quantized, for nets without attention (MobileNetV3-Large's stem block is residual too)
     "eq": {**BASE, "equalize": True},
     "eq (residual)": {**BASE, "equalize": True, "equalize_residual": True},

@@ -1,0 +1,59 @@
+name: tidl-tasks
+
+# Detection (YOLOv8n) and segmentation (LRASPP) on TI TDA4VM via TIDL host emulation, COCO val2017
+# downloaded from cocodataset.org on the runner.
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "yolov8n or lraspp_mobilenet_v3_large"
+        default: "yolov8n"
+      images:
+        description: "COCO val2017 images scored"
+        default: "300"
+      variants:
+        description: "comma-separated variant labels (see examples/tidl/run_tidl_tasks.py)"
+        default: "tidl 16-bit,tidl 8-bit,tidl 8-bit + equalised"
+
+jobs:
+  tidl:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"   # TIDL tools require exactly 3.10
+      - name: TIDL tools (pinned)
+        run: |
+          git clone https://github.com/TexasInstruments/edgeai-tidl-tools.git
+          cd edgeai-tidl-tools
+          git checkout a6beeffd66544925c371ec308ede4885f6e1bd1f
+          sudo apt-get install -y -q graphviz libgraphviz-dev
+          ./scripts/setup/setup.sh --skip_tflite
+      - name: Anneal
+        run: |
+          python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install --no-deps -e .
+          python -m pip install onnx numpy pillow rich pycocotools ultralytics
+          python -c "import onnxruntime as o; print(o.__version__, o.get_available_providers())"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.anneal_cache/coco
+          key: coco-val2017
+      - name: COCO val2017
+        run: |
+          mkdir -p ~/.anneal_cache/coco && cd ~/.anneal_cache/coco
+          [ -d val2017 ] || { curl -sSLO http://images.cocodataset.org/zips/val2017.zip && unzip -q val2017.zip && rm val2017.zip; }
+          [ -f annotations/instances_val2017.json ] || { curl -sSLO http://images.cocodataset.org/annotations/annotations_trainval2017.zip && unzip -q annotations_trainval2017.zip && rm annotations_trainval2017.zip; }
+          ls; ls annotations | head
+      - name: Run
+        run: |
+          source edgeai-tidl-tools/scripts/setup/setup_env.sh J721E
+          python examples/tidl/run_tidl_tasks.py --model "${{ inputs.model }}" --images "${{ inputs.images }}" \
+            --variants "${{ inputs.variants }}" --out tidl-tasks-result.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tidl-tasks-result
+          path: tidl-tasks-result.json

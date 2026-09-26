@@ -44,23 +44,23 @@
    },
    "params": null
   },
-  "advised + stem int16": {
-   "accuracy": 0.7769,
-   "delta_pp": -0.6,
+  "advised + int16 top3 (auto)": {
+   "accuracy": 0.7763,
+   "delta_pp": -0.66,
    "ci95_pp": [
-    -0.9569353196308823,
-    -0.24306468036911785
+    -1.0168946341765313,
+    -0.30310536582346886
    ],
-   "mcnemar_p": 0.0011710339385191928,
-   "regressions": 196,
-   "fixes": 136,
+   "mcnemar_p": 0.00034625262202844884,
+   "regressions": 199,
+   "fixes": 133,
    "vs_advised": {
-    "delta_pp": -0.22,
+    "delta_pp": -0.27999999999999997,
     "ci95_pp": [
-     -0.4901329425597701,
-     0.05013294255976999
+     -0.5639779601588827,
+     0.003977960158882713
     ],
-    "mcnemar_p": 0.12741313842801966
+    "mcnemar_p": 0.06217977335749598
    },
    "params": {
     "per_channel": true,
@@ -70,7 +70,66 @@
     "calibrate_method": "percentile_asym",
     "calib_percentile": 99.99,
     "float_stem": true,
-    "stem_int16": true
+    "int16_top_k": 3,
+    "calib_stride": 1
+   }
+  },
+  "no eq + int16 top3 (auto)": {
+   "accuracy": 0.7634,
+   "delta_pp": -1.95,
+   "ci95_pp": [
+    -2.422517546340874,
+    -1.477482453659126
+   ],
+   "mcnemar_p": 5.664820972386102e-16,
+   "regressions": 390,
+   "fixes": 195,
+   "vs_advised": {
+    "delta_pp": -1.5699999999999998,
+    "ci95_pp": [
+     -2.0119941674004305,
+     -1.1280058325995692
+    ],
+    "mcnemar_p": 3.5166990429541277e-12
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true,
+    "int16_top_k": 3,
+    "calib_stride": 1
+   }
+  },
+  "no eq + int16 top8 (auto)": {
+   "accuracy": 0.7645,
+   "delta_pp": -1.8399999999999999,
+   "ci95_pp": [
+    -2.3187435512923384,
+    -1.3612564487076615
+   ],
+   "mcnemar_p": 5.080885780756605e-14,
+   "regressions": 392,
+   "fixes": 208,
+   "vs_advised": {
+    "delta_pp": -1.46,
+    "ci95_pp": [
+     -1.9060317528427766,
+     -1.0139682471572231
+    ],
+    "mcnemar_p": 1.5534924789855363e-10
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true,
+    "int16_top_k": 8,
+    "calib_stride": 1
    }
   }
  }

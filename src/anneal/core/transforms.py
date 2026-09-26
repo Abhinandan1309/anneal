@@ -70,6 +70,50 @@ class TransformContext:
         return self.workdir / f"{stem}-{digest}.onnx"
 
 
+def mean_minmax_ranges(model_path: Path, batches) -> dict[str, tuple[float, float]]:
+    """Per activation tensor: the mean over images of each image's min and max (0 included).
+
+    Every float tensor a node produces is measured (initializers and constants are weights, not
+    activations). This is NNCF's MEAN_MINMAX estimator with one image per sample.
+    """
+    import onnx
+    import onnxruntime as ort
+    from onnx import helper
+
+    model = onnx.load(str(model_path))
+    consts = {i.name for i in model.graph.initializer}
+    consts |= {o for n in model.graph.node if n.op_type == "Constant" for o in n.output}
+    inferred = onnx.shape_inference.infer_shapes(model)
+    float_t = {v.name for v in list(inferred.graph.value_info) + list(inferred.graph.output)
+               if v.type.tensor_type.elem_type == onnx.TensorProto.FLOAT}
+    float_t |= {v.name for v in model.graph.input if v.name not in consts}
+    tensors = [o for n in model.graph.node for o in n.output if o in float_t and o not in consts]
+    tensors += [v.name for v in model.graph.input if v.name not in consts]
+    tensors = list(dict.fromkeys(tensors))
+    known_out = {o.name for o in model.graph.output}
+    model.graph.output.extend([helper.make_tensor_value_info(t, onnx.TensorProto.FLOAT, None)
+                               for t in tensors if t not in known_out])
+    opts = ort.SessionOptions()
+    opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
+    opts.enable_cpu_mem_arena = False
+    session = ort.InferenceSession(model.SerializeToString(), opts, providers=["CPUExecutionProvider"])
+    input_name = session.get_inputs()[0].name
+    lo_sum = dict.fromkeys(tensors, 0.0)
+    hi_sum = dict.fromkeys(tensors, 0.0)
+    count = 0
+    for batch in batches:
+        for x in batch:  # one image at a time: per-image extremes
+            values = session.run(tensors, {input_name: x[None]})
+            for t, v in zip(tensors, values):
+                if v.size:
+                    lo_sum[t] += min(float(v.min()), 0.0)
+                    hi_sum[t] += max(float(v.max()), 0.0)
+            count += 1
+    if not count:
+        raise TransformError("mean_minmax calibration needs calibration images; none were given")
+    return {t: (lo_sum[t] / count, hi_sum[t] / count) for t in tensors}
+
+
 def _slug(text: str) -> str:
     keep = "".join(c if c.isalnum() else "-" for c in text)
     while "--" in keep:
@@ -684,6 +728,10 @@ def quantize_static_int8(
         # default, which wastes half the uint8 grid on post-SiLU tensors. The asymmetric form
         # clips outliers without that: -12.9pp vs -19.1pp on EfficientNet-B0.
         "percentile_asym": CalibrationMethod.Percentile,
+        # OpenVINO/NNCF's default estimator: the mean over calibration images of each image's
+        # min and max. onnxruntime has no such calibrator (its moving average is exponential),
+        # so the ranges are measured here and passed as rmin/rmax overrides.
+        "mean_minmax": CalibrationMethod.MinMax,
     }
     if calib_method not in methods:
         raise TransformError(f"calibrate_method must be one of {sorted(methods)}")
@@ -858,6 +906,11 @@ def quantize_static_int8(
                 {"tensor": r.tensor, "damage": round(r.damage, 5)} for r in ranking
             ],
         }
+    if calib_method == "mean_minmax":
+        overrides = extra.setdefault("TensorQuantOverrides", {})
+        for t, (lo, hi) in mean_minmax_ranges(src, calib_source.calibration_batches(n_calib)).items():
+            entry = overrides.setdefault(t, [{}])[0]
+            entry.update({"rmin": np.float32(lo), "rmax": np.float32(hi)})
     if float_stem:
         src = _with_named_nodes(src)
         base_exclude = base_exclude + [n for n in stem_nodes(src) if n not in base_exclude]
@@ -1001,7 +1054,7 @@ REGISTRY: dict[str, TransformSpec] = {
             "reduce_range": {"type": "boolean", "description": "7-bit weights for AVX2 safety."},
             "calibrate_method": {
                 "type": "string",
-                "enum": ["minmax", "entropy", "percentile", "percentile_asym"],
+                "enum": ["minmax", "entropy", "percentile", "percentile_asym", "mean_minmax"],
                 "description": (
                     "How activation ranges are estimated. percentile_asym clips outliers without "
                     "forcing a symmetric range; with equalize it was the best recipe on "

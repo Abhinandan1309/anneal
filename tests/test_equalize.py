@@ -697,3 +697,18 @@ def test_min_damage_switch_measures_and_decides(tmp_path: Path, calib):
 def test_invalid_min_damage_settings_are_rejected(tmp_path: Path, calib, params):
     with pytest.raises(TransformError):
         _static(tmp_path, calib, _model(tmp_path / "m.onnx", "silu"), "bad", **params)
+
+
+def test_mean_minmax_ranges_sit_inside_the_extremes_and_quantize(tmp_path: Path, calib):
+    from anneal.core.transforms import mean_minmax_ranges
+
+    src = _model(tmp_path / "m.onnx", "silu")
+    ranges = mean_minmax_ranges(src, calib.calibration_batches(16))
+    assert {"x", "y", "z", "input"} <= set(ranges)
+    x = np.concatenate(list(calib.calibration_batches(16)))
+    s = ort.InferenceSession(str(src), providers=["CPUExecutionProvider"])
+    z = s.run(None, {"input": x})[0]
+    lo, hi = ranges["z"]
+    assert min(z.min(), 0) <= lo <= 0 <= hi <= max(z.max(), 0)  # mean of per-image extremes
+    out = _static(tmp_path, calib, src, "mm", calibrate_method="mean_minmax", equalize=True)
+    assert out.lineage[-1].params["calibrate_method"] == "mean_minmax"
