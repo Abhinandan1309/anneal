@@ -1,0 +1,95 @@
+{
+  "model": "efficientnet_b0",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "qnn_dlc",
+  "n": 256,
+  "variants": {
+    "fp32": {
+      "compile_job": "j5wlrxvzp",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "j5m0l42yg",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.7421875,
+      "delta_pp_vs_device_fp32": 0.0,
+      "params": null,
+      "profile_job": "j5wlr8kmp",
+      "latency_ms": 0.838,
+      "compute_units": {
+        "NPU": 242
+      }
+    },
+    "eq + asym pct + stem int16": {
+      "compile_job": "jg9zq81qp",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jp0mxk72g",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.72265625,
+      "delta_pp_vs_device_fp32": -1.953125,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "calib_stride": 1,
+        "equalize": true,
+        "calibrate_method": "percentile_asym",
+        "stem_int16": true
+      },
+      "profile_job": "jg9zqkr8p",
+      "latency_ms": 0.573,
+      "compute_units": {
+        "NPU": 263
+      }
+    },
+    "full: eq + asym pct + stem": {
+      "compile_job": "j57e86wqp",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jgzl0wkz5",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.73828125,
+      "delta_pp_vs_device_fp32": -0.390625,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "calib_stride": 1,
+        "equalize": true,
+        "calibrate_method": "percentile_asym",
+        "float_stem": true
+      },
+      "profile_job": "jgddm8kzg",
+      "latency_ms": 0.689,
+      "compute_units": {
+        "NPU": 261
+      }
+    },
+    "no stem: eq + asym pct": {
+      "compile_job": "jp4y28oqp",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "j5wlrxnzp",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.71484375,
+      "delta_pp_vs_device_fp32": -2.734375,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "calib_stride": 1,
+        "equalize": true,
+        "calibrate_method": "percentile_asym"
+      },
+      "profile_job": "j5wlr8k4p",
+      "latency_ms": 0.55,
+      "compute_units": {
+        "NPU": 260
+      }
+    }
+  }
+}

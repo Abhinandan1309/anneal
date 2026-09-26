@@ -1,0 +1,75 @@
+{
+  "model": "efficientnet_b1",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "qnn_dlc",
+  "n": 256,
+  "variants": {
+    "fp32": {
+      "compile_job": "jgjr8oe8p",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jgk2koyog",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.67578125,
+      "delta_pp_vs_device_fp32": 0.0,
+      "params": null
+    },
+    "eq + asym pct + stem int16": {
+      "compile_job": "jpe7n8k05",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jprl7o19p",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.69140625,
+      "delta_pp_vs_device_fp32": 1.5625,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "calib_stride": 1,
+        "equalize": true,
+        "calibrate_method": "percentile_asym",
+        "stem_int16": true
+      }
+    },
+    "full: eq + asym pct + stem": {
+      "compile_job": "jgzl08r65",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jpyoyqv75",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.69140625,
+      "delta_pp_vs_device_fp32": 1.5625,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "calib_stride": 1,
+        "equalize": true,
+        "calibrate_method": "percentile_asym",
+        "float_stem": true
+      }
+    },
+    "no stem: eq + asym pct": {
+      "compile_job": "j5wlr8qjp",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jp0mxde6g",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.640625,
+      "delta_pp_vs_device_fp32": -3.515625,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 16,
+        "calib_stride": 1,
+        "equalize": true,
+        "calibrate_method": "percentile_asym"
+      }
+    }
+  }
+}

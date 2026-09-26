@@ -1,0 +1,77 @@
+{
+ "model": "efficientnet_b0",
+ "n": 10000,
+ "fp32_accuracy": 0.7829,
+ "mode": "emulated",
+ "rows": {
+  "advised: eq + asym 99.99 + stem": {
+   "accuracy": 0.7791,
+   "delta_pp": -0.38,
+   "ci95_pp": [
+    -0.7402646350892632,
+    -0.019735364910736762
+   ],
+   "mcnemar_p": 0.04400393019010983,
+   "regressions": 188,
+   "fixes": 150,
+   "vs_advised": {
+    "delta_pp": 0.0,
+    "ci95_pp": [
+     0.0,
+     0.0
+    ],
+    "mcnemar_p": 1.0
+   },
+   "params": null
+  },
+  "minmax (default)": {
+   "accuracy": 0.3181,
+   "delta_pp": -46.48,
+   "ci95_pp": [
+    -47.52149789435025,
+    -45.438502105649754
+   ],
+   "mcnemar_p": 0.0,
+   "regressions": 4816,
+   "fixes": 168,
+   "vs_advised": {
+    "delta_pp": -46.1,
+    "ci95_pp": [
+     -47.13765110051501,
+     -45.062348899485
+    ],
+    "mcnemar_p": 0.0
+   },
+   "params": null
+  },
+  "advised + stem int16": {
+   "accuracy": 0.7769,
+   "delta_pp": -0.6,
+   "ci95_pp": [
+    -0.9569353196308823,
+    -0.24306468036911785
+   ],
+   "mcnemar_p": 0.0011710339385191928,
+   "regressions": 196,
+   "fixes": 136,
+   "vs_advised": {
+    "delta_pp": -0.22,
+    "ci95_pp": [
+     -0.4901329425597701,
+     0.05013294255976999
+    ],
+    "mcnemar_p": 0.12741313842801966
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true,
+    "stem_int16": true
+   }
+  }
+ }
+}
