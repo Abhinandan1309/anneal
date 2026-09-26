@@ -150,6 +150,36 @@
     ],
     "mcnemar_p": 8.109583796601088e-06
    }
+  },
+  "advised + stem int16": {
+   "accuracy": 0.748046875,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true,
+    "stem_int16": true
+   },
+   "vs_fp32": {
+    "delta_pp": -2.44140625,
+    "ci95_pp": [
+     -3.4931800968573685,
+     -1.3896324031426315
+    ],
+    "mcnemar_p": 6.909552457823494e-06
+   },
+   "vs_advised": {
+    "delta_pp": 3.61328125,
+    "ci95_pp": [
+     2.367940601130946,
+     4.858621898869055
+    ],
+    "mcnemar_p": 1.5780085448755445e-08
+   }
   }
  }
 }

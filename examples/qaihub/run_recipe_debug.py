@@ -24,14 +24,16 @@ CACHE = Path.home() / ".anneal_cache"
 sys.path.insert(0, str(HERE))
 from run_qaihub import static_copy  # noqa: E402
 
-BASE = {"per_channel": True, "activation_type": "uint8", "calib_samples": 16}
+BASE = {"per_channel": True, "activation_type": "uint8", "calib_samples": 16, "calib_stride": 1}
 VARIANTS = {
     "full: eq + asym pct + stem": {**BASE, "equalize": True, "calibrate_method": "percentile_asym", "float_stem": True},
     "no stem: eq + asym pct": {**BASE, "equalize": True, "calibrate_method": "percentile_asym"},
     "no eq: asym pct + stem": {**BASE, "calibrate_method": "percentile_asym", "float_stem": True},
     "plain QDQ: minmax": {**BASE, "calibrate_method": "minmax"},
     "int8 activations: eq + asym pct": {**BASE, "activation_type": "int8", "equalize": True, "calibrate_method": "percentile_asym"},
+    "eq + asym pct + stem int16": {**BASE, "equalize": True, "calibrate_method": "percentile_asym", "stem_int16": True},
 }
+#: --variants picks a subset (comma-separated labels); fp32 always runs as the reference.
 
 
 def main() -> None:
@@ -46,29 +48,34 @@ def main() -> None:
     ap.add_argument("--device", default="Samsung Galaxy S24 (Family)")
     ap.add_argument("--runtime", default="tflite", choices=["tflite", "qnn_dlc", "onnx"])
     ap.add_argument("--images", type=int, default=256)
+    ap.add_argument("--variants", default=None, help="comma-separated subset of the variant labels")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
 
     src = ROOT / "examples" / "models" / f"{args.model}-fp32.onnx"
     work = ROOT / "scratch" / "qaihub" / f"{args.model}-recipe-debug"
     work.mkdir(parents=True, exist_ok=True)
-    calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=8, limit=16)
-    ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=16, limit=args.images)
+    from anneal.core.artifact import sample_shape
+
+    shape = sample_shape(src)
+    calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=8, limit=16, sample_shape=shape)
+    ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=16, limit=args.images, sample_shape=shape)
     eval_imgs, labels = [], []
     for x, y in ev.batches():
         eval_imgs += [x[i:i + 1] for i in range(len(x))]
         labels += list(y)
     labels = np.array(labels)
 
+    chosen = VARIANTS if not args.variants else {k: VARIANTS[k] for k in args.variants.split(",")}
     models = {"fp32": static_copy(src, work)}
-    for label, params in VARIANTS.items():
+    for label, params in chosen.items():
         art = apply_transform("quantize_static_int8", dict(params), ModelArtifact(path=src),
                               TransformContext(workdir=work / label.split(":")[0].replace(" ", "_"), calibset=calib))
         models[label] = static_copy(Path(art.path), work / label.split(":")[0].replace(" ", "_"))
         print(f"  built {label}", flush=True)
 
     device = hub.Device(args.device)
-    c_jobs = {k: hub.submit_compile_job(str(p), device=device, input_specs={"input": (1, 3, 224, 224)},
+    c_jobs = {k: hub.submit_compile_job(str(p), device=device, input_specs={"input": (1, *shape)},
                                         options=f"--target_runtime {args.runtime}", name=f"anneal-debug-{k}")
               for k, p in models.items()}
     dataset = hub.upload_dataset({"input": eval_imgs}, name=f"anneal-imagenette-{args.images}")
@@ -92,7 +99,8 @@ def main() -> None:
     result = {"model": args.model, "device": args.device, "runtime": args.runtime, "n": int(len(labels)),
               "variants": {k: {**rows[k], "params": VARIANTS.get(k)} for k in rows}}
     slug = args.device.lower().replace(" ", "-").replace("(", "").replace(")", "")
-    path = HERE / "results" / f"{args.model}-recipe-debug-{slug}-{args.runtime}.json"
+    tag = "" if not args.variants else "-subset"
+    path = HERE / "results" / f"{args.model}-recipe-debug{tag}-{slug}-{args.runtime}.json"
     path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     for k, r in rows.items():
         state = "compile FAILED" if not r["compiled"] else ("run FAILED" if not r.get("ran") else f"{100 * r['accuracy']:.1f}%")

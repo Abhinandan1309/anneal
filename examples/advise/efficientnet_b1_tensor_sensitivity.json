@@ -1,0 +1,592 @@
+{
+ "model": "efficientnet_b1",
+ "n": 512,
+ "all_conv_inputs_flips": 0.14453125,
+ "float_top_k_flips": {
+  "1": 0.052734375,
+  "3": 0.033203125,
+  "5": 0.025390625,
+  "10": 0.0234375,
+  "20": 0.01171875,
+  "40": 0.013671875
+ },
+ "order": [
+  "/features/features.0/features.0.2/Mul_output_0",
+  "/features/features.6/features.6.2/block/block.2/Mul_output_0",
+  "/features/features.7/features.7.1/block/block.2/Mul_output_0",
+  "/features/features.6/features.6.4/block/block.2/Mul_output_0",
+  "/features/features.3/features.3.2/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.1/features.1.0/block/block.1/Mul_output_0",
+  "/features/features.2/features.2.2/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.5/features.5.1/block/block.2/Mul_output_0",
+  "/features/features.5/features.5.3/Add_output_0",
+  "/features/features.6/features.6.3/block/block.2/Mul_output_0",
+  "/features/features.1/features.1.0/block/block.2/block.2.0/Conv_output_0",
+  "/features/features.2/features.2.0/block/block.3/block.3.0/Conv_output_0",
+  "/features/features.6/features.6.0/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.7/features.7.0/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.1/features.1.1/block/block.1/Mul_output_0",
+  "/features/features.3/features.3.1/Add_output_0",
+  "/features/features.4/features.4.0/block/block.2/Mul_output_0",
+  "/features/features.5/features.5.0/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.5/features.5.1/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.5/features.5.2/Add_output_0",
+  "/features/features.5/features.5.3/block/block.2/Mul_output_0",
+  "/features/features.6/features.6.1/Add_output_0",
+  "/features/features.6/features.6.1/block/block.2/Mul_output_0",
+  "/features/features.6/features.6.3/Add_output_0",
+  "/features/features.6/features.6.4/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.7/features.7.1/block/block.0/block.0.2/Mul_output_0",
+  "input",
+  "/features/features.1/features.1.1/Add_output_0",
+  "/features/features.2/features.2.0/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.2/features.2.0/block/block.2/Mul_output_0",
+  "/features/features.2/features.2.1/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.2/features.2.1/block/block.2/Mul_output_0",
+  "/features/features.2/features.2.2/Add_output_0",
+  "/features/features.2/features.2.2/block/block.2/Mul_output_0",
+  "/features/features.2/features.2.2/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.3/features.3.0/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.3/features.3.0/block/block.2/Mul_output_0",
+  "/features/features.4/features.4.1/Add_output_0",
+  "/features/features.4/features.4.1/block/block.2/Mul_output_0",
+  "/features/features.4/features.4.2/block/block.2/Mul_output_0",
+  "/features/features.5/features.5.0/block/block.2/Mul_output_0",
+  "/features/features.5/features.5.0/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.5/features.5.0/block/block.3/block.3.0/Conv_output_0",
+  "/features/features.6/features.6.0/block/block.2/Mul_output_0",
+  "/features/features.6/features.6.1/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.6/features.6.1/block/block.2/activation/Mul_output_0",
+  "/features/features.6/features.6.4/Add_output_0",
+  "/features/features.7/features.7.0/block/block.2/Mul_output_0",
+  "/features/features.7/features.7.0/block/block.3/block.3.0/Conv_output_0",
+  "/features/features.7/features.7.1/block/block.2/activation/Mul_output_0",
+  "/features/features.1/features.1.0/block/block.1/avgpool/GlobalAveragePool_output_0",
+  "/features/features.2/features.2.1/Add_output_0",
+  "/features/features.2/features.2.1/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.3/features.3.0/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.3/features.3.1/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.3/features.3.1/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.3/features.3.2/Add_output_0",
+  "/features/features.4/features.4.0/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.4/features.4.0/block/block.3/block.3.0/Conv_output_0",
+  "/features/features.4/features.4.2/Add_output_0",
+  "/features/features.4/features.4.2/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.4/features.4.2/block/block.2/activation/Mul_output_0",
+  "/features/features.4/features.4.3/Add_output_0",
+  "/features/features.5/features.5.1/Add_output_0",
+  "/features/features.5/features.5.1/block/block.2/activation/Mul_output_0",
+  "/features/features.5/features.5.1/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.5/features.5.2/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.5/features.5.2/block/block.2/Mul_output_0",
+  "/features/features.5/features.5.2/block/block.2/activation/Mul_output_0",
+  "/features/features.5/features.5.2/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.6/features.6.0/block/block.3/block.3.0/Conv_output_0",
+  "/features/features.6/features.6.2/Add_output_0",
+  "/features/features.6/features.6.2/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.6/features.6.3/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.6/features.6.4/block/block.2/activation/Mul_output_0",
+  "/features/features.7/features.7.0/block/block.2/activation/Mul_output_0",
+  "/features/features.7/features.7.1/Add_output_0",
+  "/features/features.7/features.7.1/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.1/features.1.0/block/block.1/activation/Mul_output_0",
+  "/features/features.1/features.1.1/block/block.1/activation/Mul_output_0",
+  "/features/features.1/features.1.1/block/block.1/avgpool/GlobalAveragePool_output_0",
+  "/features/features.2/features.2.0/block/block.2/activation/Mul_output_0",
+  "/features/features.2/features.2.0/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.2/features.2.1/block/block.2/activation/Mul_output_0",
+  "/features/features.2/features.2.2/block/block.2/activation/Mul_output_0",
+  "/features/features.3/features.3.0/block/block.2/activation/Mul_output_0",
+  "/features/features.3/features.3.0/block/block.3/block.3.0/Conv_output_0",
+  "/features/features.3/features.3.1/block/block.2/Mul_output_0",
+  "/features/features.3/features.3.1/block/block.2/activation/Mul_output_0",
+  "/features/features.3/features.3.2/block/block.2/Mul_output_0",
+  "/features/features.3/features.3.2/block/block.2/activation/Mul_output_0",
+  "/features/features.3/features.3.2/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.4/features.4.0/block/block.2/activation/Mul_output_0",
+  "/features/features.4/features.4.0/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.4/features.4.1/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.4/features.4.1/block/block.2/activation/Mul_output_0",
+  "/features/features.4/features.4.1/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.4/features.4.2/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.4/features.4.3/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.4/features.4.3/block/block.2/Mul_output_0",
+  "/features/features.4/features.4.3/block/block.2/activation/Mul_output_0",
+  "/features/features.4/features.4.3/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.5/features.5.0/block/block.2/activation/Mul_output_0",
+  "/features/features.5/features.5.3/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.5/features.5.3/block/block.2/activation/Mul_output_0",
+  "/features/features.5/features.5.3/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.6/features.6.0/block/block.2/activation/Mul_output_0",
+  "/features/features.6/features.6.0/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.6/features.6.1/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.6/features.6.2/block/block.0/block.0.2/Mul_output_0",
+  "/features/features.6/features.6.2/block/block.2/activation/Mul_output_0",
+  "/features/features.6/features.6.3/block/block.2/activation/Mul_output_0",
+  "/features/features.6/features.6.3/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.6/features.6.4/block/block.2/avgpool/GlobalAveragePool_output_0",
+  "/features/features.7/features.7.0/block/block.2/avgpool/GlobalAveragePool_output_0"
+ ],
+ "tensors": {
+  "/features/features.0/features.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.13671875
+  },
+  "/features/features.1/features.1.0/block/block.1/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.009765625
+  },
+  "/features/features.1/features.1.0/block/block.1/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.1/features.1.0/block/block.1/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.1/features.1.0/block/block.2/block.2.0/Conv_output_0": {
+   "kind": "depthwise",
+   "flips": 0.0078125
+  },
+  "/features/features.1/features.1.1/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.1/features.1.1/block/block.1/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.005859375
+  },
+  "/features/features.1/features.1.1/block/block.1/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.1/features.1.1/block/block.1/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.2/features.2.0/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.00390625
+  },
+  "/features/features.2/features.2.0/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.2/features.2.0/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.2/features.2.0/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.2/features.2.0/block/block.3/block.3.0/Conv_output_0": {
+   "kind": "dense",
+   "flips": 0.0078125
+  },
+  "/features/features.2/features.2.1/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.2/features.2.1/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.00390625
+  },
+  "/features/features.2/features.2.1/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.2/features.2.1/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.2/features.2.1/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.2/features.2.2/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.2/features.2.2/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.009765625
+  },
+  "/features/features.2/features.2.2/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.2/features.2.2/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.2/features.2.2/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.3/features.3.0/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.00390625
+  },
+  "/features/features.3/features.3.0/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.3/features.3.0/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.3/features.3.0/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.3/features.3.0/block/block.3/block.3.0/Conv_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.3/features.3.1/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.005859375
+  },
+  "/features/features.3/features.3.1/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.001953125
+  },
+  "/features/features.3/features.3.1/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.3/features.3.1/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.3/features.3.1/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.3/features.3.2/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.3/features.3.2/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.01171875
+  },
+  "/features/features.3/features.3.2/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.3/features.3.2/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.3/features.3.2/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.4/features.4.0/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.001953125
+  },
+  "/features/features.4/features.4.0/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.005859375
+  },
+  "/features/features.4/features.4.0/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.4/features.4.0/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.4/features.4.0/block/block.3/block.3.0/Conv_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.4/features.4.1/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.4/features.4.1/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.0
+  },
+  "/features/features.4/features.4.1/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.4/features.4.1/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.4/features.4.1/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.4/features.4.2/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.4/features.4.2/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.001953125
+  },
+  "/features/features.4/features.4.2/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.4/features.4.2/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.4/features.4.2/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.4/features.4.3/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.4/features.4.3/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.0
+  },
+  "/features/features.4/features.4.3/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.4/features.4.3/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.4/features.4.3/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.5/features.5.0/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.005859375
+  },
+  "/features/features.5/features.5.0/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.5/features.5.0/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.5/features.5.0/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.5/features.5.0/block/block.3/block.3.0/Conv_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.5/features.5.1/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.5/features.5.1/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.005859375
+  },
+  "/features/features.5/features.5.1/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.009765625
+  },
+  "/features/features.5/features.5.1/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.5/features.5.1/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.5/features.5.2/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.005859375
+  },
+  "/features/features.5/features.5.2/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.001953125
+  },
+  "/features/features.5/features.5.2/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.5/features.5.2/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.5/features.5.2/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.5/features.5.3/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.009765625
+  },
+  "/features/features.5/features.5.3/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.0
+  },
+  "/features/features.5/features.5.3/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.005859375
+  },
+  "/features/features.5/features.5.3/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.5/features.5.3/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.6/features.6.0/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.0078125
+  },
+  "/features/features.6/features.6.0/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.6/features.6.0/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.6/features.6.0/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.6/features.6.0/block/block.3/block.3.0/Conv_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.6/features.6.1/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.005859375
+  },
+  "/features/features.6/features.6.1/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.00390625
+  },
+  "/features/features.6/features.6.1/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.005859375
+  },
+  "/features/features.6/features.6.1/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.6/features.6.1/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.6/features.6.2/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.6/features.6.2/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.0
+  },
+  "/features/features.6/features.6.2/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0390625
+  },
+  "/features/features.6/features.6.2/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.6/features.6.2/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.6/features.6.3/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.005859375
+  },
+  "/features/features.6/features.6.3/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.001953125
+  },
+  "/features/features.6/features.6.3/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.009765625
+  },
+  "/features/features.6/features.6.3/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.6/features.6.3/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.6/features.6.4/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.6/features.6.4/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.005859375
+  },
+  "/features/features.6/features.6.4/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.013671875
+  },
+  "/features/features.6/features.6.4/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.6/features.6.4/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.7/features.7.0/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.0078125
+  },
+  "/features/features.7/features.7.0/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.7/features.7.0/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.7/features.7.0/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.0
+  },
+  "/features/features.7/features.7.0/block/block.3/block.3.0/Conv_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.7/features.7.1/Add_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "/features/features.7/features.7.1/block/block.0/block.0.2/Mul_output_0": {
+   "kind": "depthwise",
+   "flips": 0.005859375
+  },
+  "/features/features.7/features.7.1/block/block.2/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.0234375
+  },
+  "/features/features.7/features.7.1/block/block.2/activation/Mul_output_0": {
+   "kind": "dense",
+   "flips": 0.00390625
+  },
+  "/features/features.7/features.7.1/block/block.2/avgpool/GlobalAveragePool_output_0": {
+   "kind": "dense",
+   "flips": 0.001953125
+  },
+  "input": {
+   "kind": "dense",
+   "flips": 0.005859375
+  }
+ }
+}

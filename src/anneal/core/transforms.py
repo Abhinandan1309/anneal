@@ -554,6 +554,15 @@ def stem_nodes(model_path: Path) -> list[str]:
     return [n for n in names if n]
 
 
+def stem_output(model_path: Path) -> str | None:
+    """The tensor the stem block hands to the rest of the network (its last activation's output)."""
+    import onnx
+
+    names = set(stem_nodes(model_path))
+    last = [n for n in onnx.load(str(model_path)).graph.node if n.name in names]
+    return last[-1].output[0] if last else None
+
+
 def quantize_static_int8(
     artifact: ModelArtifact, params: dict[str, Any], ctx: TransformContext
 ) -> ModelArtifact:
@@ -597,6 +606,7 @@ def quantize_static_int8(
     top_k = params.get("equalize_top_k")
     min_gain = params.get("equalize_min_gain")
     calib_stride = params.get("calib_stride")
+    stem_int16 = bool(params.get("stem_int16", False))
     if calib_stride is not None and (isinstance(calib_stride, bool) or not isinstance(calib_stride, int) or calib_stride < 1):
         raise TransformError(f"calib_stride must be a positive integer, got {calib_stride!r}")
     float_gates = bool(params.get("float_gates", False))
@@ -659,6 +669,7 @@ def quantize_static_int8(
             **({"equalize_top_k": top_k} if top_k is not None else {}),
             **({"equalize_min_gain": min_gain} if min_gain is not None else {}),
             **({"calib_stride": calib_stride} if calib_stride is not None else {}),
+            **({"stem_int16": True} if stem_int16 else {}),
             **({"float_stem": True} if float_stem else {}),
             **({"equalize_dense": True, "equalize_slack": slack, "float_gates": float_gates}
                if equalize_dense else {}),
@@ -739,6 +750,14 @@ def quantize_static_int8(
         extra["CalibTensorRangeSymmetric"] = False
     if calib_stride is not None:
         extra["CalibStridedMinMax"] = calib_stride
+    if stem_int16:
+        # EfficientNet-B1: after equalisation the stem's output alone still flipped 13.7% of
+        # top-1 predictions at 8 bits (tensor_sensitivity.py); one 16-bit tensor, not the model.
+        src = _with_named_nodes(src)
+        stem_out = stem_output(src)
+        if stem_out is None:
+            raise TransformError("stem_int16: no stem convolution found")
+        extra["TensorQuantOverrides"] = {stem_out: [{"quant_type": QuantType.QUInt16}]}
     if float_stem:
         src = _with_named_nodes(src)
         base_exclude = base_exclude + [n for n in stem_nodes(src) if n not in base_exclude]
@@ -932,6 +951,14 @@ REGISTRY: dict[str, TransformSpec] = {
                     "With equalize: rewrite only the k sites with the highest predicted gain "
                     "(rounding noise removed from starved channels) instead of all. Each gated "
                     "site adds one element-wise Mul, which is costly on NPUs; 0 = none."
+                ),
+            },
+            "stem_int16": {
+                "type": "boolean",
+                "description": (
+                    "Quantize the stem block's output tensor (the first depthwise conv's input) "
+                    "to 16 bits, everything else to 8: mixed precision for the one tensor that "
+                    "stays too coarse at 8 bits on EfficientNet-B1 even after equalisation."
                 ),
             },
             "calib_stride": {

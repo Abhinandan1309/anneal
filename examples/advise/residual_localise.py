@@ -34,6 +34,8 @@ VARIANTS = {
     "advised, float gates": {**ADVISED, "float_gates": True},
     "advised at 99.95": {**ADVISED, "calib_percentile": 99.95},
     "advised at 99.9": {**ADVISED, "calib_percentile": 99.9},
+    # tensor_sensitivity.py: after equalisation the stem's output alone flips 13.7% of top-1.
+    "advised + stem int16": {**ADVISED, "stem_int16": True},
 }
 
 

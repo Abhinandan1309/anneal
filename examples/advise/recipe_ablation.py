@@ -43,6 +43,7 @@ RECIPES = {
     "eq + minmax + stem": {**BASE, **EQ, "calibrate_method": "minmax", **STEM},
     "asym 99.99 + stem (no eq)": {**BASE, **A9999, **STEM},
     "eq + minmax": {**BASE, **EQ, "calibrate_method": "minmax"},
+    "advised + stem int16": {**BASE, **EQ, **A9999, **STEM, "stem_int16": True},
 }
 ADVISED = "anneal (32-bit): equalise + percentile + float stem"  # eq + asym 99.99 + stem, stored
 
@@ -51,6 +52,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="efficientnet_b0")
     ap.add_argument("--limit", type=int, default=10_000)
+    ap.add_argument("--only", default=None, help="comma-separated recipe labels to run (default: all)")
     ap.add_argument("--calib-stride", type=int, default=None,
                     help="calibrate in chunks of this many 8-image batches (bounds RAM; e.g. 1 for EfficientNet-B1)")
     args = ap.parse_args()
@@ -67,6 +69,9 @@ def main() -> None:
     if not stored_path.exists():  # no ImageNet run to pair with: score the advised recipe and the default here
         recipes = {"advised: eq + asym 99.99 + stem": {**BASE, **EQ, **A9999, **STEM},
                    "minmax (default)": {**BASE, "calibrate_method": "minmax"}, **recipes}
+    if args.only:
+        keep = set(args.only.split(","))
+        recipes = {k: v for k, v in recipes.items() if k in keep}
     if args.calib_stride:
         recipes = {k: {**v, "calib_stride": args.calib_stride} for k, v in recipes.items()}
     built = {}
@@ -109,7 +114,7 @@ def main() -> None:
     fp_right = p["fp32"] == y
     ref = p["advised: eq + asym 99.99 + stem"] == y
     rows = {}
-    for k in ["advised: eq + asym 99.99 + stem", "minmax (default)", *RECIPES]:
+    for k in [k for k in ["advised: eq + asym 99.99 + stem", "minmax (default)", *RECIPES] if k in p]:
         right = p[k] == y
         row = stats(fp_right, right)
         b, c = int(np.sum(ref & ~right)), int(np.sum(~ref & right))
@@ -119,7 +124,7 @@ def main() -> None:
         rows[k] = row
         print(f"  {k:36s} {row['delta_pp']:+6.2f}pp vs FP32 | {d:+6.2f}pp vs advised [{lo:+.2f},{hi:+.2f}] "
               f"p={row['vs_advised']['mcnemar_p']:.2g}", flush=True)
-    out = HERE / f"{name}_recipe_ablation.json"
+    out = HERE / (f"{name}_recipe_ablation.json" if not args.only else f"{name}_recipe_ablation_subset.json")
     out.write_text(json.dumps({"model": name, "n": m, "fp32_accuracy": float(fp_right.mean()), "mode": "emulated",
                                "rows": rows}, indent=1), encoding="utf-8")
     print(f"written: {out}")

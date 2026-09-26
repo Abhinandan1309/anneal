@@ -535,3 +535,16 @@ def test_strided_calibration_is_recorded_and_close_to_one_shot(tmp_path: Path, c
     assert np.abs(a - b).max() <= 0.1 * max(1.0, np.abs(a).max())
     with pytest.raises(TransformError):
         _static(tmp_path, calib, src, "bad", calib_stride=0)
+
+
+def test_stem_int16_puts_one_16_bit_quantizer_on_the_stem_output(tmp_path: Path, calib):
+    src = _chain(tmp_path / "m.onnx")
+    art = _static(tmp_path, calib, src, "s16", equalize=True, stem_int16=True)
+    assert art.lineage[-1].params["stem_int16"] is True
+    m = onnx.load(str(art.path))
+    zero_points = {i.name: i.data_type for i in m.graph.initializer}
+    sixteen = [n for n in m.graph.node if n.op_type == "QuantizeLinear" and len(n.input) > 2
+               and zero_points.get(n.input[2]) == onnx.TensorProto.UINT16]
+    assert len(sixteen) == 1
+    x = _batches(1, seed=2)[0]
+    assert np.isfinite(_run(Path(art.path), x)).all()
