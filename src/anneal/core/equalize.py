@@ -39,6 +39,9 @@ depthwise conv's output channels by s scales x, y, the pooled mean and z; the SE
 the projection divide s out of their input channels, so the SE's output and the block's output
 are unchanged. This balances the depthwise conv's *output* side, which matters most when weights
 are quantized per tensor (the depthwise and projection weights then share one scale each).
+MobileNetV3's ReLU blocks (depthwise -> ReLU -> SE -> projection) are handled the same way
+(kind ``"relu-se"``): ReLU(s x) = s ReLU(x) for s > 0, so no gate Mul is needed, and s stays
+positive.
 
 Choosing s. Each tensor's quantization range [lo, hi] (always including 0) may not grow at the
 top; its bottom may extend by ``slack`` of the range. Within that budget every channel is scaled
@@ -70,7 +73,7 @@ DEFAULT_MAX_SCALE = 1e3
 
 @dataclass
 class _Site:
-    kind: str  # "gated", "gated-se" or "relu"
+    kind: str  # "gated", "gated-se", "relu" or "relu-se"
     conv_a: Any
     act: Any  # the Mul (gated) or the Relu
     gate: Any | None
@@ -83,7 +86,7 @@ class _Site:
     conv_p: Any | None = None
     consumers_z: list = field(default_factory=list)
     z: str | None = None
-    #: Squeeze-excite sites only (kind "gated-se"): y also feeds ``pool`` (GlobalAveragePool or
+    #: Squeeze-excite sites only (kind "gated-se" or "relu-se"): y also feeds ``pool`` (GlobalAveragePool or
     #: ReduceMean over H, W), whose only consumer ``fc1`` (a Conv) takes the scale out of its
     #: input channels, and ``se_mul`` (z = y * e). ``conv_b`` is then z's first consumer.
     pool: Any | None = None
@@ -145,7 +148,7 @@ class EqualisationResult:
             "sites": len(self.sites),
             "candidates": len(self.ranking),
             "by_kind": {
-                k: sum(s.kind == k for s in self.sites) for k in ("gated", "gated-residual", "gated-se", "relu")
+                k: sum(s.kind == k for s in self.sites) for k in ("gated", "gated-residual", "gated-se", "relu", "relu-se")
             },
             "channels_mirrored": sum(s.channels_mirrored for s in self.sites),
             "median_levels_before": float(np.median([s.levels_before for s in self.sites])) if self.sites else None,
@@ -289,6 +292,10 @@ def find_sites(model, *, residual: bool = False, se: bool = False) -> list[_Site
     over axes 2, 3 with keepdims) and the SE Mul; p feeds only FC1 (a group-1 Conv with
     constant weights); e is a Sigmoid/HardSigmoid output that feeds only the SE Mul; z feeds
     only group-1 or depthwise Convs with constant weights and is not a graph output.
+
+    Also with ``se``, ``y = ReLU(x)`` feeding a squeeze-excite block matched the same way is a
+    site of kind ``"relu-se"`` (MobileNetV3's ReLU blocks). It is exact for s > 0 only, so its
+    scales are never negative, and it needs no gate Mul.
     """
     g = model.graph
     inits = {i.name: i for i in g.initializer}
@@ -442,9 +449,16 @@ def find_sites(model, *, residual: bool = False, se: bool = False) -> list[_Site
             a = producer.get(x)
             if not conv_with_const_weights(a) or len(consumers.get(x, [])) != 1:
                 continue
-            b = depthwise_only_consumer(node.output[0])
+            y = node.output[0]
+            b = depthwise_only_consumer(y)
             if b is not None:
-                sites.append(_Site("relu", a, node, None, b, x, node.output[0]))
+                sites.append(_Site("relu", a, node, None, b, x, y))
+                continue
+            found_se = se_consumers(a, y)
+            if found_se is not None:
+                pool, fc1, mul, cs, z = found_se
+                sites.append(_Site("relu-se", a, node, None, cs[0], x, y, consumers_z=cs, z=z,
+                                   pool=pool, fc1=fc1, se_mul=mul))
     return sites
 
 
@@ -599,7 +613,8 @@ def equalise(
     153.5 did not); the transform's ``equalize_min_damage`` measures joint damage instead.
     At most one of the three may be given. ``residual`` also rewrites gated sites whose output
     feeds a residual Add (see :func:`find_sites`); off by default. ``se`` likewise rewrites
-    gated sites whose output feeds a squeeze-excite block (kind ``"gated-se"``); off by default.
+    gated and ReLU sites whose output feeds a squeeze-excite block (kinds ``"gated-se"`` and
+    ``"relu-se"``); off by default.
     A depthwise conv can be both the consumer of an ordinary gated site (its weights divided by
     that site's s) and the producer of a gated-se site (multiplied by another): both act on its
     output-channel axis and commute.
@@ -679,7 +694,7 @@ def equalise(
         lo_y, hi_y = ranges[site.y]
         s = _site_scales(site, ranges, **scale_kw)
         if mix is not None:
-            # For a gated-se site the weight balanced against A's is the projection's (z's first
+            # For a squeeze-excite site the weight balanced against A's is the projection's (z's first
             # consumer), along its input channels unless it is depthwise.
             b_axis = 0 if site.fc1 is None or _is_depthwise_weight(site.conv_b, inits) else 1
             s = _mixed_scales(s, inits[site.conv_a.input[1]], inits[site.conv_b.input[1]], *mix, b_axis=b_axis)
