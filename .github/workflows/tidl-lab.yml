@@ -1,0 +1,53 @@
+name: tidl-lab
+
+# Does Anneal's equalisation hold on a second NPU vendor? TI TDA4VM (J721E) via TIDL host
+# emulation, which reproduces the device's integer arithmetic on x86 Linux.
+on:
+  workflow_dispatch:
+    inputs:
+      models:
+        description: "comma-separated torchvision models"
+        default: "efficientnet_b0"
+      images:
+        description: "Imagenette validation images"
+        default: "512"
+      variants:
+        description: "comma-separated variant labels (see examples/tidl/run_tidl.py)"
+        default: "tidl 8-bit,tidl 8-bit + equalised,tidl 16-bit,tidl auto mixed"
+
+jobs:
+  tidl:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"   # TIDL tools require exactly 3.10
+      - name: TIDL tools (pinned)
+        run: |
+          git clone https://github.com/TexasInstruments/edgeai-tidl-tools.git
+          cd edgeai-tidl-tools
+          git checkout a6beeffd66544925c371ec308ede4885f6e1bd1f
+          ./scripts/setup/setup.sh --skip_tflite --skip_tvm
+      - name: Anneal
+        run: |
+          python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          # TIDL's setup installs its own onnxruntime build (with the TIDL providers); keep it.
+          python -m pip install --no-deps -e .
+          python -m pip install onnx numpy pillow rich
+          python -c "import onnxruntime as o; print(o.__version__, o.get_available_providers())"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.anneal_cache
+          key: imagenette2-160
+      - name: Run
+        run: |
+          source edgeai-tidl-tools/scripts/setup/setup_env.sh J721E
+          python examples/tidl/run_tidl.py --models "${{ inputs.models }}" --images "${{ inputs.images }}" \
+            --variants "${{ inputs.variants }}" --out tidl-result.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tidl-result
+          path: tidl-result.json

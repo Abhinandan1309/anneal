@@ -33,23 +33,23 @@
     "calib_stride": 1
    }
   },
-  "advised + stem int16": {
-   "accuracy": 0.7745,
-   "delta_pp": -2.21,
+  "advised + top3 int16": {
+   "accuracy": 0.7751,
+   "delta_pp": -2.15,
    "ci95_pp": [
-    -2.684512680698841,
-    -1.7354873193011593
+    -2.627040606657337,
+    -1.672959393342663
    ],
-   "mcnemar_p": 5.269151418833589e-20,
+   "mcnemar_p": 8.324740632339817e-19,
    "regressions": 406,
-   "fixes": 185,
+   "fixes": 191,
    "vs_advised": {
-    "delta_pp": 1.31,
+    "delta_pp": 1.37,
     "ci95_pp": [
-     0.8685499087960226,
-     1.7514500912039777
+     0.9303640482217133,
+     1.8096359517782867
     ],
-    "mcnemar_p": 6.902992153395344e-09
+    "mcnemar_p": 1.1399767423916343e-09
    },
    "params": {
     "per_channel": true,
@@ -59,7 +59,47 @@
     "calibrate_method": "percentile_asym",
     "calib_percentile": 99.99,
     "float_stem": true,
-    "stem_int16": true,
+    "int16_tensors": [
+     "/features/features.0/features.0.2/Mul_output_0",
+     "/features/features.6/features.6.2/block/block.2/Mul_output_0",
+     "/features/features.7/features.7.1/block/block.2/Mul_output_0"
+    ],
+    "calib_stride": 1
+   }
+  },
+  "advised + top5 int16": {
+   "accuracy": 0.7738,
+   "delta_pp": -2.2800000000000002,
+   "ci95_pp": [
+    -2.7572113396138027,
+    -1.8027886603861973
+   ],
+   "mcnemar_p": 5.504924749651202e-21,
+   "regressions": 413,
+   "fixes": 185,
+   "vs_advised": {
+    "delta_pp": 1.24,
+    "ci95_pp": [
+     0.7989074977014458,
+     1.6810925022985541
+    ],
+    "mcnemar_p": 4.1682595165417544e-08
+   },
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true,
+    "int16_tensors": [
+     "/features/features.0/features.0.2/Mul_output_0",
+     "/features/features.6/features.6.2/block/block.2/Mul_output_0",
+     "/features/features.7/features.7.1/block/block.2/Mul_output_0",
+     "/features/features.6/features.6.4/block/block.2/Mul_output_0",
+     "/features/features.3/features.3.2/block/block.0/block.0.2/Mul_output_0"
+    ],
     "calib_stride": 1
    }
   }
