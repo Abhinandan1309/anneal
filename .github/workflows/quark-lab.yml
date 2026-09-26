@@ -1,0 +1,48 @@
+name: quark-lab
+
+# Does Anneal's equalisation hold under AMD's quantizer (Vitis AI / Ryzen AI, via AMD Quark)?
+# XINT8: symmetric power-of-two, per-tensor activations and weights. Quark JIT-builds C++ custom
+# ops, which needs a compiler, so this runs on Linux.
+on:
+  workflow_dispatch:
+    inputs:
+      models:
+        description: "comma-separated torchvision models"
+        default: "efficientnet_b0,efficientnet_b1,mobilenet_v3_large"
+      images:
+        description: "Imagenette validation images"
+        default: "1000"
+      variants:
+        description: "comma-separated variant labels (see examples/vitis/run_quark.py); empty = all"
+        default: ""
+
+jobs:
+  quark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install amd-quark ninja
+          python -m pip install -e .
+          python -m pip list | grep -i -E "quark|onnx|torch"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.anneal_cache
+          key: imagenette2-160
+      - name: Run
+        run: |
+          VARIANTS="${{ inputs.variants }}"
+          python examples/vitis/run_quark.py --models "${{ inputs.models }}" --images "${{ inputs.images }}" \
+            ${VARIANTS:+--variants "$VARIANTS"} --out quark-result.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quark-result
+          path: quark-result.json
