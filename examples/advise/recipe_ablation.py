@@ -43,9 +43,6 @@ RECIPES = {
     "eq + minmax + stem": {**BASE, **EQ, "calibrate_method": "minmax", **STEM},
     "asym 99.99 + stem (no eq)": {**BASE, **A9999, **STEM},
     "eq + minmax": {**BASE, **EQ, "calibrate_method": "minmax"},
-    # Selective equalisation: only sites predicted to recover >= 1 / >= 3 channels of signal.
-    "eq(gain>=1) + asym 99.99 + stem": {**BASE, **EQ, "equalize_min_gain": 1.0, **A9999, **STEM},
-    "eq(gain>=3) + asym 99.99 + stem": {**BASE, **EQ, "equalize_min_gain": 3.0, **A9999, **STEM},
 }
 ADVISED = "anneal (32-bit): equalise + percentile + float stem"  # eq + asym 99.99 + stem, stored
 

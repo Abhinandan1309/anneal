@@ -27,3 +27,20 @@ ResNet-18 it clips most ReLU outputs to exactly its smallest candidate threshold
 min/max range), which costs 20pp where NVIDIA reports entropy costing about 0.1pp on ResNets.
 Our entropy rows are therefore labelled *onnxruntime entropy*; comparisons with entropy
 calibration as practised (TensorRT) use NVIDIA's published numbers (Wu et al. 2020), not ours.
+
+**Update (26 Sep 2026): ImageNet rows after the fix.** The EfficientNet-B0 ImageNet entropy row
+was re-run with the fixed calibrator (`"redone": ["entropy"]` in
+[efficientnet_b0.json](../imagenet/results/efficientnet_b0.json)). The ImageNet entropy rows now
+read:
+
+| Model | n | min/max Δ | onnxruntime entropy Δ (fixed) |
+|---|---:|---:|---:|
+| EfficientNet-B0 | 49,000 | −45.46pp | −6.33pp |
+| MobileNetV3-Large | 49,000 | −5.37pp | −7.20pp |
+| ResNet-50 | 10,000 | −0.19pp | −23.39pp |
+
+Source: [`../imagenet/results/`](../imagenet/results/) (emulated 32-bit, 64 held-out calibration
+images). Entropy and min/max differ on all three, so none of these is the broken calibrator.
+The ResNet-50 row shows the second caveat at ImageNet scale: onnxruntime entropy over-clips
+ReLU outputs, whereas NVIDIA reports about 0.1pp for entropy on ResNets. For EfficientNet-B0,
+NVIDIA's entropy result (−4.8pp) remains the reference for entropy as practised.

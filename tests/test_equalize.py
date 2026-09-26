@@ -484,16 +484,15 @@ def test_compute_only_quantization_leaves_other_ops_in_float(tmp_path: Path, cal
                         TransformContext(workdir=tmp_path / "w2", calibset=calib))
 
 
-def test_min_gain_keeps_only_sites_worth_their_cost(tmp_path: Path):
+def test_min_gain_is_all_or_nothing_on_the_models_total_gain(tmp_path: Path):
     src = _chain(tmp_path / "m.onnx")
-    ranking = rank_sites(src, _batches())
-    cut = (ranking[0].gain + ranking[1].gain) / 2  # between the best site and the rest
-    result = equalise(src, tmp_path / "eq.onnx", _batches(), min_gain=cut)
-    assert [s.producer for s in result.sites] == [ranking[0].site]
-    none = equalise(src, tmp_path / "none.onnx", _batches(), min_gain=ranking[0].gain * 10)
+    total = sum(r.gain for r in rank_sites(src, _batches()))
+    all_ = equalise(src, tmp_path / "all.onnx", _batches(), min_gain=total * 0.99)
+    assert len(all_.sites) == 3  # a model worth equalising gets every site, not the top ones
+    none = equalise(src, tmp_path / "none.onnx", _batches(), min_gain=total * 1.01)
     assert none.sites == [] and len(none.ranking) == 3
-    full = equalise(src, tmp_path / "full.onnx", _batches(), min_gain=0.0)
-    assert len(full.sites) == 3
+    x = _batches(1, seed=5)[0]
+    assert np.array_equal(_run(src, x), _run(tmp_path / "none.onnx", x))
 
 
 @pytest.mark.parametrize("kwargs", [{"min_gain": -1.0}, {"min_gain": True}, {"min_gain": 1.0, "top_k": 1}])

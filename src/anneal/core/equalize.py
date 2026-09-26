@@ -422,11 +422,13 @@ def equalise(
 
     By default every site found is rewritten. ``sites`` restricts that to the named ones (ids
     as in :func:`rank_sites`: producer conv names; an unknown id is an error), and ``top_k``
-    to the k with the highest predicted gain. ``min_gain`` keeps only sites whose predicted gain
-    is at least that many channels' worth of signal: the data-driven switch, which rewrites
-    nothing on a model whose channels are already balanced (SSDLite-MobileNetV3: total gain 2.9,
-    against 58-366 on the classifiers that collapse without equalisation). At most one of the
-    three may be given.
+    to the k with the highest predicted gain. ``min_gain`` is a model-level switch: every site
+    is rewritten if the predicted gains *summed over the model* reach it, none otherwise. Balanced
+    models are left alone (SSDLite-MobileNetV3: total 2.9, against 58-366 on the classifiers that
+    collapse without equalisation), and a model that needs equalisation gets all of it: on the
+    Galaxy S24, equalising EfficientNet-B0's top 8 of 16 sites by predicted gain recovered only
+    half the loss (-6.4pp vs -0.7pp for all 16), so the per-site prediction is not used to select.
+    At most one of the three may be given.
     """
     import onnx
     from onnx import helper, numpy_helper
@@ -460,7 +462,8 @@ def equalise(
     if top_k is not None:
         wanted = [r.site for r in result.ranking[:top_k]]
     if min_gain is not None:
-        wanted = [r.site for r in result.ranking if r.gain >= min_gain]
+        total = sum(r.gain for r in result.ranking)
+        wanted = [r.site for r in result.ranking] if total >= min_gain else []
     chosen = None if wanted is None else set(wanted)
     g = model.graph
     inits = {i.name: i for i in g.initializer}

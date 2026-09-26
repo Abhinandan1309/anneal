@@ -924,9 +924,9 @@ REGISTRY: dict[str, TransformSpec] = {
             "equalize_min_gain": {
                 "type": "number",
                 "description": (
-                    "With equalize: rewrite only sites whose predicted gain (channels' worth of "
-                    "quantization signal recovered) is at least this; skips equalisation, and its "
-                    "NPU cost, where channel ranges are already balanced."
+                    "With equalize: rewrite all sites if the model's summed predicted gain "
+                    "(channels' worth of quantization signal recovered) is at least this, none "
+                    "otherwise; skips equalisation, and its NPU cost, on balanced models."
                 ),
             },
             "quantize_ops": {

@@ -90,6 +90,16 @@ Anneal's search had `reduce_range` in its action space and never tried it on the
 graph. The heuristic policy now retries a broken static INT8 model with `reduce_range` and
 with per-tensor scales before anything else.
 
+> **Update (26 Sep 2026).** "7-bit weights fix it" is true but no longer the fix Anneal
+> recommends for ReLU CNNs. Anneal's per-layer saturation analyser later located the damage on
+> this model in one layer, the stem convolution; keeping only the stem in float moved this laptop
+> from −4.20pp to +1.27pp without shrinking any weights. On ImageNet (ResNet-50, 10,000 images,
+> this laptop's real kernels), symmetric 99.999 percentile + float stem loses 0.04pp, while the
+> same calibration with `reduce_range` instead of the float stem loses 0.63pp
+> ([`../advise/resnet50_ablation.json`](../advise/resnet50_ablation.json)). `anneal advise` now
+> recommends the float stem and no `reduce_range` for plain CNNs. The search policy's
+> `reduce_range` retry described above is unchanged, but it is no longer the recommended recipe.
+
 ## 4. Olive's search against Anneal's search
 
 To compare the tools fairly, [`olive_search_config.json`](olive_search_config.json) runs
@@ -121,6 +131,14 @@ identically — all 3,925 images, AC power, A-B-A timing (reports in
   budget. Choosing the best-looking of many candidates on a small sample systematically
   selects a lucky one (the winner's curse). Anneal's pick, judged the same way, is
   confirmed within budget.
+
+> **Update (26 Sep 2026), on "entropy calibration" in Olive's pick.** Anneal's own entropy
+> results were later found to be min/max in disguise: onnxruntime's `quantize_static` ran its
+> entropy calibrator with 128 histogram bins folded to 128, which returns the min/max range
+> ([`../imagenette_entropy/`](../imagenette_entropy/)). Olive's pick went through the same
+> onnxruntime calibrator. Whether Olive's configuration passed a larger histogram, and so
+> whether its "entropy" differed from min/max, has not been checked. The accuracy and speed
+> measured for Olive's pick are unaffected; only the label may be misleading.
 
 ## Reproducing
 

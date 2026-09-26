@@ -184,6 +184,44 @@ Withdrawn with its model in the narrowing amendment, before any result. Not run.
   so the Pixel 8 tests another vendor's silicon (Q3) but not another vendor's NPU, and its latencies
   say nothing about INT8 on an NPU.
 
+## Follow-ups after grading (not pre-registered)
+
+The runs below came after the grades above were written. They were not predicted in the design
+and do not change any grade.
+
+**Integer results are identical across two Hexagon generations.** See "Does FP32 differ across
+devices by more than noise?" above: the `hub int8` predictions on the Galaxy S24 and SA8775P agree
+on all 1,024 images.
+
+**Selective equalisation (commit 2325b57).** Prediction 4 failed because equalisation costs
+29–32% latency. To recover speed, the 16 sites were ranked by Anneal's predicted gain
+(`rank_sites`) and only the top k were equalised before Qualcomm's quantizer. EfficientNet-B0,
+Galaxy S24, QNN (DLC), 1,024 images, one profile job per latency
+([results](../examples/qaihub/results/efficientnet_b0-topk-samsung-galaxy-s24-family-qnn_dlc-n1024.json),
+[run_topk.py](../examples/qaihub/run_topk.py)):
+
+| k (sites equalised) | share of predicted gain | Top-1 | Δ (pp) [95% CI] | McNemar p | share of loss recovered | Latency (ms) | NPU ops |
+|---:|---:|---:|---|---:|---:|---:|---:|
+| 0 (`hub int8`) | 0% | 62.6% | −12.0 [−14.4, −9.6] | 7e-22 | 0% | 0.425 | 244 |
+| 1 | 34% | 63.4% | −11.2 [−13.6, −8.9] | 3e-20 | 7% | 0.416 | 245 |
+| 2 | 50% | 63.6% | −11.0 [−13.3, −8.7] | 5e-21 | 8% | 0.424 | 246 |
+| 4 | 68% | 64.6% | −10.0 [−12.2, −7.7] | 4e-18 | 17% | 0.428 | 248 |
+| 8 | 84% | 68.2% | −6.4 [−8.4, −4.5] | 2e-10 | 46% | 0.453 | 252 |
+| 16 (all) | 100% | 73.9% | −0.7 [−2.2, +0.9] | 0.46 | 94% | 0.541 | 260 |
+
+FP32 on the same device: 74.6%, 0.839 ms. "Share of predicted gain" is the fraction of the summed
+`rank_sites` gain (70.98) in the top k sites.
+
+- **Selection by predicted gain does not keep accuracy.** The top four sites carry 68% of the predicted gain and recover 17% of the loss; the last eight carry 16% and recover 48%. Recovery accumulates over all 16 sites, and the per-site prediction does not rank a site's value on the device.
+- **The latency cost is concentrated in the low-ranked sites.** Sites 1–8 add 0.03 ms, sites 9–16 add 0.09 ms. Sites 9–16 include the three highest-resolution sites (the stem and both `features.2` blocks).
+- **Reproducibility.** k = 0 and k = 16 reproduce the QNN `hub int8` and `hub int8 + equalised` accuracies in the table above exactly (−12.0 and −0.7pp, same images). Their latencies differ from that run by up to 0.01 ms (0.425 vs 0.415 ms), and k = 1 measured faster than k = 0, so latency differences under about 0.01 ms are noise.
+- **What this leaves.** The NPU speed cost of equalisation is an open problem. Summed over a model, the predicted gain does separate a detector that does not need equalisation (SSDLite-MobileNetV3, total 2.9) from the classifiers that do (58–366); that evidence is from COCO in emulation, not from this device. `equalize_min_gain` was first written as a per-site filter (commit 5fafa9b), which on EfficientNet-B0 would select a top-k subset of the kind this table shows to be insufficient; after this result it was changed to act on the model's summed gain, all sites or none.
+
+**Pending.**
+
+- *Leave-one-site-out* (`examples/qaihub/run_site_value.py`): each site's measured accuracy value and latency cost on the S24. Running; no results yet.
+- *Why `anneal recipe` does not run on the S24* (`examples/qaihub/run_recipe_debug.py`): queued; no results yet.
+
 ## Limitations
 
 - **Imagenette, not ImageNet.** Images are Imagenette validation images scored 1000-way; absolute

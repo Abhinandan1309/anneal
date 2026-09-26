@@ -2,6 +2,42 @@
 > **The full record.** Everything Anneal has measured, in the order it was found, with the
 > corrections left in. The [README](../README.md) is the short version.
 
+> **Status as of 2026-09-26: what has since been superseded or corrected.** The body below is
+> left as it was written; stale statements carry an inline *[Update 2026-09-26]* note.
+>
+> - **Entropy calibration was min/max in disguise.** onnxruntime's entropy calibrator ran with
+>   128 histogram bins folded to 128, which returns the min/max range. Fixed (commit f0b091e);
+>   reruns in [examples/imagenette_entropy](../examples/imagenette_entropy/README.md). Even fixed,
+>   onnxruntime's entropy is not TensorRT's (it over-clips ResNets: −23.4pp on ResNet-50,
+>   [data](../examples/imagenet/results/resnet50.json)), so entropy-as-practised comparisons cite
+>   NVIDIA's published numbers.
+> - **The advice for plain ReLU CNNs was corrected** (commit 906393b). On ImageNet the old rule,
+>   asymmetric 99.99 percentile + float stem (+ `reduce_range` on non-VNNI x86), lost 0.44pp
+>   (0.65pp fused) to symmetric 99.999 percentile. The [ablation](../examples/advise/README.md)
+>   traced it to over-clipping at 99.99 and to `reduce_range`, which costs ~0.5pp once the float
+>   stem has removed the saturation. Plain CNNs now get symmetric 99.999 percentile + float stem,
+>   no `reduce_range`: −0.14pp emulated, −0.04pp on the non-VNNI laptop. For gated-depthwise
+>   networks asymmetric 99.99 stays best (EfficientNet-B0 ablation, same page).
+> - **ImageNet results now exist** ([examples/imagenet](../examples/imagenet/README.md)): five
+>   models, 49,000 or 10,000 validation images. EfficientNet-B0 −45.5pp by default, −0.52pp with
+>   Anneal (significant, p = 4e-10; not lossless). Statements below that Anneal's numbers are
+>   Imagenette-only are out of date.
+> - **Real edge devices** ([design](edge_study_design.md), [results](edge_study_results.md),
+>   [data](../examples/qaihub/README.md)): with Qualcomm's own quantizer on AI Hub, EfficientNet-B0
+>   loses 11.5–13.3pp on the Galaxy S24, SA8775P and Pixel 8, and 0.7–2.0pp once equalised
+>   (Imagenette). Equalisation costs 27–32% of INT8 latency on the S24 NPU, far more than the
+>   ~10% measured on CPUs below.
+> - **Selective equalisation by predicted gain failed on the device** (commit 2325b57):
+>   equalising the top 8 of 16 sites by `rank_sites`' predicted gain keeps −6.4pp on the S24;
+>   only all 16 recover (−0.7pp). The per-site prediction does not rank a site's value there.
+> - **Dense-consumer equalisation** (the "next step" below) was built and gives no gain on any
+>   model on ImageNet; it is experimental and off by default.
+> - **Beyond classification** ([examples/tasks](../examples/tasks/README.md)): on COCO neither
+>   SSDLite-MobileNetV3 nor YOLOv8n collapses under INT8 (−2.59 and −0.89 mAP points by default),
+>   so equalisation is not needed there; `equalize_min_gain` (commit 5fafa9b) skips it when the
+>   predicted gain is small.
+> - Current open problems are listed in the [README](../README.md#limitations-and-open-problems).
+
 # Anneal: the full record
 
 **An agent that optimises neural networks for the hardware they'll actually run on.**
@@ -139,7 +175,10 @@ proxy cannot see. Sensitivity is itself a property of the hardware.
 
 What is and is not established: the emulation's pairing order (input channels innermost) is
 an assumption about the kernel's data layout, and the latency cost of the guard has not yet
-been measured on AC power.
+been measured on AC power. *[Update 2026-09-26: measured since for EfficientNet-B0 on this
+laptop (AC power, interleaved rounds): the equalised recipe with the guard ran at 1.02x FP32
+against 1.04x without it
+([data](../examples/advise/efficientnet_b0-x86-avx2-16bit-timing.json)).]*
 
 ### Does it generalise? Three models, four machines
 
@@ -281,7 +320,7 @@ speed vs FP32 at 1 thread; * means McNemar p < 0.05:
 | AMD EPYC 7763 (no VNNI) | −50.9pp* · 1.27x | −7.0pp* · 1.30x | −3.1pp* · 1.15x | **−0.6pp · 1.18x** |
 
 - **The accuracy fix holds on every CPU.** With the right recipe for the chip, EfficientNet-B0's change is not statistically significant anywhere. Apple M1 matches ARM Neoverse to the image; its timings drifted 16% and are left out.
-- **Equalisation costs about 10% of the INT8 speedup** (2.33x → 2.11x on ARM) for the inserted gate multiplies. That is the price of +4pp.
+- **Equalisation costs about 10% of the INT8 speedup** (2.33x → 2.11x on ARM) for the inserted gate multiplies. That is the price of +4pp. *[Update 2026-09-26: on the Galaxy S24 NPU the cost is much larger: equalised INT8 takes 27–32% longer than plain INT8. See [edge study results](edge_study_results.md).]*
 - **reduce_range is needed exactly where the saturation analysis says.** On the two CPUs without VNNI it takes the equalised recipe from −3.1pp to −0.6pp. Elsewhere it changes nothing.
 - **For MobileNetV3, equalise + percentile + float stem is the best recipe on all six CPUs** (−1.0 to −2.6pp, down from −11 to −25pp), at no measurable speed cost.
 
@@ -310,12 +349,17 @@ change vs FP32 in pp, fused on this non-VNNI laptop / emulated 32-bit):
 | EfficientNets | B0, B1, V2-S | **−31 to −76 / −25 to −76** | equalise + percentile + stem (+ rr): −0.6, −6.8, −1.4 |
 | Vision transformers | ViT-B/16 | −8.0 / −8.4 | **quantize only Conv/MatMul/Gemm: +0.6 / +0.2** |
 | | Swin-T | −1.8 / −3.1 | compute ops only: −2.5 / +0.2 (within noise) |
-| ConvNeXt | ConvNeXt-Tiny | −0.2 / +3.9 (noise; agreement only 85%) | not solved: every recipe loses 2–4pp |
+| ConvNeXt | ConvNeXt-Tiny | −0.2 / +3.9 (noise; agreement only 85%) | not solved: every recipe loses 2–4pp ² |
+
+² *[Update 2026-09-26: on ImageNet (10,000 images) ConvNeXt-Tiny loses only 0.87pp by default
+and 0.53pp with percentile + float stem + reduce_range, emulated
+([data](../examples/imagenet/results/convnext_tiny.json)); the 2–4pp above was on 512–1,024
+Imagenette images.]*
 
 - **x86 saturation is the rule for CNNs, not a ResNet-18 quirk.** Every ReLU network loses 8–18pp on the non-VNNI laptop and nothing in emulation. On ResNet-50, a single layer saturates (the first conv, 23% of its accumulators); keeping it in float, or `reduce_range`, recovers everything.
 - **The collapse on every CPU belongs to the SiLU/Hardswish-plus-depthwise family.** EfficientNet-B1 keeps about 7pp after the fix. 4.2pp of that sits in one tensor, the equalised stem output, and why B1 is more sensitive there than B0 is not yet known.
 - **Transformers fail somewhere else.** onnxruntime's default op list also quantizes LayerNormalization, whose input is ViT's residual stream. That stream grows to [−42, 34], with outlier channels about 9× the median width, so one 8-bit scale starves half the channels. `quantize_ops="compute"` quantizes only the matrix products' inputs and weights. Leaving the residual stream in float was shown causally to recover the loss. Saturation does not affect transformer MatMuls here: fused and emulated agree within noise.
-- **ConvNeXt is open.** The ViT fix does not carry over. A prototype of gate-side equalisation into the dense fc2 layer went from −3.7 to −1.0pp. That is at the noise limit, and it costs fc2 weight precision.
+- **ConvNeXt is open.** The ViT fix does not carry over. A prototype of gate-side equalisation into the dense fc2 layer went from −3.7 to −1.0pp. That is at the noise limit, and it costs fc2 weight precision. *[Update 2026-09-26: on ImageNet, dense equalisation changed ConvNeXt-Tiny from −0.53 to −0.55pp, i.e. no gain ([data](../examples/imagenet/results/convnext_tiny.json)).]*
 
 **Choosing the recipe automatically: `anneal advise`**
 ([`anneal/core/advise.py`](../src/anneal/core/advise.py)). The findings above reduce to two
@@ -347,6 +391,12 @@ Verified on 512–1,024 images ([data](../examples/advise/)):
 | ViT-B/16, x86 with VNNI (emulated) | quantize only matmuls | **+0.20pp** (p = 1), the best | −8.4pp |
 | MobileNetV3, ARM (emulated) | EQ + P + stem, −2.05pp | P + stem measured −1.86pp; the 0.19pp gap is noise | −12.4pp |
 
+*[Update 2026-09-26: the ResNet-50 row's recipe is no longer the advice. On ImageNet (10,000
+images) "P + stem + reduce_range" (asymmetric 99.99) lost 0.44–0.65pp to plain symmetric
+99.999 percentile; ReLU CNNs are now advised symmetric 99.999 percentile + float stem, no
+reduce_range (−0.14pp emulated, −0.04pp fused). See the
+[ablation](../examples/advise/README.md).]*
+
 The rules are learned from eleven models. **One was corrected against the lab data before
 shipping:** `reduce_range` is advised on non-VNNI x86 for SiLU networks, where it removed
 EfficientNet's saturation, but not for Hardswish networks, where it cost MobileNetV3 2pp.
@@ -362,13 +412,17 @@ rounds, [script](../examples/advise/retime.py)):
 On x86 without VNNI, the recipes that keep accuracy are only about 5% faster than FP32. The
 default is faster because it quantizes the stem, and that is exactly what breaks it. So the
 advisor says that on this kind of CPU INT8 may not be worth deploying at all. The same
-recipes ran 2–4x faster on ARM in the lab.
+recipes ran 2–4x faster on ARM in the lab. *[Update 2026-09-26: the ResNet-50 row times the
+old advice (with reduce_range), not the corrected recipe.]*
 
 **What is left.** On EfficientNet, the remaining ~1pp sits at the next boundary: depthwise
 conv → SiLU → squeeze-excite and project conv. Per-channel scales there recover it fully
 ([data](../examples/equalize/residual_localisation.json)). Equalising across it means scaling
 *input* channels of dense convs, which per-channel weight scales do not absorb exactly. That
-is a real trade-off, and it is the next step.
+is a real trade-off, and it is the next step. *[Update 2026-09-26: done, as the experimental
+option `equalize_dense`. On ImageNet it gives no gain on any model (EfficientNet-B0 −0.52 →
+−0.52pp, MobileNetV3-L −1.01 → −1.05pp, ConvNeXt-T −0.53 → −0.55pp;
+[data](../examples/imagenet/README.md)), so it stays off.]*
 
 ---
 
@@ -578,7 +632,10 @@ the unmodified FP32 model. MobileNetV3's depthwise convolutions, hard-swish acti
 squeeze-excite blocks are known to resist post-training quantization; it needs
 quantization-aware training, which is outside this action space. The value here is the
 negative result arriving in minutes, with the evidence attached, instead of after a week of
-hand-tuning.
+hand-tuning. *[Update 2026-09-26: superseded. This search had no equalisation or percentile
+calibration. With equalise + percentile + float stem, MobileNetV3-Large loses 1.0–2.6pp on six
+CPUs (above) and 1.01pp on ImageNet ([data](../examples/imagenet/README.md)); QAT is not
+needed for that.]*
 
 **The measured ranking finds the fragile layers on its own.** The four layers it chose to
 spare are all depthwise convolutions — the layer type the literature singles out as
@@ -689,7 +746,7 @@ Anneal's eval sets do.
 |---|---|---|
 | [Microsoft Olive](https://github.com/microsoft/Olive) | Hardware-aware optimisation workflows for ONNX/PyTorch, with a search over pass parameters and an evaluator. | Much broader, and vendor-integrated. Anneal's distinct part is the audit: paired significance testing, prediction-change counts, operator attribution, cross-target checks. |
 | [Intel Neural Compressor](https://github.com/intel/neural-compressor) | Accuracy-driven quantization tuning with a tolerance loop. | Tunes to an accuracy target; Anneal reports the statistical resolution of that accuracy and what it cannot rule out. |
-| [OpenVINO NNCF](https://github.com/openvinotoolkit/nncf), [Qualcomm AIMET](https://github.com/quic/aimet) | Compression and quantization, including quantization-aware training. | They can fix what post-training quantization breaks (MobileNetV3 here); Anneal cannot and says so. |
+| [OpenVINO NNCF](https://github.com/openvinotoolkit/nncf), [Qualcomm AIMET](https://github.com/quic/aimet) | Compression and quantization, including quantization-aware training. | They can fix what post-training quantization breaks (MobileNetV3 here); Anneal cannot and says so. *[Update 2026-09-26: out of date; Anneal's equalisation now recovers MobileNetV3 post-training, to −1.01pp on ImageNet.]* |
 | TensorRT, TI TIDL tools | Vendor compilers that choose kernels for their own silicon. | Anneal declares these targets but does not implement them yet. |
 
 This comparison reflects those projects as I understand them; check their current docs
@@ -699,7 +756,7 @@ A fuller [literature review](literature_review.md) covers prior art for each Ann
 component and what is new in it. In brief:
 - **Known:** the gate-side inverse scale (I-LLM, MambaQuant) and the x86 saturation mechanism (Intel, oneDNN, FBGEMM).
 - **Not found elsewhere:** deliberately negative equalisation scales, the accuracy cost of saturation across many CNNs, and predicting saturation layer by layer without the affected CPU.
-- **Published baselines** for EfficientNet-B0 post-training INT8 on ImageNet-1k are −3.0pp (HPTQ) and −4.8pp (NVIDIA). Anneal's numbers are on Imagenette and are not directly comparable.
+- **Published baselines** for EfficientNet-B0 post-training INT8 on ImageNet-1k are −3.0pp (HPTQ) and −4.8pp (NVIDIA). Anneal's numbers are on Imagenette and are not directly comparable. *[Update 2026-09-26: ImageNet results now exist: EfficientNet-B0 −0.52pp on 49,000 validation images ([examples/imagenet](../examples/imagenet/README.md)); the comparison with the published figures is indicative only.]*
 
 ---
 
@@ -846,6 +903,11 @@ Adding one means implementing `Target` and calling `register_target()`. The hone
 stated in the code: **the sensitivity ranking transfers between targets; the absolute
 latencies do not.** Develop the recipe on CPU, confirm it on the board.
 
+*[Update 2026-09-26: real phone and automotive NPUs have since been measured through Qualcomm
+AI Hub scripts ([examples/qaihub](../examples/qaihub/README.md)), outside the `Target` registry;
+the targets above are still not implemented. On the S24, `rank_sites`' per-site prediction did
+not rank sites by their value on the device.]*
+
 ---
 
 ## Layout
@@ -883,9 +945,18 @@ pytest tests/ -q
 
 Stated plainly, because the alternative is letting someone find them in a review:
 
+*[Update 2026-09-26: this list predates the ImageNet, edge-device and COCO runs; several
+items are now out of date and are marked. The current open problems are in the
+[README](../README.md#limitations-and-open-problems): equalisation's NPU speed cost (27–32%
+of INT8 latency on the S24; selective equalisation by predicted gain failed), `rank_sites`'
+per-site prediction not matching on-device value, and Anneal's full QDQ recipe compiling but
+not running on the S24.]*
+
 - **These are CPU numbers,** measured on the machine named in the report fingerprint. They
   do not transfer to a Jetson or a TDA4VM — as the `compare` table shows, they barely
-  transfer across a thread count. What transfers is the method.
+  transfer across a thread count. What transfers is the method. *[Update 2026-09-26: phone
+  and automotive NPUs have since been measured on Qualcomm AI Hub
+  ([results](edge_study_results.md)); Jetson and TDA4VM have not.]*
 - **The search's eval set is small.** 256 images resolves ±5.7pp, and in the run above it
   understated static INT8's damage by more than a third. `anneal validate` exists because of
   this, and the report prints its own resolution.
@@ -905,7 +976,9 @@ Stated plainly, because the alternative is letting someone find them in a review
   *within* each run, the same model measured 0.92x in one audit and 1.19x in the next.
   One-thread figures agree across runs to within a few percent, so claims here rest on them.
   The within-run drift check does not catch variation *between* runs; repeated,
-  interleaved measurement would, and is not implemented yet.
+  interleaved measurement would, and is not implemented yet. *[Update 2026-09-26: the
+  advisor's timings are now taken in interleaved rounds
+  ([retime.py](../examples/advise/retime.py)); the search itself still is not.]*
 - **Latencies measured before the environment check existed may be distorted.** Power state
   was not recorded for them, and one set is known to have run on battery (see the
   correction above). Figures from the first ResNet-18 and MobileNetV3 runs, the cross-target
@@ -918,7 +991,10 @@ Stated plainly, because the alternative is letting someone find them in a review
 - **The equalisation results cover two models, six cloud CPUs and one laptop,** with one run
   per machine. Differences under about 1.5pp on 2,048–3,925 Imagenette images are within
   noise, and Imagenette's 10 classes are easier than ImageNet-1k. The drops are not directly
-  comparable to published ImageNet numbers.
+  comparable to published ImageNet numbers. *[Update 2026-09-26: since extended to five models
+  on ImageNet (49,000 or 10,000 images; [examples/imagenet](../examples/imagenet/README.md)),
+  three edge devices (Imagenette; [results](edge_study_results.md)) and two COCO detectors
+  ([examples/tasks](../examples/tasks/README.md)).]*
 - **`graph_optimize(level='all')` produces a non-portable artifact** — onnxruntime's NCHWc
   transformer bakes in the optimising CPU's layout and SIMD width. Anneal records this on
   the artifact and warns in the report. Use `level='extended'` if the file must travel.

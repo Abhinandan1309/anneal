@@ -177,7 +177,7 @@ def advise(model_path: Path, int8_path: str) -> Advice:
     if int8_path == "unknown":
         caveats.append(
             "The target's INT8 arithmetic is unknown; advice assumes 32-bit accumulation. On an "
-            "x86 CPU without VNNI, add reduce_range or run `anneal saturation`."
+            "x86 CPU without VNNI, keep the stem in float or run `anneal saturation`."
         )
 
     if prof.family == "transformer":

@@ -21,7 +21,33 @@ published baselines it should be compared against. Three parts, researched separ
 
 Caveats that apply to Anneal's own numbers:
 - **Imagenette is not ImageNet.** Anneal's results are on Imagenette, a 10-class subset scored 1000-way, which is easier than ImageNet-1k. The drops are not directly comparable.
+  *Update, 26 Sep 2026:* ImageNet results now exist (`examples/imagenet/results/*.json`; 64 held-out val images calibrate, 49,000 or 10,000 scored, emulated 32-bit). EfficientNet-B0: onnxruntime default −45.5pp, Anneal −0.52pp (p = 3.9e-10, so not lossless). The edge-device study is still Imagenette.
 - **SQNR does not predict top-1 drop.** A September 2026 preprint finds that per-layer SQNR does not predict the drop, so `anneal imbalance` is a diagnostic, not an accuracy predictor.
+  *Update, 26 Sep 2026:* Anneal's own per-site predicted gain (`rank_sites`) also failed to rank sites by their value on a device: on the Galaxy S24, the top 4 of 16 sites carry 68% of the predicted gain but recover 17% of the loss (`examples/qaihub/results/efficientnet_b0-topk-samsung-galaxy-s24-family-qnn_dlc-n1024.json`). Summed over a model, the same prediction does separate models that need equalisation from those that do not.
+
+## Update, 26 Sep 2026: targeted search on activation support and recent reports
+
+A targeted search on 26 Sep 2026 checked the claim that no retraining-free equalisation covers
+SiLU or Hardswish. Nothing found contradicts it. New or sharper evidence:
+
+- **AIMET source.** `cross_layer_equalization.py` restricts CLE to the activations listed in
+  `cls_supported_activations`, which are ReLU and PReLU. This is the code-level form of the paper
+  statement in Part 1 §1. TODO: pin the link to a release tag before citing.
+- **HPTQ** applies its channel equalisation only to ReLU, ReLU8 and PReLU, and its Swish
+  EfficientNet-B0 loses 3.0pp (77.2 → 74.2). This matches Part 1 §1 and Part 2 §1; no change.
+- **TensorFlow EfficientNet-Lite.** Google replaced Swish with ReLU6 after post-training
+  quantization dropped the Swish model from 75% to 46%. Already in Part 2 §1 and §2; no change.
+- **EfficientViT on TensorRT, arXiv:2609.20441 (Sep 2026).** Reports per-tensor INT8 collapse with
+  Hardswish, and scale inflation of up to 9x from folded BN, in a hybrid CNN-transformer. It resolves
+  the collapse by replacing the activation and applying QAT, not by a function-preserving rewrite.
+  This is independent evidence of the same mechanism (BN folding spreads channel ranges; one
+  per-tensor scale cannot serve them) outside CNN classifiers, and of the usual remedy
+  (architecture change plus training) that Anneal avoids. From the search result only; the full
+  text has not been read. Read it before citing the 9x figure.
+
+Effect on the verdicts above: none change. The claim "retraining-free equalisation through SiLU and
+Hardswish gates, with negative scales, not found in CNN PTQ" stands. The most recent remedy found
+(arXiv:2609.20441) still changes the activation and retrains.
 
 ---
 
@@ -64,7 +90,8 @@ non-linearity. It gives no equalisation for them. Its PTQ tables use EfficientNe
 **AIMET, Siddegowda et al. 2022, https://arxiv.org/abs/2201.08442.** CLE "exploit[s] the scale equivariance
 property of certain activation functions (e.g. ReLU, PReLU)". The CLE API replaces ReLU6 with ReLU, and the
 paper warns: if float accuracy drops after that replacement, "do not apply CLE". It offers no path for SiLU
-or Hardswish.
+or Hardswish. (Confirmed in the source on 26 Sep 2026: `cls_supported_activations` lists ReLU and PReLU
+only; see the update section near the top.)
 
 **Qualcomm patent US12242956B2 (priority 2019-03-22), https://patents.google.com/patent/US12242956B2/en.**
 The patented form of CLE. It says the equality may not hold "if f(.) is a non-linear function such as a
@@ -226,6 +253,10 @@ our knowledge, the first application of gate-side-compensated equalisation (afte
 CNN PTQ, extended with signed scales and to Hardswish, closing EfficientNet-B0 static INT8 to within ~0.7pp".
 This is an engineering and application contribution, not a new equivalence.
 
+*Update, 26 Sep 2026:* the "~0.7pp" was an Imagenette figure. On ImageNet (49,000 images, emulated
+32-bit) the recipe loses 0.52pp [0.36, 0.69], a statistically significant residual
+(`examples/imagenet/results/efficientnet_b0.json`). Use that figure and do not say "lossless".
+
 ---
 
 # Part 2 — Post-training quantization of efficient CNNs
@@ -246,6 +277,12 @@ weights and per-tensor activations:
 |---|---|---|---|---|
 | EfficientNet-B0 | 76.6 | 26.5 / 24.2 | 75.6 / 75.9 (reduce_range 75.8 emul) | **−0.8 to −1.0** |
 | MobileNetV3-L | 70.9 | 59.7 / 45.9 | 69.2 / 67.5 | **−1.7** emul, −3.4 laptop |
+
+*Update, 26 Sep 2026:* the ImageNet counterparts (`examples/imagenet/results/*.json`, 49,000
+scored images, 64 held-out calibration images) are: EfficientNet-B0 FP32 77.62, min/max 32.16
+emulated / 24.99 fused, Anneal 77.10 emulated (−0.52pp) / 76.36 fused with reduce_range
+(−1.26pp); MobileNetV3-L FP32 75.29, min/max 69.92 / 62.48, Anneal 74.27 (−1.01pp) / 73.79
+(−1.50pp). The table above is kept as the Imagenette record.
 
 Anneal zoo, per the coordinator: with MinMax, EfficientNet-B1 loses −76pp and EfficientNetV2-S
 loses −25pp **even emulated**. ResNet-50, MobileNetV2, RegNet, ShuffleNet and MnasNet lose ~0pp
@@ -402,6 +439,10 @@ model-specific.
   this. **Their max-calibrated 22.3% is within about 2–4pp of Anneal's MinMax 24.2/26.5%**,
   which is independent corroboration of the collapse, although on a different dataset and a
   different EfficientNet port (lukemelas).
+  *Update, 26 Sep 2026:* on ImageNet itself, Anneal's min/max gives 32.2% emulated and 25.0% on the
+  non-VNNI laptop (`examples/imagenet/results/efficientnet_b0.json`). The emulated figure is about
+  10pp above NVIDIA's 22.3% (symmetric activations, different port); the collapse is corroborated,
+  the close numerical match was partly an Imagenette coincidence.
 - Nagel 2019 (Tab.7) finds asymmetric vs symmetric almost negligible *after DFQ* on ReLU nets
   (MobileNetV2 71.15 vs 71.19). The asymmetry question only matters when the activation is
   signed and lopsided.
@@ -460,6 +501,16 @@ model-specific.
 > (activation equalisation unavailable for swish), and our fix is closed-form. We do not claim
 > that Anneal beats any published method.
 
+*Update, 26 Sep 2026:* this proposed text predates the ImageNet runs. The positioning should now
+use ImageNet: EfficientNet-B0 −0.52pp (49,000 images, emulated; −1.26pp on non-VNNI x86 real
+kernels), MobileNetV3-L −1.01pp, against −45.5pp and −5.4pp for onnxruntime's default. The
+comparison with NVIDIA (−4.8pp) and HPTQ (−3.0pp) remains indicative only: different ports,
+preprocessing and activation grids. On the recipe's parts, an ImageNet ablation (10,000 images,
+`examples/advise/efficientnet_b0_recipe_ablation.json`) finds equalisation worth about 3.3pp,
+percentile over min/max 2.5pp and the float stem 0.9pp; the best percentile is 99.99 for this
+gated network but 99.999 for ResNet-50 (`examples/advise/resnet50_ablation.json`). The draft
+wording lives in `docs/paper/draft.md`.
+
 **Why the zoo result strengthens the story.** EfficientNet-B1 (−76pp) and EfficientNetV2-S
 (−25pp) collapse emulated, while ReLU-family, ReLU6 and group-conv nets lose ~0 emulated. That
 is the same split the literature shows. ReLU/ReLU6 MobileNetV2, MnasNet, RegNet and ShuffleNet
@@ -477,6 +528,10 @@ float.
    and documented preprocessing (resize 256 / center-crop 224, or timm's per-model config).
    Shin 2026 found that preprocessing alone moved top-1 by ~1pp, which is 9x the quantization
    cost they measured. Report the float stem as partial quantization, as Wu does.
+   *Update, 26 Sep 2026:* partly done. ImageNet val with torchvision weights, 64 held-out
+   calibration images and 49,000 scored images for EfficientNet-B0 and MobileNetV3-L (10,000 for
+   ResNet-50, ViT-B/16, ConvNeXt-T). Items 2 and 3 (same-pipeline DFQ/HPTQ/AdaRound baselines,
+   EfficientNet-Lite0) are still open.
 2. **Same pipeline baselines** in the same onnxruntime QDQ graph, same calibration set
    (e.g. 1,024 train images), same per-channel-W and per-tensor-A granularity: (a) ORT
    MinMax / Entropy / Percentile (sym and asym) / Distribution; (b) CLE+bias correction (DFQ,
@@ -706,6 +761,12 @@ Legend: **[doc]** vendor documentation · **[src]** source code · **[paper]** p
   - "On AVX2 and AVX512 machines, you will generally need to enable reduce-range as well if
     per-channel is enabled." This is the per-channel interaction Anneal found. It is documented,
     but without a number.
+    *Update, 26 Sep 2026:* for ReLU CNNs Anneal no longer follows this advice. The saturation sits
+    in the stem, and keeping the stem in float removes it without shrinking any weights. On
+    ResNet-50 (ImageNet, 10,000 images, non-VNNI laptop, real kernels), symmetric 99.999
+    percentile + float stem loses 0.04pp; the same calibration with reduce_range instead of the
+    float stem loses 0.63pp (`examples/advise/resnet50_ablation.json`). reduce_range is still
+    advised for SiLU networks on non-VNNI x86, where equalised channels saturate beyond the stem.
   - S8S8 with QDQ is called the "first choice" default. The docs do not say that it performs badly
     on non-VNNI x86 (see §2).
   - The debugging API (`qdq_loss_debug`: `create_weight_matching`, `collect_activations`,
