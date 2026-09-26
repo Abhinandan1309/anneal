@@ -44,6 +44,9 @@ VARIANTS = {
     "tidl 8-bit + equalised (per-tensor)": ("equalised_pt", COMMON),
     # the same plus gated dense sites into k x k convs (YOLOv8's Conv -> SiLU -> 3x3 Conv)
     "tidl 8-bit + equalised (per-tensor + dense kxk)": ("equalised_pt_dense", COMMON),
+    # the per-tensor variant with CLE capped at 4x (MobileNetV2 on TIDL: uncapped -12.9pp, 4x -1.2pp) and without CLE
+    "tidl 8-bit + equalised (per-tensor cle4)": ("equalised_pt_cle4", COMMON),
+    "tidl 8-bit + equalised (per-tensor no cle)": ("equalised_pt_nocle", COMMON),
 }
 
 
@@ -134,8 +137,11 @@ def main() -> None:
     d_pt, _, _ = equalise_dense(eq_ptd, eq_ptd, calib, mix=(0.5, 0.5), any_kernel=True)
     cross_layer_equalise(eq_ptd, eq_ptd)
     print(f"{args.model}: per-tensor dense kxk sites {len(d_pt)}", flush=True)
+    eq_nocle, eq_cle4 = work / f"{args.model}-pt-nocle.onnx", work / f"{args.model}-pt-cle4.onnx"
+    equalise(src, eq_nocle, calib, residual=True, se=True, mix=(0.5, 0.5))
+    cross_layer_equalise(eq_nocle, eq_cle4, max_scale=4.0)
     models = {"plain": src, "equalised": eq, "concat_eq": cat_eq, "concat_eq_cle": cat_eq_cle, "equalised_pt": eq_pt,
-              "equalised_pt_dense": eq_ptd}
+              "equalised_pt_dense": eq_ptd, "equalised_pt_cle4": eq_cle4, "equalised_pt_nocle": eq_nocle}
     for p in models.values():
         onnx.shape_inference.infer_shapes_path(str(p), str(p))
 
