@@ -38,6 +38,9 @@ VARIANTS = {
     # conv-ReLU pairs meet per-tensor weights (anneal.core.cle)
     "tidl 8-bit + concat eq": ("concat_eq", COMMON),
     "tidl 8-bit + concat eq + cle": ("concat_eq_cle", COMMON),
+    # per-tensor-weight aware: gated, squeeze-excite and residual sites with the activation/weight
+    # mix t=0.5, then ReLU/ReLU6 cross-layer equalisation
+    "tidl 8-bit + equalised (per-tensor)": ("equalised_pt", COMMON),
 }
 
 
@@ -119,7 +122,11 @@ def main() -> None:
     cat_eq, cat_eq_cle = work / f"{args.model}-concat-eq.onnx", work / f"{args.model}-concat-eq-cle.onnx"
     print(f"{args.model}: concat sites {len(equalise_concat(src, cat_eq, calib))}", flush=True)
     cross_layer_equalise(cat_eq, cat_eq_cle)
-    models = {"plain": src, "equalised": eq, "concat_eq": cat_eq, "concat_eq_cle": cat_eq_cle}
+    eq_pt = work / f"{args.model}-equalised-per-tensor.onnx"
+    r_pt = equalise(src, eq_pt, calib, residual=True, se=True, mix=(0.5, 0.5))
+    c_pt = cross_layer_equalise(eq_pt, eq_pt)
+    print(f"{args.model}: per-tensor equalisation {r_pt.summary()['by_kind']}, cle pairs {len(c_pt.pairs)}", flush=True)
+    models = {"plain": src, "equalised": eq, "concat_eq": cat_eq, "concat_eq_cle": cat_eq_cle, "equalised_pt": eq_pt}
     for p in models.values():
         onnx.shape_inference.infer_shapes_path(str(p), str(p))
 
