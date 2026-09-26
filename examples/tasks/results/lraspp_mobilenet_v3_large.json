@@ -1,0 +1,135 @@
+{
+ "model": "lraspp_mobilenet_v3_large",
+ "n": 500,
+ "calibration": "16 highest-id COCO val2017 images of this task, disjoint from the scored ones",
+ "mode": "emulated (32-bit accumulation)",
+ "advice": {
+  "profile": {
+   "convs": 66,
+   "depthwise": 15,
+   "matmuls": 0,
+   "layernorms": 0,
+   "gated_sites": 9,
+   "relu_sites": 5,
+   "activations": {
+    "Hardswish": 28,
+    "ReLU": 20
+   },
+   "family": "gated-depthwise"
+  },
+  "int8_path": "arm-dotprod",
+  "recommended": {
+   "label": "equalise + percentile + float stem",
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calibrate_method": "percentile_asym",
+    "float_stem": true,
+    "equalize": true
+   },
+   "why": "Equalise the SiLU/Hardswish -> depthwise chains exactly, calibrate by asymmetric percentile, keep the stem in float."
+  },
+  "alternatives": [
+   {
+    "label": "percentile + float stem",
+    "params": {
+     "per_channel": true,
+     "activation_type": "uint8",
+     "calib_samples": 64,
+     "calibrate_method": "percentile_asym",
+     "float_stem": true
+    },
+    "why": "Without equalisation: faster (no gate multiplies), a few pp less accurate on EfficientNet."
+   },
+   {
+    "label": "onnxruntime default",
+    "params": {
+     "per_channel": true,
+     "activation_type": "uint8",
+     "calib_samples": 64,
+     "calibrate_method": "minmax"
+    },
+    "why": "Control: per-tensor activation scales collapse this family."
+   }
+  ],
+  "confidence": "high",
+  "evidence": [
+   "EfficientNet-B0 on six CPUs, 2,048 images: default -48 to -51pp everywhere; this recipe -0.5 to -0.7pp (not significant); with reduce_range -0.6pp on non-VNNI x86.",
+   "MobileNetV3-Large, same six CPUs: -11 to -25pp -> -1.0 to -2.6pp.",
+   "Cost: about 10% of the INT8 speedup for the gate multiplies (2.33x -> 2.11x on ARM)."
+  ],
+  "caveats": [
+   "9 gated chains will be equalised. EfficientNet-B1 kept ~7pp after this recipe; verify."
+  ]
+ },
+ "failed_to_build": {},
+ "recipes": {
+  "minmax (onnxruntime default)": {
+   "metric": 0.526336748630727,
+   "delta_pts": -2.1617040075788463,
+   "ci95_pts": [
+    -3.8458631608037273,
+    -0.8039370924043246
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 16,
+    "calibrate_method": "minmax"
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\lraspp_mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-samples-16--d0663001c4.onnx"
+  },
+  "percentile 99.999": {
+   "metric": 0.5389608308251062,
+   "delta_pts": -0.8992957881409303,
+   "ci95_pts": [
+    -2.7391963354034163,
+    0.5066179874878838
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 16,
+    "calibrate_method": "percentile",
+    "calib_percentile": 99.999
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\lraspp_mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-percentile--6817d334e9.onnx"
+  },
+  "anneal advised [gated-depthwise]: equalise + percentile + float stem": {
+   "metric": 0.5314149423614283,
+   "delta_pts": -1.6538846345087177,
+   "ci95_pts": [
+    -2.7794057066548024,
+    -0.17224071264680196
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 16,
+    "calibrate_method": "percentile_asym",
+    "float_stem": true,
+    "equalize": true
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\lraspp_mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-samples-16--d2c2549cd5.onnx"
+  },
+  "anneal without equalisation: percentile + float stem": {
+   "metric": 0.5391731768853895,
+   "delta_pts": -0.8780611821125994,
+   "ci95_pts": [
+    -1.9995481599453184,
+    0.0844449595214097
+   ],
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 16,
+    "calibrate_method": "percentile_asym",
+    "float_stem": true
+   },
+   "model_path": "C:\\Users\\abhin\\Desktop\\interstellar_hop\\anneal\\scratch\\tasks\\lraspp_mobilenet_v3_large\\quantize-static-int8-activation-type-uint8-calib-samples-16--bd0c3e216e.onnx"
+  }
+ },
+ "metric": "mIoU (21 VOC classes)",
+ "fp32": 0.5479537887065155
+}
