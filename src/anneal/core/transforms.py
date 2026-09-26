@@ -790,7 +790,7 @@ def quantize_static_int8(
     rewrite to the k sites :func:`anneal.core.equalize.rank_sites` predicts gain most.
 
     ``cle`` first applies data-free cross-layer weight equalisation
-    (:mod:`anneal.core.cle`) across Conv/Gemm -> ReLU -> Conv/Gemm pairs, for targets whose
+    (:mod:`anneal.core.cle`) across Conv/Gemm -> ReLU/ReLU6 -> Conv/Gemm pairs, for targets whose
     weights are quantized per tensor; it runs before ``equalize`` when both are set.
     ``sigmoid_surrogate`` (K > 0) then replaces every Sigmoid by a per-gate fitted sum of K
     fixed HardSigmoids (see :mod:`anneal.core.surrogate`), the only gate AMD's NPUs run.
