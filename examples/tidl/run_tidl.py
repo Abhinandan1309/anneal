@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import os
 import shutil
 import sys
@@ -59,6 +60,7 @@ VARIANTS = {
     # since uncapped CLE can widen per-tensor activation ranges ~650x on MobileNetV2
     "tidl 8-bit + cle": ("cle", COMMON),
     "tidl 8-bit + cle (max scale 16)": ("cle16", COMMON),
+    "tidl 8-bit + cle (max scale 4)": ("cle4", COMMON),
 }
 
 
@@ -125,8 +127,10 @@ def main() -> None:
         cle_path, cle16 = mdir / f"{name}-cle.onnx", mdir / f"{name}-cle16.onnx"
         cross_layer_equalise(src, cle_path)
         cross_layer_equalise(src, cle16, max_scale=16.0)
+        cle4 = mdir / f"{name}-cle4.onnx"
+        cross_layer_equalise(src, cle4, max_scale=4.0)
         models = {"plain": src, "equalised": eq, "equalised_res": eq_res, "equalised_pt": eq_pt,
-                  "cle": cle_path, "cle16": cle16}
+                  "cle": cle_path, "cle16": cle16, "cle4": cle4}
         for p in models.values():
             onnx.shape_inference.infer_shapes_path(str(p), str(p))
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)
@@ -149,7 +153,7 @@ def main() -> None:
         rows, timing = {}, {}
         for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
             which, opts = VARIANTS[label]
-            art = mdir / "artifacts" / label.replace(" ", "_").replace("+", "plus")
+            art = mdir / "artifacts" / re.sub(r"[^A-Za-z0-9]+", "_", label.replace("+", "plus")).strip("_")  # TI tools run shell commands on this path
             shutil.rmtree(art, ignore_errors=True)
             art.mkdir(parents=True)
             t = time.time()

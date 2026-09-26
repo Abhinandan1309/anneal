@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import os
 import shutil
 import sys
@@ -149,7 +150,7 @@ def main() -> None:
     for label in wanted:
         which, opts = VARIANTS[label]
         opts = {**opts, "advanced_options:calibration_frames": len(calib)}
-        art = work / "artifacts" / label.replace(" ", "_").replace("+", "plus")
+        art = work / "artifacts" / re.sub(r"[^A-Za-z0-9]+", "_", label.replace("+", "plus")).strip("_")  # TI tools run shell commands on this path
         shutil.rmtree(art, ignore_errors=True)
         art.mkdir(parents=True)
         t = time.time()
