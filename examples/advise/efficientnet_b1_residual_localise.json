@@ -1,0 +1,155 @@
+{
+ "model": "efficientnet_b1",
+ "n": 2048,
+ "fp32_accuracy": 0.7724609375,
+ "eval": "imagenette",
+ "rows": {
+  "advised": {
+   "accuracy": 0.7119140625,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true
+   },
+   "vs_fp32": {
+    "delta_pp": -6.0546875,
+    "ci95_pp": [
+     -7.409798423741837,
+     -4.699576576258163
+    ],
+    "mcnemar_p": 1.2339782084649087e-18
+   },
+   "vs_advised": {
+    "delta_pp": 0.0,
+    "ci95_pp": [
+     0.0,
+     0.0
+    ],
+    "mcnemar_p": 1.0
+   }
+  },
+  "advised, compute ops only": {
+   "accuracy": 0.70654296875,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true,
+    "quantize_ops": "compute"
+   },
+   "vs_fp32": {
+    "delta_pp": -6.591796875,
+    "ci95_pp": [
+     -7.952334103781462,
+     -5.231259646218538
+    ],
+    "mcnemar_p": 8.96706458220808e-22
+   },
+   "vs_advised": {
+    "delta_pp": -0.537109375,
+    "ci95_pp": [
+     -1.3083418893744692,
+     0.2341231393744692
+    ],
+    "mcnemar_p": 0.21453919400817845
+   }
+  },
+  "advised, float gates": {
+   "accuracy": 0.71142578125,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.99,
+    "float_stem": true,
+    "float_gates": true
+   },
+   "vs_fp32": {
+    "delta_pp": -6.103515625,
+    "ci95_pp": [
+     -7.420505399304345,
+     -4.7865258506956545
+    ],
+    "mcnemar_p": 4.5250753202768064e-20
+   },
+   "vs_advised": {
+    "delta_pp": -0.048828125,
+    "ci95_pp": [
+     -0.7187466621315771,
+     0.6210904121315771
+    ],
+    "mcnemar_p": 1.0
+   }
+  },
+  "advised at 99.95": {
+   "accuracy": 0.6923828125,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.95,
+    "float_stem": true
+   },
+   "vs_fp32": {
+    "delta_pp": -8.0078125,
+    "ci95_pp": [
+     -9.430114168560614,
+     -6.585510831439387
+    ],
+    "mcnemar_p": 4.8784291584597244e-29
+   },
+   "vs_advised": {
+    "delta_pp": -1.953125,
+    "ci95_pp": [
+     -2.9804023170023406,
+     -0.9258476829976597
+    ],
+    "mcnemar_p": 0.000258261024055893
+   }
+  },
+  "advised at 99.9": {
+   "accuracy": 0.6826171875,
+   "params": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "equalize": true,
+    "calibrate_method": "percentile_asym",
+    "calib_percentile": 99.9,
+    "float_stem": true
+   },
+   "vs_fp32": {
+    "delta_pp": -8.984375,
+    "ci95_pp": [
+     -10.483798194291975,
+     -7.484951805708024
+    ],
+    "mcnemar_p": 1.6770151579366372e-32
+   },
+   "vs_advised": {
+    "delta_pp": -2.9296875,
+    "ci95_pp": [
+     -4.200206184780507,
+     -1.659168815219493
+    ],
+    "mcnemar_p": 8.109583796601088e-06
+   }
+  }
+ }
+}
