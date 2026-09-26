@@ -34,7 +34,33 @@ VARIANTS = {
     "tidl 16-bit": ("plain", {**COMMON, "tensor_bits": 16}),
     "tidl 8-bit": ("plain", COMMON),
     "tidl 8-bit + equalised": ("equalised", COMMON),
+    # U-Net: the skip concatenations share one scale on TIDL (anneal.core.equalize_concat), and
+    # conv-ReLU pairs meet per-tensor weights (anneal.core.cle)
+    "tidl 8-bit + concat eq": ("concat_eq", COMMON),
+    "tidl 8-bit + concat eq + cle": ("concat_eq_cle", COMMON),
 }
+
+
+class UNetFidelity:
+    """COCO val2017 photos with a car, 192x288, pixels in [0, 1]; scored against FP32's own masks."""
+
+    def __init__(self, api) -> None:
+        sys.path.insert(0, str(ROOT / "examples" / "segmentation"))
+        from unet_carvana import SIZE
+
+        self.size = SIZE
+        self.car = api.getCatIds(catNms=["car"])
+
+    def image_ids(self, api) -> list[int]:
+        return sorted(api.getImgIds(catIds=self.car))
+
+    def preprocess(self, api, img_id):
+        from unet_study import load
+
+        return load(api, img_id, self.size), {}
+
+    def per_image(self, outputs, meta, img_id) -> np.ndarray:
+        return outputs[0][0].argmax(0) == 1
 
 
 def main() -> None:
@@ -46,7 +72,7 @@ def main() -> None:
     from anneal.core.equalize_dense import equalise_dense
 
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", required=True, choices=["yolov8n", "lraspp_mobilenet_v3_large"])
+    ap.add_argument("--model", required=True, choices=["yolov8n", "lraspp_mobilenet_v3_large", "unet_carvana"])
     ap.add_argument("--images", type=int, default=300)
     ap.add_argument("--calib-images", type=int, default=16)
     ap.add_argument("--variants", default=",".join(VARIANTS))
@@ -58,14 +84,22 @@ def main() -> None:
         raise SystemExit("TIDL_TOOLS_PATH is not set: source edgeai-tidl-tools/scripts/setup/setup_env.sh J721E")
 
     api = rt.coco()
-    task = rt.Segmentation() if args.model.startswith("lraspp") else rt.YOLO(sorted(api.getCatIds()))
+    if args.model == "unet_carvana":
+        task = UNetFidelity(api)
+    else:
+        task = rt.Segmentation() if args.model.startswith("lraspp") else rt.YOLO(sorted(api.getCatIds()))
     all_ids = task.image_ids(api)
     ids, calib_ids = all_ids[:args.images], all_ids[-args.calib_images:]
     assert not set(ids) & set(calib_ids)
 
     work = Path("tidl-work") / args.model
     work.mkdir(parents=True, exist_ok=True)
-    exported = export(args.model)  # examples/models/<model>-fp32.onnx
+    if args.model == "unet_carvana":
+        from unet_carvana import export as export_unet
+
+        exported = export_unet()
+    else:
+        exported = export(args.model)  # examples/models/<model>-fp32.onnx
     src = work / f"{args.model}-fp32.onnx"
     m = onnx.load(str(exported))
     for vi in list(m.graph.input) + list(m.graph.output):
@@ -79,7 +113,13 @@ def main() -> None:
     sites = len(equalise(src, eq, calib).sites)
     dense, _, _ = equalise_dense(eq, eq, calib)
     print(f"{args.model}: equalised {sites} depthwise sites, {len(dense)} dense sites", flush=True)
-    models = {"plain": src, "equalised": eq}
+    from anneal.core.cle import cross_layer_equalise
+    from anneal.core.equalize_concat import equalise_concat
+
+    cat_eq, cat_eq_cle = work / f"{args.model}-concat-eq.onnx", work / f"{args.model}-concat-eq-cle.onnx"
+    print(f"{args.model}: concat sites {len(equalise_concat(src, cat_eq, calib))}", flush=True)
+    cross_layer_equalise(cat_eq, cat_eq_cle)
+    models = {"plain": src, "equalised": eq, "concat_eq": cat_eq, "concat_eq_cle": cat_eq_cle}
     for p in models.values():
         onnx.shape_inference.infer_shapes_path(str(p), str(p))
 
@@ -123,7 +163,20 @@ def main() -> None:
 
     result = {"soc": "J721E (TDA4VM)", "model": args.model, "n": len(ids), "calibration_images": len(calib),
               "equalised_sites": sites, "equalised_dense_sites": len(dense), "variants": {}}
-    if isinstance(task, rt.Segmentation):
+    if isinstance(task, UNetFidelity):
+        result["metric"] = "car IoU against the FP32 model's mask (fidelity)"
+        result["fp32"] = 1.0
+        ref = per_image["fp32"]
+        rng = np.random.default_rng(0)
+        for k in scored:
+            ious = np.array([float((a & b).sum() / max((a | b).sum(), 1)) for a, b in zip(per_image[k], ref) if b.any()])
+            boot = [rng.choice(ious, len(ious)).mean() for _ in range(1000)]
+            result["variants"][k] = {"metric": float(ious.mean()), "delta_pts": 100 * (float(ious.mean()) - 1),
+                                     "ci95_pts": [100 * (float(np.percentile(boot, 2.5)) - 1),
+                                                  100 * (float(np.percentile(boot, 97.5)) - 1)],
+                                     "pixel_agreement": float(np.mean([(a == b).mean() for a, b in zip(per_image[k], ref)])),
+                                     **timing.get(k, {})}
+    elif isinstance(task, rt.Segmentation):
         conf = {k: np.stack(v) for k, v in per_image.items() if k == "fp32" or k in scored}
         classes = np.flatnonzero(conf["fp32"].sum((0, 2)) > 0)
         result["metric"] = "mIoU (21 VOC classes)"
