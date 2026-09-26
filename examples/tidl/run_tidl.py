@@ -55,6 +55,10 @@ VARIANTS = {
     # per-tensor-weight aware (TIDL quantizes weights per tensor): squeeze-excite and residual sites,
     # activation/weight mix t=0.5, then ReLU cross-layer equalisation
     "tidl 8-bit + equalised (per-tensor)": ("equalised_pt", COMMON),
+    # ReLU/ReLU6 cross-layer equalisation (anneal.core.cle), full and with scales capped at 16x,
+    # since uncapped CLE can widen per-tensor activation ranges ~650x on MobileNetV2
+    "tidl 8-bit + cle": ("cle", COMMON),
+    "tidl 8-bit + cle (max scale 16)": ("cle16", COMMON),
 }
 
 
@@ -118,7 +122,11 @@ def main() -> None:
         r = equalise(src, eq_pt, calib_imgs, se=True, mix=(0.5, 0.5))
         cle = cross_layer_equalise(eq_pt, eq_pt)
         print(f"  {name}: per-tensor equalisation {r.summary()['by_kind']}, cle pairs {len(cle.pairs)}", flush=True)
-        models = {"plain": src, "equalised": eq, "equalised_res": eq_res, "equalised_pt": eq_pt}
+        cle_path, cle16 = mdir / f"{name}-cle.onnx", mdir / f"{name}-cle16.onnx"
+        cross_layer_equalise(src, cle_path)
+        cross_layer_equalise(src, cle16, max_scale=16.0)
+        models = {"plain": src, "equalised": eq, "equalised_res": eq_res, "equalised_pt": eq_pt,
+                  "cle": cle_path, "cle16": cle16}
         for p in models.values():
             onnx.shape_inference.infer_shapes_path(str(p), str(p))
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)
