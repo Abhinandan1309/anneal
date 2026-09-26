@@ -61,6 +61,8 @@ VARIANTS = {
     "tidl 8-bit + cle": ("cle", COMMON),
     "tidl 8-bit + cle (max scale 16)": ("cle16", COMMON),
     "tidl 8-bit + cle (max scale 4)": ("cle4", COMMON),
+    # activation-aware CLE: s_act^0.5 * s_cle^0.5 (best in the local TIDL emulation, +6.5pp on MobileNetV2)
+    "tidl 8-bit + cle (activation-aware)": ("cle_t05", COMMON),
 }
 
 
@@ -129,8 +131,10 @@ def main() -> None:
         cross_layer_equalise(src, cle16, max_scale=16.0)
         cle4 = mdir / f"{name}-cle4.onnx"
         cross_layer_equalise(src, cle4, max_scale=4.0)
+        cle_t05 = mdir / f"{name}-cle-t05.onnx"
+        cross_layer_equalise(src, cle_t05, batches=calib_imgs, t=0.5)
         models = {"plain": src, "equalised": eq, "equalised_res": eq_res, "equalised_pt": eq_pt,
-                  "cle": cle_path, "cle16": cle16, "cle4": cle4}
+                  "cle": cle_path, "cle16": cle16, "cle4": cle4, "cle_t05": cle_t05}
         for p in models.values():
             onnx.shape_inference.infer_shapes_path(str(p), str(p))
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)

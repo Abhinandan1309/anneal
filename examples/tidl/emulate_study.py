@@ -31,6 +31,14 @@ def prepare(kind: str, src: Path, dst: Path, batches: list[np.ndarray]) -> Path:
 
     if kind == "plain":
         return src
+    if kind.startswith("relu"):  # relu-float (float cost of ReLU6 -> ReLU), relu-cle-t0.5
+        from anneal.core.cle import relax_relu6
+
+        relax_relu6(src, dst)
+        if "cle" in kind:
+            t = float(kind.split("-t")[1]) if "-t" in kind else 1.0
+            cross_layer_equalise(dst, dst, max_scale=1e3, batches=batches if t < 1 else None, t=t)
+        return dst
     if kind.startswith("cle"):  # cle, cle16, cle4, cle-t0.5, cle-t0
         cap = 16.0 if kind == "cle16" else 4.0 if kind == "cle4" else 1e3
         t = float(kind.split("-t")[1]) if "-t" in kind else 1.0
@@ -70,7 +78,8 @@ def main() -> None:
     built = {}
     for kind in [v.strip() for v in args.variants.split(",") if v.strip()]:
         fp32 = prepare(kind, src, work / f"{kind}.onnx", batches)
-        built[kind] = str(apply_transform("quantize_static_int8", dict(TIDL_LIKE), ModelArtifact(path=fp32), ctx).path)
+        built[kind] = str(fp32) if kind.endswith("-float") else str(
+            apply_transform("quantize_static_int8", dict(TIDL_LIKE), ModelArtifact(path=fp32), ctx).path)
         print(f"  built {kind}", flush=True)
     emu = ort.SessionOptions()
     emu.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL

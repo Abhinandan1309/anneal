@@ -576,3 +576,32 @@ def _rewrite_clips(model, pairs: list[CLEPairSpec], total: list[np.ndarray]) -> 
 
     refill(g.node, nodes)
     refill(g.initializer, keep)
+
+
+def relax_relu6(src: Path, dst: Path) -> int:
+    """Replace every Clip(0, M) by Relu (NOT exact): Nagel et al.'s treatment of ReLU6 for CLE.
+
+    The exact alternative in :func:`cross_layer_equalise` (Relu -> Min with a per-channel ceiling)
+    needs a per-channel Min, which TI's TIDL does not fuse into the convolution; there, this
+    changes the function slightly instead. Measure the float cost before using it. Returns the
+    number of Clips replaced.
+    """
+    import onnx
+    from onnx import helper
+
+    model = onnx.load(str(src))
+    consts = {i.name: i for i in model.graph.initializer}
+    const_nodes = {n.output[0]: n for n in model.graph.node if n.op_type == "Constant"}
+    opset = next((o.version for o in model.opset_import if o.domain in ("", "ai.onnx")), 13)
+    count = 0
+    for i, node in enumerate(model.graph.node):
+        if node.op_type != "Clip":
+            continue
+        bounds = _clip_bounds(node, consts, const_nodes, opset)
+        if bounds is None or bounds[0] is None or bounds[0] != 0.0:
+            continue
+        model.graph.node[i].CopyFrom(helper.make_node("Relu", [node.input[0]], list(node.output), name=node.name))
+        count += 1
+    onnx.checker.check_model(model)
+    onnx.save(model, str(dst))
+    return count
