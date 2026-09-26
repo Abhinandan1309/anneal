@@ -44,6 +44,11 @@ RECIPES = {
     "asym 99.99 + stem (no eq)": {**BASE, **A9999, **STEM},
     "eq + minmax": {**BASE, **EQ, "calibrate_method": "minmax"},
     "advised + stem int16": {**BASE, **EQ, **A9999, **STEM, "stem_int16": True},
+    "advised + int16 top3 (auto)": {**BASE, **EQ, **A9999, **STEM, "int16_top_k": 3},
+    # The alternative a reviewer will ask about (cf. Qualcomm AI Hub "Lite-MP"): no equalisation,
+    # only the most sensitive tensors at 16 bits.
+    "no eq + int16 top3 (auto)": {**BASE, **A9999, **STEM, "int16_top_k": 3},
+    "no eq + int16 top8 (auto)": {**BASE, **A9999, **STEM, "int16_top_k": 8},
 }
 ADVISED = "anneal (32-bit): equalise + percentile + float stem"  # eq + asym 99.99 + stem, stored
 
