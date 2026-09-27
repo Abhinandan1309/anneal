@@ -108,6 +108,10 @@ VARIANTS = {
     "tidl 8-bit + equalised (per-tensor) + 16-bit features 0-1": (
         "equalised_pt", {**COMMON, "_16bit_re": r"/features/features\.[01]/"}),
     "tidl 8-bit + 16-bit features 0-1": ("plain", {**COMMON, "_16bit_re": r"/features/features\.[01]/"}),
+    # equalise(derived=True): noise-optimal per-channel scales (anneal.core.equalize_opt)
+    "tidl 8-bit + equalised (per-tensor grid derived)": ("equalised_pt_grid_der", COMMON),
+    "tidl 8-bit + equalised (per-tensor grid derived) + 16-bit features 0-2": (
+        "equalised_pt_grid_der", {**COMMON, "_16bit_re": r"/features/features\.[0-2]/"}),
     "tidl 8-bit + equalised (per-tensor grid) + 16-bit features 0-3": (
         "equalised_pt_grid", {**COMMON, "_16bit_re": r"/features/features\.[0-3]/"}),
     # timm naming (LCNet, FBNetV3): the stem and the first block stages
@@ -264,6 +268,10 @@ def main() -> None:
         eq_pt_grid = mdir / f"{name}-equalised-per-tensor-grid.onnx"  # 1/s on the int8 grid
         equalise(src, eq_pt_grid, calib_imgs, se=True, mix=(0.5, 0.5), grid_inverse=True)
         cross_layer_equalise(eq_pt_grid, eq_pt_grid)
+        eq_pt_grid_der = mdir / f"{name}-equalised-per-tensor-grid-derived.onnx"  # noise-optimal scales
+        if "grid derived" in args.variants:
+            equalise(src, eq_pt_grid_der, calib_imgs, se=True, mix=(0.5, 0.5), grid_inverse=True, derived=True)
+            cross_layer_equalise(eq_pt_grid_der, eq_pt_grid_der)
         from anneal.core.surrogate import clip_gate_inputs
 
         eq_pt_grid_clip = mdir / f"{name}-equalised-per-tensor-grid-clip.onnx"  # + a Clip before every gate
@@ -275,6 +283,7 @@ def main() -> None:
         models = {"plain": src, "equalised": eq, "equalised_res": eq_res, "equalised_pt": eq_pt,
                   "equalised_pt_bc": eq_pt_bc, "equalised_pt_grid": eq_pt_grid,
                   "equalised_pt_grid_clip": eq_pt_grid_clip,
+                  **({"equalised_pt_grid_der": eq_pt_grid_der} if "grid derived" in args.variants else {}),
                   "cle": cle_path, "cle16": cle16, "cle4": cle4, "cle_t05": cle_t05}
         for p in models.values():
             onnx.shape_inference.infer_shapes_path(str(p), str(p))

@@ -125,6 +125,9 @@ VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xi
             "xint8 percentile cal + anneal pt-eq grid + surrogate + bias corr (measured)",
             "xint8 percentile cal + anneal pt-eq grid + surrogate + a16 gates + bias corr (measured)",
             "xint8 percentile cal + anneal pt-eq grid + surrogate + gate clip + a16 gates + bias corr (measured)",
+            # noise-optimal per-channel scales (equalise(derived=True), anneal.core.equalize_opt) with grid 1/s
+            "xint8 percentile cal + anneal pt-eq grid derived + surrogate + bias corr (measured)",
+            "xint8 percentile cal + anneal pt-eq grid derived + surrogate + a16 gates + bias corr (measured)",
             # ablation of the all-8-bit B1 result (-3.5pp): gate-conv + clip without bias correction
             "xint8 percentile cal + anneal pt-eq gate-conv + surrogate + gate clip",
             # ReLU CNNs (MnasNet lost 6pp more with the gated recipe): the advisor's CNN recipe
@@ -239,6 +242,13 @@ def main() -> None:
         equalise(src, pt_grid, calib_imgs, residual=True, se=True, mix=(0.5, 0.5), grid_inverse=True)
         cross_layer_equalise(pt_grid, pt_grid, max_scale=4.0)
         replace_sigmoids(pt_grid, pt_grid_sur, calib_imgs, k_terms=3)
+        pt_grid_der_sur = mdir / f"{name}-pt-equalised-grid-derived-surrogate.onnx"
+        if "grid derived" in args.variants or not args.variants:
+            pt_grid_der = mdir / f"{name}-pt-equalised-grid-derived.onnx"
+            equalise(src, pt_grid_der, calib_imgs, residual=True, se=True, mix=(0.5, 0.5), grid_inverse=True,
+                     derived=True)
+            cross_layer_equalise(pt_grid_der, pt_grid_der, max_scale=4.0)
+            replace_sigmoids(pt_grid_der, pt_grid_der_sur, calib_imgs, k_terms=3)
         pt_gc = mdir / f"{name}-pt-equalised-gate-conv.onnx"
         equalise(src, pt_gc, calib_imgs, residual=True, se=True, mix=(0.5, 0.5), gate_conv=True)
         cross_layer_equalise(pt_gc, pt_gc, max_scale=4.0)
@@ -246,7 +256,7 @@ def main() -> None:
         replace_sigmoids(pt_gc, pt_gc_sur, calib_imgs, k_terms=3)
         models = {"plain": src, "eq": eq, "sur": sur, "eq sur": eq_sur, "pt": pt, "pt sur": pt_sur,
                   "pt gc sur": pt_gc_sur, "pt bc sur": pt_bc_sur,
-                  "pt grid sur": pt_grid_sur, "cle4": cle4}
+                  "pt grid sur": pt_grid_sur, "pt grid der sur": pt_grid_der_sur, "cle4": cle4}
 
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)  # batch 1: Quark may fix it
         batches = list(ev.batches())
@@ -266,7 +276,8 @@ def main() -> None:
         preds = {"fp32": predict(src, "fp32")}
         rows, timing = {}, {}
         for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
-            which = ("cle4" if "anneal CLE4" in label else "pt grid sur" if "pt-eq grid" in label
+            which = ("cle4" if "anneal CLE4" in label else "pt grid der sur" if "pt-eq grid derived" in label
+                     else "pt grid sur" if "pt-eq grid" in label
                      else "pt bc sur" if "bias corr" in label and "measured" not in label
                      else "pt gc sur" if "gate-conv" in label
                      else "pt sur" if "pt-eq" in label and "surrogate" in label else "pt" if "pt-eq" in label
