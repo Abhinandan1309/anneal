@@ -468,9 +468,18 @@ def _advise_target(prof: ModelProfile, int8_path: str, target: str) -> Advice:
             "this recipe -1.2pp (+9.5pp, p=5e-21).",
             "Same: uncapped CLE -16.7pp, cap 16 -12.9pp.",
         ]
-        confidence = "medium" if target == "tidl" else "low"
-        caveats.append("Measured on one CNN (MobileNetV2), on TIDL"
-                       + ("." if target == "tidl" else "; unmeasured on AMD XINT8."))
+        if target == "amd-xint8":
+            evidence.append("AMD Quark XINT8 (Imagenette 1,000): MnasNet -6.4pp (AMD default) -> -1.2pp, "
+                            "MobileNetV2 -7.9 -> -3.6 with this recipe; plus Quark-measured bias correction "
+                            "+0.3 / -0.8. The gated-network recipe on MnasNet: -31.3pp. Percentile "
+                            "calibration alone is worse than AMD's default here (-9.6 / -11.4).")
+            caveats.append("On XINT8, also correct the biases for Quark's own weight rounding (two passes: "
+                           "quantize, anneal.core.bias_correction.weights_from_qdq, correct_biases(..., "
+                           "quantized=...), quantize again).")
+            confidence = "medium"
+        else:
+            confidence = "medium" if target == "tidl" else "low"
+            caveats.append("Measured on one CNN (MobileNetV2), on TIDL.")
     else:
         cpu = _advise_cpu(prof, int8_path)
         rec = _emulated(cpu.recommended)

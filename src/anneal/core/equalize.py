@@ -768,7 +768,9 @@ def equalise(
             # consumer), along its input channels unless it is depthwise.
             b_axis = 0 if site.fc1 is None or _is_depthwise_weight(site.conv_b, inits) else 1
             s_mixed = _mixed_scales(s, inits[site.conv_a.input[1]], inits[site.conv_b.input[1]], *mix, b_axis=b_axis)
-            s = _bounded_spread(s_mixed, s)
+            # Bounded only at gated residual sites, whose scale also multiplies the other branch's
+            # producer: bounding every site cost EfficientNet-B1 on XINT8 (best recipe -3.5 -> -9.1pp).
+            s = _bounded_spread(s_mixed, s) if site.conv_p is not None else s_mixed
         if pow2_align:
             s = (s * pow2_alignment_gain(*ranges[site.y], s)).astype(s.dtype)
         if grid_inverse and site.kind in ("gated", "gated-se"):  # 1/s is a quantized constant
