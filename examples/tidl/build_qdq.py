@@ -76,7 +76,14 @@ def main() -> None:
     q = onnx.load(str(dst))
     fused = drop_qdq_before_fused_activation(q)
     q.ir_version = min(q.ir_version, ir)
+    # TIDL's import needs every tensor's shape in the file ("Input/output shape unknown" on every
+    # node of the quantizer's output made it fail)
+    del q.graph.value_info[:]
+    q = onnx.shape_inference.infer_shapes(q, strict_mode=True)
+    known = {v.name for v in list(q.graph.value_info) + list(q.graph.input) + list(q.graph.output)}
+    missing = [o for n in q.graph.node for o in n.output if o not in known]
     onnx.save(q, str(dst))
+    print(f"shapes: {len(q.graph.value_info)} inferred, {len(missing)} missing {missing[:3]}", file=sys.stderr)
     print(f"removed {fused} Q/DQ pairs between a Conv and its fused activation", file=sys.stderr)
     print(f"built {dst} (ir {q.ir_version}, opset {[o.version for o in q.opset_import]})", file=sys.stderr)
 
