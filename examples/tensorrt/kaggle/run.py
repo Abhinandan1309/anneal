@@ -7,9 +7,9 @@ edited per run. The repository is public, so the kernel clones it.
 import subprocess
 import sys
 
-MODELS = "efficientnet_b0,mobilenet_v3_large,efficientnet_b1,efficientvit_b0"
+MODELS = "mobilenet_v3_large,efficientnet_b0,efficientnet_b1,efficientvit_b0"
 IMAGES = "1000"
-VARIANTS = ""  # empty = all
+VARIANTS = "trt int8,modelopt int8,modelopt int8 + eq,modelopt int8 + eq res"  # empty = all
 REF = "main"
 
 
@@ -22,7 +22,10 @@ sh("nvidia-smi")
 sh(f"git clone --depth 1 --branch {REF} https://github.com/Abhinandan1309/anneal.git /kaggle/temp/anneal")
 # TensorRT 10: what JetPack 6 ships, and the last with implicit INT8 calibration (11 removed the
 # FP16/INT8 builder flags and the calibrator)
-sh(f"{sys.executable} -m pip install -q 'tensorrt>=10,<11' 'nvidia-modelopt[onnx]' timm onnx onnxruntime rich")
+# no separate 'onnxruntime': ModelOpt brings onnxruntime-gpu, and the two installed together break
+# each other (ModelOpt's calibration failed with "CopyTensorAsync is not implemented")
+sh(f"{sys.executable} -m pip uninstall -y -q onnxruntime onnxruntime-gpu")
+sh(f"{sys.executable} -m pip install -q 'tensorrt>=10,<11' 'nvidia-modelopt[onnx]' timm onnx rich")
 sh(f"{sys.executable} -m pip install -q --no-deps -e /kaggle/temp/anneal")
 sh(f"{sys.executable} -m pip list 2>/dev/null | grep -i -E 'tensorrt|modelopt|onnx|torch'")
 extra = f'--variants "{VARIANTS}"' if VARIANTS else ""

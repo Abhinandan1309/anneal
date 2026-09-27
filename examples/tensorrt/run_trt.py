@@ -115,30 +115,51 @@ def run_engine(engine, xs: list[np.ndarray]) -> tuple[list[np.ndarray], float]:
     names = [engine.get_tensor_name(i) for i in range(engine.num_io_tensors)]
     inp = next(n for n in names if engine.get_tensor_mode(n) == trt.TensorIOMode.INPUT)
     out = next(n for n in names if engine.get_tensor_mode(n) == trt.TensorIOMode.OUTPUT)
-    x_buf = torch.empty(tuple(engine.get_tensor_shape(inp)), dtype=torch.float32, device="cuda")
-    y_buf = torch.empty(tuple(engine.get_tensor_shape(out)), dtype=torch.float32, device="cuda")
+    tdt = {trt.float32: torch.float32, trt.float16: torch.float16}
+    x_buf = torch.empty(tuple(engine.get_tensor_shape(inp)), dtype=tdt[engine.get_tensor_dtype(inp)], device="cuda")
+    y_buf = torch.empty(tuple(engine.get_tensor_shape(out)), dtype=tdt[engine.get_tensor_dtype(out)], device="cuda")
     ctx.set_tensor_address(inp, x_buf.data_ptr())
     ctx.set_tensor_address(out, y_buf.data_ptr())
     stream = torch.cuda.Stream()
     ys, times = [], []
     start, end = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
     for x in xs:
-        x_buf.copy_(torch.from_numpy(x))
+        x_buf.copy_(torch.from_numpy(x))  # copy_ casts to the engine's input dtype
         with torch.cuda.stream(stream):
             start.record(stream)
             ctx.execute_async_v3(stream.cuda_stream)
             end.record(stream)
         stream.synchronize()
         times.append(start.elapsed_time(end))
-        ys.append(y_buf.cpu().numpy().copy())
+        ys.append(y_buf.float().cpu().numpy().copy())
     return ys, float(np.median(times[10:] if len(times) > 20 else times))
 
 
 def modelopt_qdq(src: Path, dst: Path, calib_batches) -> None:
+    """ModelOpt's explicit INT8 QDQ. Calibrated on the CPU (its GPU calibration failed on Kaggle
+    with onnxruntime's "CopyTensorAsync is not implemented"), and with the unquantized ops left in
+    FP32: newer ModelOpt converts them to FP16 by default, which also retypes the model's input."""
+    import inspect
+
+    import onnx
     from modelopt.onnx.quantization import quantize
 
-    quantize(onnx_path=str(src), quantize_mode="int8", calibration_data=np.concatenate(calib_batches),
-             calibration_method="entropy", output_path=str(dst))
+    name = onnx.load(str(src)).graph.input[0].name
+    kw = dict(onnx_path=str(src), quantize_mode="int8", calibration_data={name: np.concatenate(calib_batches)},
+              calibration_method="entropy", output_path=str(dst), calibration_eps=["cpu"],
+              high_precision_dtype="fp32")
+    accepted = inspect.signature(quantize).parameters
+    dropped = [k for k in kw if k not in accepted]
+    if dropped:
+        print(f"    modelopt: this version has no {dropped}", flush=True)
+    quantize(**{k: v for k, v in kw.items() if k in accepted})
+    m = onnx.load(str(dst))
+    ops = {}
+    for n in m.graph.node:
+        ops[n.op_type] = ops.get(n.op_type, 0) + 1
+    elem = m.graph.input[0].type.tensor_type.elem_type
+    print(f"    modelopt qdq: {ops.get('QuantizeLinear', 0)} Q, {ops.get('Cast', 0)} Cast, input dtype "
+          f"{onnx.TensorProto.DataType.Name(elem)}", flush=True)
 
 
 def main() -> None:
@@ -205,6 +226,13 @@ def main() -> None:
                 if label.startswith("modelopt"):
                     qdq = mdir / f"{name}-{which.replace(' ', '-')}-qdq.onnx"
                     modelopt_qdq(models[which], qdq, calib_imgs)
+                    # the same QDQ model on onnxruntime's CPU: separates ModelOpt's calibration
+                    # from TensorRT's build of it (the two should agree closely)
+                    qs = ort.InferenceSession(str(qdq), providers=["CPUExecutionProvider"])
+                    qin = qs.get_inputs()[0]
+                    cast = np.float16 if "float16" in qin.type else np.float32
+                    preds[f"{label} (ort cpu)"] = decode([qs.run(None, {qin.name: x.astype(cast)})[0] for x in xs])
+                    extra[f"{label} (ort cpu)"] = {"latency_ms": float("nan")}
                     engine = build(qdq, "qdq", None, mdir)
                 else:
                     engine = build(models[which], "fp16" if "fp16" in label else "int8", calib_imgs, mdir)
