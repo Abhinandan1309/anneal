@@ -50,6 +50,10 @@ VARIANTS = {
     # isolate LRASPP's regression: squeeze-excite sites without the mix, and the mix without them
     "tidl 8-bit + equalised (se only)": ("eq_se", COMMON),
     "tidl 8-bit + equalised (mix only)": ("eq_mix", COMMON),
+    # no weight mix (it collapsed LRASPP in emulation); gate-side 1/s on the int8 grid, gate inputs
+    # clipped to the span the gate sees
+    "tidl 8-bit + equalised (grid clip)": ("eq_grid_clip", COMMON),
+    "tidl 8-bit + equalised (se grid clip)": ("eq_se_grid_clip", COMMON),
     # TIDL's own mixed-precision search, alone and on top of Anneal's equalisation
     "tidl auto mixed": ("plain", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
     "tidl auto mixed + equalised": ("equalised", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
@@ -181,7 +185,14 @@ def main() -> None:
     eq_nocle, eq_cle4 = work / f"{args.model}-pt-nocle.onnx", work / f"{args.model}-pt-cle4.onnx"
     equalise(src, eq_nocle, calib, residual=True, se=True, mix=(0.5, 0.5))
     cross_layer_equalise(eq_nocle, eq_cle4, max_scale=4.0)
-    models = {"plain": src, "equalised": eq, "concat_eq": cat_eq, "concat_eq_cle": cat_eq_cle, "equalised_pt": eq_pt,
+    from anneal.core.surrogate import clip_gate_inputs
+
+    eq_gc, eq_se_gc = work / f"{args.model}-eq-grid-clip.onnx", work / f"{args.model}-eq-se-grid-clip.onnx"
+    equalise(src, eq_gc, calib, grid_inverse=True)
+    clip_gate_inputs(eq_gc, eq_gc)
+    equalise(src, eq_se_gc, calib, se=True, grid_inverse=True)
+    clip_gate_inputs(eq_se_gc, eq_se_gc)
+    models = {"plain": src, "equalised": eq, "eq_grid_clip": eq_gc, "eq_se_grid_clip": eq_se_gc, "concat_eq": cat_eq, "concat_eq_cle": cat_eq_cle, "equalised_pt": eq_pt,
               "equalised_pt_dense": eq_ptd, "equalised_pt_cle4": eq_cle4, "equalised_pt_nocle": eq_nocle,
               "eq_se": eq_se, "eq_mix": eq_mix}
     for p in models.values():
