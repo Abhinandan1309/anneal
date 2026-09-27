@@ -630,6 +630,157 @@ def _mixed_scales(
     return (np.sign(s) * np.abs(s) ** alpha * cle ** beta).astype(np.float32)
 
 
+def _site_activation(site: _Site) -> str:
+    """The activation between A and the rest, for its slope: silu, hswish or relu."""
+    if site.kind.startswith("relu"):
+        return "relu"
+    if site.gate is not None and site.gate.op_type == "Sigmoid":
+        return "silu"
+    return "hswish"  # HardSwish, or x * HardSigmoid(x)
+
+
+def _derived_requests(site: _Site) -> dict[str, set[str]]:
+    """The moments :func:`_derived_terms` needs for a site (see anneal.core.equalize_opt)."""
+    req: dict[str, set[str]] = {site.conv_a.input[0]: {"ms_c"}, site.x: {f"slope_{_site_activation(site)}"}}
+    req.setdefault(site.y, set()).add("ms_c")
+    if site.z is not None:
+        req.setdefault(site.z, set()).add("ms_c")
+    if site.se_mul is not None:
+        e = next(i for i in site.se_mul.input if i != site.y)
+        req.setdefault(e, set()).add("ms_c")
+    for p in ([site.conv_p] if site.conv_p is not None else []) + site.extra_p:
+        req.setdefault(p.input[0], set()).add("ms_c")
+        req.setdefault(p.output[0], set()).add("absmax_c")
+    return req
+
+
+def _sensitivity_tensors(site: _Site) -> list[str]:
+    """Tensors whose output sensitivities :func:`_derived_terms` uses."""
+    ts = [site.x, site.y] + ([site.z] if site.z is not None else [])
+    if site.se_mul is None:
+        ts.append(site.conv_b.output[0])
+    ts += [c.output[0] for c in site.consumers_z]
+    ts += [p.output[0] for p in ([site.conv_p] if site.conv_p is not None else []) + site.extra_p]
+    return list(dict.fromkeys(ts))
+
+
+def _derived_terms(site: _Site, inits, ranges, moments, applied: dict[str, np.ndarray] | None = None,
+                   sens: dict[str, np.ndarray] | None = None) -> list:
+    """The quantized tensors at a site as noise terms (anneal.core.equalize_opt.Term).
+
+    Error is measured at the outputs of the consumers that divide s out: the depthwise B (plain
+    and residual sites) and every consumer of z (residual and squeeze-excite sites).
+    """
+    from onnx import numpy_helper
+
+    from anneal.core.equalize_opt import Term
+
+    def w_of(node) -> np.ndarray:
+        return numpy_helper.to_array(inits[node.input[1]]).astype(np.float64)
+
+    def consumer_stats(node) -> tuple[np.ndarray, np.ndarray, float]:
+        """Per input channel: squared column norm, max |weight|, and (outputs x kernel) per input."""
+        w = w_of(node)
+        k = float(np.prod(w.shape[2:])) if w.ndim > 2 else 1.0
+        if _is_depthwise_weight(node, inits):
+            flat = w.reshape(w.shape[0], -1)
+            return (flat ** 2).sum(1), np.abs(flat).max(1), k
+        cols = np.moveaxis(w, 1, 0).reshape(w.shape[1], -1)
+        return (cols ** 2).sum(1), np.abs(cols).max(1), w.shape[0] * k
+
+    def absmax(t: str) -> np.ndarray:
+        lo, hi = ranges[t]
+        return np.maximum(np.abs(lo), np.abs(hi))
+
+    applied = applied or {}
+
+    def producer_noise(conv) -> np.ndarray | float:
+        """Rounding-noise power one output channel of a producer gets per unit weight step^2: its
+        fan-in's mean square. A depthwise producer sees only its own input channel, whose scale an
+        earlier site may already have changed (EfficientNet's depthwise conv is B of one site and A
+        of the next); a dense one sums over every input channel."""
+        w = w_of(conv)
+        t = conv.input[0]
+        ms = moments[t]["ms_c"] * applied.get(t, 1.0) ** 2
+        k_sp = float(np.prod(w.shape[2:])) if w.ndim > 2 else 1.0
+        if _is_depthwise_weight(conv, inits):
+            return k_sp * ms
+        return k_sp * float(ms.sum())
+
+    act = _site_activation(site)
+    g2 = moments[site.x][f"slope_{act}"]
+    if sens is not None:
+        return _derived_terms_exact(site, inits, moments, sens, producer_noise, w_of, absmax, act)
+    terms_down = []
+    s_z = None
+    if site.z is not None:
+        s_z = np.zeros_like(g2)
+        ms_z = moments[site.z]["ms_c"]
+        for c in site.consumers_z:
+            colsq, rmax, per_in = consumer_stats(c)
+            s_z = s_z + colsq
+            terms_down.append(Term(f"W:{c.name}", rmax, per_in * ms_z, up=False))
+    if site.se_mul is not None:
+        e = next(i for i in site.se_mul.input if i != site.y)
+        s_y = moments[e]["ms_c"] * s_z
+    else:
+        colsq, rmax, per_in = consumer_stats(site.conv_b)
+        s_y = colsq + (s_z if s_z is not None else 0.0)
+        terms_down.append(Term(f"W:{site.conv_b.name}", rmax, per_in * moments[site.y]["ms_c"], up=False))
+    wa = w_of(site.conv_a)
+    terms = [
+        Term("W:A", np.abs(wa.reshape(wa.shape[0], -1)).max(1),
+             producer_noise(site.conv_a) * g2 * s_y, up=True),
+        Term("y", absmax(site.y), s_y, up=True),
+    ]
+    if act != "relu":  # a ReLU fuses into its conv: x itself is not quantized
+        terms.append(Term("x", absmax(site.x), g2 * s_y, up=True))
+    if site.z is not None:
+        terms.append(Term("z", absmax(site.z), s_z, up=True))
+    for p in ([site.conv_p] if site.conv_p is not None else []) + site.extra_p:
+        wp = w_of(p)
+        terms.append(Term(f"W:{p.name}", np.abs(wp.reshape(wp.shape[0], -1)).max(1),
+                          producer_noise(p) * s_z, up=True))
+        terms.append(Term(f"p:{p.name}", moments[p.output[0]]["absmax_c"], s_z, up=True))
+    return terms + terms_down
+
+
+def _derived_terms_exact(site: _Site, inits, moments, sens, producer_noise, w_of, absmax, act: str) -> list:
+    """:func:`_derived_terms` with every sensitivity measured at the network output
+    (anneal.core.equalize_opt.output_sensitivities): each tensor's rounding noise weighted by how
+    much of it reaches the logits, through residual chains, squeeze-excite products and all
+    downstream layers, instead of per-site formulas that stop at the site's consumers."""
+    from anneal.core.equalize_opt import Term
+
+    def down_term(conv, t_in: str) -> Term:
+        """Weights of a consumer that divides s out along its input channels (read from t_in)."""
+        w = w_of(conv)
+        k = float(np.prod(w.shape[2:])) if w.ndim > 2 else 1.0
+        s_out = sens[conv.output[0]]
+        ms = moments[t_in]["ms_c"]
+        if _is_depthwise_weight(conv, inits):
+            return Term(f"W:{conv.name}", np.abs(w.reshape(w.shape[0], -1)).max(1), k * ms * s_out, up=False)
+        cols = np.moveaxis(w, 1, 0).reshape(w.shape[1], -1)
+        return Term(f"W:{conv.name}", np.abs(cols).max(1), k * ms * float(s_out.sum()), up=False)
+
+    wa = w_of(site.conv_a)
+    terms = [Term("W:A", np.abs(wa.reshape(wa.shape[0], -1)).max(1), producer_noise(site.conv_a) * sens[site.x], up=True),
+             Term("y", absmax(site.y), sens[site.y], up=True)]
+    if act != "relu":
+        terms.append(Term("x", absmax(site.x), sens[site.x], up=True))
+    if site.z is not None:
+        terms.append(Term("z", absmax(site.z), sens[site.z], up=True))
+        terms += [down_term(c, site.z) for c in site.consumers_z]
+    if site.se_mul is None:
+        terms.append(down_term(site.conv_b, site.y))
+    for p in ([site.conv_p] if site.conv_p is not None else []) + site.extra_p:
+        wp = w_of(p)
+        s_p = sens[p.output[0]]
+        terms.append(Term(f"W:{p.name}", np.abs(wp.reshape(wp.shape[0], -1)).max(1), producer_noise(p) * s_p, up=True))
+        terms.append(Term(f"p:{p.name}", moments[p.output[0]]["absmax_c"], s_p, up=True))
+    return terms
+
+
 def _bounded_spread(s_mixed: np.ndarray, s_act: np.ndarray) -> np.ndarray:
     """Limit the mixed scales' spread (max/min |s|) to the activation scales' own spread.
 
@@ -700,6 +851,7 @@ def equalise(
     pow2_align: bool = False,
     gate_conv: bool = False,
     grid_inverse: bool = False,
+    derived: bool = False,
 ) -> EqualisationResult:
     """Write an equalised copy of ``src`` to ``dst`` and describe what changed.
 
@@ -760,8 +912,30 @@ def equalise(
         onnx.save(model, str(dst))
         return result
 
+    batches = list(batches)  # read more than once
     ranges = channel_ranges(model, sorted({t for s in found for t in s.tensors}), batches)
     scale_kw = {"slack": slack, "allow_negative": allow_negative, "max_scale": max_scale}
+    moments = None
+    if derived:
+        from anneal.core.equalize_opt import channel_moments
+
+        req: dict[str, set[str]] = {}
+        for site in found:
+            for t, stats in _derived_requests(site).items():
+                req.setdefault(t, set()).update(stats)
+        moments = channel_moments(model, req, batches)
+        sens = None
+        try:  # exact output sensitivities (torch + onnx2torch); per-site formulas without them
+            from anneal.core.equalize_opt import output_sensitivities
+
+            sens_t = sorted({t for site in found for t in _sensitivity_tensors(site)})
+            sens = output_sensitivities(model, sens_t, batches[:2], probes=4)
+        except Exception as exc:  # noqa: BLE001 - any conversion gap falls back, visibly
+            import warnings
+
+            warnings.warn(f"derived equalisation: output sensitivities unavailable ({exc!s:.120}); "
+                          "using per-site sensitivities", stacklevel=2)
+    applied: dict[str, np.ndarray] = {}
     result.ranking = _rank(found, ranges, **scale_kw)
     gains = dict(result.ranking)
     if top_k is not None:
@@ -814,11 +988,22 @@ def equalise(
             # Bounded only at gated residual sites, whose scale also multiplies the other branch's
             # producer: bounding every site cost EfficientNet-B1 on XINT8 (best recipe -3.5 -> -9.1pp).
             s = _bounded_spread(s_mixed, s) if site.conv_p is not None else s_mixed
+        if derived:
+            # Noise-optimal magnitudes for per-tensor weights (anneal.core.equalize_opt), started
+            # from the scales above (never worse under the model); the sign stays the activation's.
+            from anneal.core.equalize_opt import optimal_scales
+
+            mag = optimal_scales(_derived_terms(site, inits, ranges, moments, applied, sens), s, max_spread=max_scale)
+            s = (np.where(s < 0, -1.0, 1.0) * mag).astype(np.float32)
         if pow2_align:
             s = (s * pow2_alignment_gain(*ranges[site.y], s)).astype(s.dtype)
         if grid_inverse and site.kind in ("gated", "gated-se"):  # 1/s is a quantized constant
             s = grid_scales(s).astype(s.dtype)
         s64 = s.astype(np.float64)
+        if derived:  # tensors now carrying s: a later site's producer reads one of them
+            for t in (site.x, site.y, site.z):
+                if t is not None:
+                    applied[t] = applied.get(t, 1.0) * np.abs(s64)
         rescale(site.conv_a.input[1], s64)
         if len(site.conv_a.input) > 2 and site.conv_a.input[2]:
             rescale(site.conv_a.input[2], s64)

@@ -61,8 +61,9 @@ def prepare(kind: str, src: Path, dst: Path, batches: list[np.ndarray]) -> Path:
         if kind == "eq":
             equalise(src, dst, batches)
         else:  # eq-pt, eq-pt-p2 (power-of-two range alignment), eq-pt-grid (1/s on the int8 grid)
+            # eq-pt-derived / eq-pt-grid-derived: noise-optimal scales (anneal.core.equalize_opt)
             equalise(src, dst, batches, residual=True, se=True, mix=(0.5, 0.5), pow2_align=kind.endswith("-p2"),
-                     grid_inverse=kind.endswith("-grid"))
+                     grid_inverse="-grid" in kind, derived=kind.endswith("-derived"))
             cross_layer_equalise(dst, dst, max_scale=4.0, batches=batches, t=0.5)
         return dst
     raise ValueError(kind)

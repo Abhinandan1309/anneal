@@ -347,7 +347,7 @@ def main() -> None:
                         from anneal.core.dataset import load_calibset as _lc
                         from anneal.core.transforms import TransformContext, apply_transform
 
-                        cal = _lc("imagenette", cache_dir=CACHE, batch_size=8, limit=64, sample_shape=shape)
+                        cal = _lc("imagenette", cache_dir=CACHE, batch_size=1, limit=64, sample_shape=shape)  # the model is batch 1
                         params = {**ANNEAL_TRT, **({"int16_top_k": 4} if wide else {})}
                         raw = apply_transform("quantize_static_int8", params, ModelArtifact(path=src),
                                               TransformContext(workdir=mdir / "anneal", calibset=cal)).path

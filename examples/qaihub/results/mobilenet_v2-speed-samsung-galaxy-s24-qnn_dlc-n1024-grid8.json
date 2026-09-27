@@ -1,0 +1,1287 @@
+{
+  "model": "mobilenet_v2",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "qnn_dlc",
+  "n": 1024,
+  "post_scale_sites": 0,
+  "variants": {
+    "fp32": {
+      "latency_ms": 0.371,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/conv/conv.1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.18/features.18.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.18/features.18.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/classifier/classifier.1/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.6484375,
+      "delta_vs_true_fp32_pp": 0.29296875,
+      "ci95_vs_true_fp32_pp": [
+        -0.038070610839386655,
+        0.6240081108393867
+      ]
+    },
+    "int8": {
+      "latency_ms": 0.221,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/conv/conv.1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.18/features.18.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.18/features.18.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/classifier/classifier.1/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.6416015625,
+      "delta_vs_true_fp32_pp": -0.390625,
+      "ci95_vs_true_fp32_pp": [
+        -1.6009479563030178,
+        0.819697956303018
+      ],
+      "delta_pp": -0.68359375,
+      "ci95_pp": [
+        -1.8781918591187707,
+        0.5110043591187708
+      ],
+      "mcnemar_p": 0.3367836351899314
+    },
+    "eq grid": {
+      "latency_ms": 0.225,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/conv/conv.1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.13/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.14/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.15/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.16/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.0/conv.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.0/conv.0.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.1/conv.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.1/conv.1.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.17/conv/conv.2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.18/features.18.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.18/features.18.2/Clip": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/classifier/classifier.1/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.6416015625,
+      "delta_vs_true_fp32_pp": -0.390625,
+      "ci95_vs_true_fp32_pp": [
+        -1.6009479563030178,
+        0.819697956303018
+      ],
+      "delta_pp": -0.68359375,
+      "ci95_pp": [
+        -1.8781918591187707,
+        0.5110043591187708
+      ],
+      "mcnemar_p": 0.3367836351899314
+    }
+  },
+  "true_fp32_accuracy": 0.6455078125
+}
