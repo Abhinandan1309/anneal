@@ -54,6 +54,13 @@ VARIANTS = {
     # clipped to the span the gate sees
     "tidl 8-bit + equalised (grid clip)": ("eq_grid_clip", COMMON),
     "tidl 8-bit + equalised (se grid clip)": ("eq_se_grid_clip", COMMON),
+    # which TIDL option breaks LRASPP's early layers (traces: block 1 falls to 3 dB)? its percentile
+    # weight/activation clipping on a 16-channel depthwise layer is the suspect
+    "tidl 8-bit no weight clip": ("plain", {**COMMON, "advanced_options:weight_clipping": 0}),
+    "tidl 8-bit no act clip": ("plain", {**COMMON, "advanced_options:activation_clipping": 0}),
+    "tidl 8-bit no clip": ("plain", {**COMMON, "advanced_options:weight_clipping": 0,
+                                     "advanced_options:activation_clipping": 0}),
+    "tidl 8-bit ch-wise": ("plain", {**COMMON, "advanced_options:channel_wise_quantization": 1}),
     # TIDL's own mixed-precision search, alone and on top of Anneal's equalisation
     "tidl auto mixed": ("plain", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
     "tidl auto mixed + equalised": ("equalised", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
@@ -90,6 +97,10 @@ def trace_layers(label: str, model_path, art, task, api, img_id: int, inp: str) 
     out = Path("tidl-traces") / re.sub(r"[^A-Za-z0-9]+", "_", label.replace("+", "plus")).strip("_")
     out.mkdir(parents=True, exist_ok=True)
     roots = ["/tmp", os.getcwd(), str(art)]
+    for r in roots:  # traces of an earlier variant have the same names: remove them first
+        for f in glob.glob(os.path.join(r, "**", "tidl_trace_*"), recursive=True):
+            if "tidl-traces" not in f:
+                os.remove(f)
     before = {f for r in roots for f in glob.glob(os.path.join(r, "**", "*"), recursive=True)}
     x, _ = task.preprocess(api, img_id)
     np.save(out / "input.npy", x)
