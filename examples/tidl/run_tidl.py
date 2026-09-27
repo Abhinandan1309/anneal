@@ -116,6 +116,36 @@ def session(model: Path, providers: list[str], options: dict | None):
     return ort.InferenceSession(str(model), providers=providers, provider_options=provider_options, sess_options=so)
 
 
+def run_isolated(fn):
+    """Run ``fn()`` in a forked child; ``(result, None)``, or ``(None, error)`` if it raised or crashed."""
+    import multiprocessing as mp
+    import traceback
+
+    ctx = mp.get_context("fork")
+    recv, send = ctx.Pipe(duplex=False)
+
+    def child() -> None:
+        try:
+            send.send((fn(), None))
+        except BaseException as exc:  # noqa: BLE001 - every failure is reported to the parent
+            send.send((None, f"{type(exc).__name__}: {exc}\n{traceback.format_exc()[-300:]}"))
+        finally:
+            send.close()
+            os._exit(0)
+
+    p = ctx.Process(target=child)
+    p.start()
+    send.close()
+    try:
+        got = recv.recv()
+    except EOFError:
+        got = None
+    p.join()
+    if got is None:
+        return None, f"crashed (exit code {p.exitcode})"
+    return got
+
+
 #: ops TIDL fuses into the layer before them: the fused layer's output tensor is the last one's
 FUSED = {"Relu", "Clip", "LeakyRelu", "PRelu", "BatchNormalization", "HardSwish"}
 
@@ -252,8 +282,10 @@ def main() -> None:
             art = mdir / "artifacts" / re.sub(r"[^A-Za-z0-9]+", "_", label.replace("+", "plus")).strip("_")  # TI tools run shell commands on this path
             shutil.rmtree(art, ignore_errors=True)
             art.mkdir(parents=True)
-            t = time.time()
-            try:
+
+            def run_variant(which=which, opts=opts, art=art, label=label):
+                t = time.time()
+                tim: dict = {}
                 opts = dict(opts)
                 k16 = opts.pop("_top16", None)
                 if k16:
@@ -263,7 +295,7 @@ def main() -> None:
                         rankings[which] = rank_activation_tensors(models[which], calib_imgs[:32], calib_imgs[32:])
                     top = [fused_end(models[which], r.tensor) for r in rankings[which][:k16]]
                     opts["advanced_options:output_feature_16bit_names_list"] = ",".join(top)
-                    timing.setdefault(label, {})["int16_tensors"] = top
+                    tim["int16_tensors"] = top
                     print(f"  {name} {label}: 16-bit {top}", flush=True)
                 comp = session(models[which], ["TIDLCompilationProvider", "CPUExecutionProvider"],
                                {**opts, "artifacts_folder": str(art), "tidl_tools_path": tools})
@@ -274,18 +306,24 @@ def main() -> None:
                 if k16:  # did TIDL keep these names as layers? (a fused-away name is ignored silently)
                     known = " ".join(f.read_text(errors="replace") for f in art.rglob("*layer_info*.txt"))
                     found = [n for n in top if n in known]
-                    timing[label]["int16_names_in_layer_info"] = found
+                    tim["int16_names_in_layer_info"] = found
                     print(f"  {name} {label}: {len(found)}/{len(top)} 16-bit names found in TIDL layer info "
                           f"({len(known)} chars; files {[f.name for f in art.rglob('*') if f.is_file()][:12]})", flush=True)
-                timing.setdefault(label, {})["compile_s"] = time.time() - t
+                tim["compile_s"] = time.time() - t
                 t = time.time()
-                preds[label] = predict(session(models[which], ["TIDLExecutionProvider", "CPUExecutionProvider"],
-                                               {"artifacts_folder": str(art), "debug_level": 0}), label)
-                timing[label]["infer_s"] = time.time() - t
-            except Exception as exc:  # a variant the toolchain cannot compile is a result too
-                rows[label] = {"error": f"{type(exc).__name__}: {exc}"[:500]}
+                pred = predict(session(models[which], ["TIDLExecutionProvider", "CPUExecutionProvider"],
+                                       {"artifacts_folder": str(art), "debug_level": 0}), label)
+                tim["infer_s"] = time.time() - t
+                return pred, tim
+
+            # Each variant in a forked child: TIDL's importer can segfault (a pre-quantized model it
+            # cannot sort killed a whole run), and that must cost one variant, not the rest.
+            got, err = run_isolated(run_variant)
+            if err is not None:  # a variant the toolchain cannot compile is a result too
+                rows[label] = {"error": err[:500]}
                 print(f"  {name} {label}: FAILED {rows[label]['error']}", flush=True)
                 continue
+            preds[label], timing[label] = got
             print(f"  {name} {label}: done ({timing[label]})", flush=True)
 
         ref = preds["fp32"] == ys

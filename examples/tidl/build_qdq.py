@@ -14,6 +14,39 @@ import sys
 from pathlib import Path
 
 CACHE = Path.home() / ".anneal_cache"
+#: activations TIDL fuses into the Conv before them; its QDQ import wants no Q/DQ in between
+#: (docs/quantization.md: such patterns "only require QDQ nodes at the end"). With one there,
+#: TIDL's import of MobileNetV3 failed ("Error in topologically sorting the network") at the
+#: inlined HardSwish.
+FUSED_ACTIVATIONS = ("HardSwish", "Relu", "Clip")
+
+
+def drop_qdq_before_fused_activation(model) -> int:
+    """Conv -> Q -> DQ -> act (Q, DQ, act single-consumer) becomes Conv -> act. Returns the count."""
+    g = model.graph
+    prod = {o: n for n in g.node for o in n.output}
+    cons: dict[str, list] = {}
+    for n in g.node:
+        for i in n.input:
+            cons.setdefault(i, []).append(n)
+    outputs = {o.name for o in g.output}
+    drop = []
+    for act in g.node:
+        if act.op_type not in FUSED_ACTIVATIONS:
+            continue
+        dq = prod.get(act.input[0])
+        q = prod.get(dq.input[0]) if dq is not None and dq.op_type == "DequantizeLinear" else None
+        conv = prod.get(q.input[0]) if q is not None and q.op_type == "QuantizeLinear" else None
+        if conv is None or conv.op_type != "Conv":
+            continue
+        if len(cons.get(conv.output[0], [])) != 1 or len(cons.get(q.output[0], [])) != 1 \
+                or len(cons.get(dq.output[0], [])) != 1 or dq.output[0] in outputs:
+            continue
+        act.input[0] = conv.output[0]
+        drop += [q, dq]
+    for n in drop:
+        g.node.remove(n)
+    return len(drop) // 2
 
 
 def main() -> None:
@@ -41,9 +74,11 @@ def main() -> None:
     # TIDL's older onnx/onnxruntime read this file: keep the source model's IR version
     ir = onnx.load(str(src), load_external_data=False).ir_version
     q = onnx.load(str(dst))
+    fused = drop_qdq_before_fused_activation(q)
     if q.ir_version > ir:
         q.ir_version = ir
-        onnx.save(q, str(dst))
+    onnx.save(q, str(dst))
+    print(f"removed {fused} Q/DQ pairs between a Conv and its fused activation", file=sys.stderr)
     print(f"built {dst} (ir {q.ir_version}, opset {[o.version for o in q.opset_import]})", file=sys.stderr)
 
 
