@@ -186,7 +186,7 @@ def equalise_concat(
     lo: dict[str, np.ndarray] = {}
     hi: dict[str, np.ndarray] = {}
     for b in batches:
-        for t, v in zip(tensors, sess.run(tensors, {inp: b})):
+        for t, v in zip(tensors, sess.run(tensors, {inp: b}), strict=True):
             mn, mx = v.min(axis=(0, 2, 3)), v.max(axis=(0, 2, 3))
             lo[t] = mn if t not in lo else np.minimum(lo[t], mn)
             hi[t] = mx if t not in hi else np.maximum(hi[t], mx)

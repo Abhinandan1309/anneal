@@ -15,7 +15,7 @@ from __future__ import annotations
 import tarfile
 import urllib.request
 from pathlib import Path
-from typing import Iterable, Iterator, Sequence
+from typing import Iterator, Sequence
 
 import numpy as np
 
@@ -81,7 +81,13 @@ def download_imagenette(cache_dir: Path, variant: str = "160") -> Path:
             if name.is_absolute() or ".." in name.parts:
                 raise ValueError(f"refusing unsafe archive member: {m.name}")
             members.append(m)
-        tf.extractall(cache_dir, members=members)
+        if hasattr(tarfile, "data_filter"):  # also refuses links out of the tree, device files
+            tf.extractall(cache_dir, members=members, filter="data")
+        else:  # Python < 3.10.12: no filter; reject links outright
+            for m in members:
+                if m.issym() or m.islnk() or m.isdev():
+                    raise ValueError(f"refusing link or device in archive: {m.name}")
+            tf.extractall(cache_dir, members=members)
 
     if not (root / "val").is_dir():
         raise RuntimeError(f"extracted archive but {root / 'val'} is missing")

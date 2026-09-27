@@ -109,7 +109,7 @@ def analyse(model_path: Path, batches: Iterable[np.ndarray], *, levels: int = 25
     s2: dict[str, np.ndarray] = {}
     count: dict[str, int] = {}
     for batch in batches:
-        for t, v in zip(tensors, session.run(tensors, {input_name: batch})):
+        for t, v in zip(tensors, session.run(tensors, {input_name: batch}), strict=True):
             v = v.astype(np.float64)
             axes = (0,) + tuple(range(2, v.ndim))
             if t in inputs:

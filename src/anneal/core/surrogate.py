@@ -54,7 +54,7 @@ def hard_sigmoid(u: np.ndarray) -> np.ndarray:
 def surrogate(x: np.ndarray, w: np.ndarray, k: np.ndarray, b: np.ndarray) -> np.ndarray:
     """``sum_i w_i * h(k_i x + b_i)`` evaluated in numpy (float64)."""
     x = np.asarray(x, dtype=np.float64)
-    return sum(float(wi) * hard_sigmoid(float(ki) * x + float(bi)) for wi, ki, bi in zip(w, k, b))
+    return sum(float(wi) * hard_sigmoid(float(ki) * x + float(bi)) for wi, ki, bi in zip(w, k, b, strict=True))
 
 
 def _sigmoid(x: np.ndarray) -> np.ndarray:
@@ -380,7 +380,7 @@ def gate_samples(
     for batch in batches:
         if first is None:
             first = batch
-        values = dict(zip(fetch, session.run(fetch, {input_name: batch}) if fetch else []))
+        values = dict(zip(fetch, session.run(fetch, {input_name: batch}) if fetch else [], strict=True))
         if input_name in tensors:
             values[input_name] = batch
         for t in tensors:
@@ -539,4 +539,4 @@ def _output_change(a: Path, b: Path, batch: np.ndarray) -> float:
     for p in (a, b):
         s = ort.InferenceSession(str(p), providers=["CPUExecutionProvider"])
         outs.append(s.run(None, {s.get_inputs()[0].name: batch}))
-    return float(max(np.abs(x - y).max() for x, y in zip(*outs)))
+    return float(max(np.abs(x - y).max() for x, y in zip(*outs, strict=True)))

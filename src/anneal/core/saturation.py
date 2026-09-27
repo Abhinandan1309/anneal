@@ -219,7 +219,7 @@ def _capture_activations(model_path: Path, tensors: list[str], batches: Iterable
     captured: dict[str, list[np.ndarray]] = {t: [] for t in tensors}
     for x in batches:
         outs = session.run(tensors, {input_name: x})
-        for name, value in zip(tensors, outs):
+        for name, value in zip(tensors, outs, strict=True):
             captured[name].append(value)
     return {k: np.concatenate(v, axis=0) for k, v in captured.items()}
 

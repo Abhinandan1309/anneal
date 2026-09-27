@@ -393,6 +393,12 @@ def _advise_target(prof: ModelProfile, int8_path: str, target: str) -> Advice:
         "16-bit feature maps: TIDL's tensor_bits 16 lost ~0pp on these models. It is not a "
         "parameter of this transform; set it in the target's toolchain if 8 bits are not enough.",
     ]
+    if target == "tidl":
+        caveats.append(
+            "On TIDL, combine the recipe with TIDL's own mixed precision (advanced_options:"
+            "mixed_precision_factor 1.2): MobileNetV3-Large -4.1pp -> -0.4pp. Do not expect 16-bit "
+            "activations alone to fix a per-tensor weight collapse: 16-bit on Anneal's 8 most "
+            "damaged activations left MobileNetV3-Small at -65.5pp (equalisation: -9.7pp).")
     silu = prof.activations.get("SiLU (Sigmoid*x)", 0) > 0
     if prof.family == "gated-depthwise":
         params = {**base, "equalize": True, "equalize_se": True, "equalize_mix": 0.5,
@@ -425,11 +431,18 @@ def _advise_target(prof: ModelProfile, int8_path: str, target: str) -> Advice:
                             "B1 -75.7pp; with sigmoid_surrogate 3: +0.2pp / -0.5pp.")
             evidence.append("AMD Quark XINT8 (Imagenette 1,000): EfficientNet-B0 -75.1pp -> -3.5pp with "
                             "percentile calibration + this recipe + sigmoid_surrogate 3; each part alone "
-                            "stays near -75pp. EfficientNet-B1 -75.7 -> -49.9pp (not solved).")
+                            "stays near -75pp. EfficientNet-B1 -75.7 -> -50.1pp; with the gate ops at "
+                            "16 bits -33.9pp (B0 -2.2pp); gate ops in float -28.1pp.")
             caveats.append(
                 "AMD's NPU replaces Sigmoid by HardSigmoid, hence sigmoid_surrogate 3. In Quark, "
                 "calibrate activations with CalibMethod.Percentile: its default MinMSE cost "
-                "EfficientNet-B0 ~25pp. Deeper SiLU nets (EfficientNet-B1) remain far from FP32.")
+                "EfficientNet-B0 ~25pp.")
+            caveats.append(
+                "Deeper SiLU nets (EfficientNet-B1) stay far from FP32 at 8 bits: the gate branches "
+                "cost most of it. Keep the gate ops at 16 bits in Quark (specific_layer_config with "
+                "Int16Spec input/output tensors on the nodes named anneal_sur_* and "
+                "anneal_eq_gate_mul_*): B1 -50.1pp -> -33.9pp. Do not add a formula-based bias "
+                "correction on XINT8: its assumed weight rounding is not Quark's, and it cost 10pp.")
             confidence = "medium"
         rec = Candidate(label, params, why)
     elif prof.family == "cnn":

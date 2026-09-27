@@ -444,3 +444,28 @@ def test_different_source_models_never_share_an_output_path(tmp_path):
     b = ctx.path_for(ModelArtifact(path=tmp_path / "b.onnx"), record)
     assert a != b
     assert a == ctx.path_for(ModelArtifact(path=tmp_path / "a.onnx"), record)  # still deterministic
+
+
+def test_preprocessing_cache_is_keyed_on_the_source_bytes(tmp_path):
+    """Two different models with the same file name must not share a pre-processed file."""
+    import onnx
+    from onnx import TensorProto, helper, numpy_helper
+
+    from anneal.core.transforms import _preprocessed
+
+    def model(path, value):
+        w = numpy_helper.from_array(np.full((2, 2), value, np.float32), "w")
+        g = helper.make_graph([helper.make_node("MatMul", ["x", "w"], ["y"])], "g",
+                              [helper.make_tensor_value_info("x", TensorProto.FLOAT, [1, 2])],
+                              [helper.make_tensor_value_info("y", TensorProto.FLOAT, [1, 2])], [w])
+        onnx.save(helper.make_model(g, opset_imports=[helper.make_opsetid("", 13)], ir_version=8), str(path))
+        return path
+
+    ctx = TransformContext(workdir=tmp_path / "work")
+    (tmp_path / "a").mkdir()
+    (tmp_path / "b").mkdir()
+    pa = _preprocessed(ModelArtifact(path=model(tmp_path / "a" / "model.onnx", 1.0)), ctx)
+    pb = _preprocessed(ModelArtifact(path=model(tmp_path / "b" / "model.onnx", 2.0)), ctx)
+    assert pa != pb
+    wb = numpy_helper.to_array(onnx.load(str(pb)).graph.initializer[0])
+    assert np.all(wb == 2.0)

@@ -131,7 +131,7 @@ def input_means(model_path: Path, batches: Iterable[np.ndarray], names: list[str
     count: dict[str, int] = {}
     for x in batches:
         outs = s.run(names, {inp: x})
-        for nm, t in zip(names, outs):
+        for nm, t in zip(names, outs, strict=True):
             t = np.asarray(t, np.float64)
             axes = tuple(a for a in range(t.ndim) if a != 1)
             n = int(np.prod([t.shape[a] for a in axes]))

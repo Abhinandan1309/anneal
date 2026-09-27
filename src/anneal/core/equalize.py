@@ -509,7 +509,7 @@ def channel_ranges(
     seen = False
     for batch in batches:
         seen = True
-        for t, v in zip(tensors, session.run(tensors, {input_name: batch})):
+        for t, v in zip(tensors, session.run(tensors, {input_name: batch}), strict=True):
             axes = (0,) + tuple(range(2, v.ndim))
             mn, mx = v.min(axis=axes), v.max(axis=axes)
             lo[t] = mn if t not in lo else np.minimum(lo[t], mn)

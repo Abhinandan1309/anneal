@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 import onnx
 import onnxruntime as ort
-import pytest
 from onnx import TensorProto, helper, numpy_helper
 
 from anneal.core.equalize_concat import equalise_concat, find_concat_sites

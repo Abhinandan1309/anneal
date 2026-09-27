@@ -134,7 +134,7 @@ def mixed_range_outputs(model_path: Path, batches, ratio: float = MIXED_OUTPUT_R
     lo = dict.fromkeys(wanted, 0.0)
     hi = dict.fromkeys(wanted, 0.0)
     for batch in batches:
-        for t, v in zip(wanted, session.run(wanted, {input_name: batch})):
+        for t, v in zip(wanted, session.run(wanted, {input_name: batch}), strict=True):
             lo[t], hi[t] = min(lo[t], float(v.min())), max(hi[t], float(v.max()))
     flagged = []
     for name, cat in found:
@@ -253,7 +253,7 @@ def mean_minmax_ranges(model_path: Path, batches) -> dict[str, tuple[float, floa
     for batch in batches:
         for x in batch:  # one image at a time: per-image extremes
             values = session.run(tensors, {input_name: x[None]})
-            for t, v in zip(tensors, values):
+            for t, v in zip(tensors, values, strict=True):
                 if v.size:
                     lo_sum[t] += min(float(v.min()), 0.0)
                     hi_sum[t] += max(float(v.max()), 0.0)
@@ -452,7 +452,9 @@ def _preprocessed(artifact: ModelArtifact, ctx: TransformContext) -> Path:
     """
     from onnxruntime.quantization.shape_inference import quant_pre_process
 
-    out = ctx.workdir / f"{artifact.path.stem}-preproc.onnx"
+    # Keyed on the source's bytes, not its name: two models called model.onnx in different
+    # folders, or a source rewritten in place, must never share a cached pre-processed file.
+    out = ctx.workdir / f"{artifact.path.stem}-{artifact.content_hash()[:12]}-preproc.onnx"
     if out.exists():
         return out
     ctx.workdir.mkdir(parents=True, exist_ok=True)

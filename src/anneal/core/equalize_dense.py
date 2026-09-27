@@ -290,7 +290,7 @@ def equalise_dense(
     ys = {s.y for s in sites}
     rng = np.random.default_rng(0)
     for i, batch in enumerate(batches):
-        for t, v in zip(tensors, sess.run(tensors, {inp: batch})):
+        for t, v in zip(tensors, sess.run(tensors, {inp: batch}), strict=True):
             ax = axes[t] % v.ndim
             red = tuple(d for d in range(v.ndim) if d != ax)
             mn, mx = v.min(axis=red), v.max(axis=red)

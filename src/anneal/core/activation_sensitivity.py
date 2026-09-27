@@ -91,7 +91,7 @@ def tensor_ranges(
     seen = False
     for batch in batches:
         seen = True
-        for t, v in zip(tensors, session.run(list(tensors), {name: batch})):
+        for t, v in zip(tensors, session.run(list(tensors), {name: batch}), strict=True):
             lo[t] = min(lo[t], float(v.min()))
             hi[t] = max(hi[t], float(v.max()))
     if not seen:

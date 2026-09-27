@@ -18,7 +18,6 @@ accuracy aggregates on the same data are not.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from anneal.core.artifact import ModelArtifact, TransformRecord
@@ -82,7 +81,7 @@ def spearman(xs: Sequence[float], ys: Sequence[float]) -> float | None:
     n = len(rx)
     mx, my = sum(rx) / n, sum(ry) / n
 
-    num = sum((a - mx) * (b - my) for a, b in zip(rx, ry))
+    num = sum((a - mx) * (b - my) for a, b in zip(rx, ry, strict=True))
     den_x = sum((a - mx) ** 2 for a in rx) ** 0.5
     den_y = sum((b - my) ** 2 for b in ry) ** 0.5
     if den_x == 0 or den_y == 0:
