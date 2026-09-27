@@ -29,6 +29,13 @@ def prepare(kind: str, src: Path, dst: Path, batches: list[np.ndarray]) -> Path:
     from anneal.core.cle import cross_layer_equalise
     from anneal.core.equalize import equalise
 
+    if kind.endswith("+bc"):  # analytic bias correction for per-tensor int8 weights, last
+        from anneal.core.bias_correction import correct_biases
+
+        base = prepare(kind[:-3], src, dst.with_name(dst.stem[:-3] + ".onnx"), batches)
+        r = correct_biases(base, dst, batches, per_channel=TIDL_LIKE["per_channel"])
+        print(f"  {kind}: corrected {len(r.layers)} biases", flush=True)
+        return dst
     if kind == "plain":
         return src
     if kind.startswith("relu"):  # relu-float (float cost of ReLU6 -> ReLU), relu-cle-t0.5

@@ -86,6 +86,24 @@ def session(model: Path, providers: list[str], options: dict | None):
     return ort.InferenceSession(str(model), providers=providers, provider_options=provider_options, sess_options=so)
 
 
+#: ops TIDL fuses into the layer before them: the fused layer's output tensor is the last one's
+FUSED = {"Relu", "Clip", "LeakyRelu", "PRelu", "BatchNormalization", "HardSwish"}
+
+
+def fused_end(model_path: Path, tensor: str) -> str:
+    """The tensor TIDL names a layer by: follow single consumers that it fuses (Conv -> Relu)."""
+    import onnx
+
+    g = onnx.load(str(model_path)).graph
+    consumers: dict[str, list] = {}
+    for n in g.node:
+        for i in n.input:
+            consumers.setdefault(i, []).append(n)
+    while len(consumers.get(tensor, [])) == 1 and consumers[tensor][0].op_type in FUSED:
+        tensor = consumers[tensor][0].output[0]
+    return tensor
+
+
 def main() -> None:
     import onnx
 
@@ -177,7 +195,7 @@ def main() -> None:
 
                     if which not in rankings:
                         rankings[which] = rank_activation_tensors(models[which], calib_imgs[:32], calib_imgs[32:])
-                    top = [r.tensor for r in rankings[which][:k16]]
+                    top = [fused_end(models[which], r.tensor) for r in rankings[which][:k16]]
                     opts["advanced_options:output_feature_16bit_names_list"] = ",".join(top)
                     timing.setdefault(label, {})["int16_tensors"] = top
                     print(f"  {name} {label}: 16-bit {top}", flush=True)
@@ -187,6 +205,12 @@ def main() -> None:
                 for x in calib_imgs[: opts["advanced_options:calibration_frames"]]:
                     comp.run(None, {inp: x})
                 del comp
+                if k16:  # did TIDL keep these names as layers? (a fused-away name is ignored silently)
+                    known = " ".join(f.read_text(errors="replace") for f in art.rglob("*layer_info*.txt"))
+                    found = [n for n in top if n in known]
+                    timing[label]["int16_names_in_layer_info"] = found
+                    print(f"  {name} {label}: {len(found)}/{len(top)} 16-bit names found in TIDL layer info "
+                          f"({len(known)} chars; files {[f.name for f in art.rglob('*') if f.is_file()][:12]})", flush=True)
                 timing.setdefault(label, {})["compile_s"] = time.time() - t
                 t = time.time()
                 preds[label] = predict(session(models[which], ["TIDLExecutionProvider", "CPUExecutionProvider"],
