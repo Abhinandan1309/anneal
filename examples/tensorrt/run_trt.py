@@ -84,7 +84,7 @@ class Calibrator:
         return _C()
 
 
-def build(onnx_path: Path, mode: str, calib_batches, work: Path):
+def build(onnx_path: Path, mode: str, calib_batches, work: Path, fp16: bool = True):
     import tensorrt as trt
 
     logger = trt.Logger(trt.Logger.WARNING)
@@ -95,7 +95,8 @@ def build(onnx_path: Path, mode: str, calib_batches, work: Path):
         raise RuntimeError("; ".join(str(parser.get_error(i)) for i in range(parser.num_errors)))
     config = builder.create_builder_config()
     config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 2 << 30)
-    config.set_flag(trt.BuilderFlag.FP16)
+    if fp16:  # off: ops outside INT8 run in FP32 (FP16 can overflow on rescaled equalised tensors)
+        config.set_flag(trt.BuilderFlag.FP16)
     if mode == "int8":
         config.set_flag(trt.BuilderFlag.INT8)
         config.int8_calibrator = Calibrator(calib_batches, work / f"{onnx_path.stem}.calib")
@@ -180,6 +181,15 @@ def main() -> None:
     import tensorrt as trt
 
     report = {"runtime": f"TensorRT {trt.__version__}", "n": args.images, "models": {}}
+    from importlib.metadata import PackageNotFoundError, version
+
+    report["versions"] = {}
+    for pkg in ("nvidia-modelopt", "onnxruntime-gpu", "onnxruntime", "onnx", "timm", "torch"):
+        try:
+            report["versions"][pkg] = version(pkg)
+        except PackageNotFoundError:
+            pass
+    print(f"versions {report['versions']}", flush=True)
     try:
         import torch
 
@@ -220,22 +230,28 @@ def main() -> None:
         preds = {"fp32": decode([s.run(None, {s.get_inputs()[0].name: x})[0] for x in xs])}
         rows, extra = {}, {}
         for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
-            which = "eq res" if label.endswith("eq res") else "eq" if label.endswith("+ eq") else "plain"
+            # "... (no fp16)" builds without FP16 fallback; "... #k" is an independent rebuild (TensorRT's
+            # INT8 build is not deterministic: EfficientViT-B0 plain scored -69.4 and -0.2 in two runs)
+            base = label.split(" #")[0].replace(" (no fp16)", "")
+            fp16 = "(no fp16)" not in label
+            which = "eq res" if base.endswith("eq res") else "eq" if base.endswith("+ eq") else "plain"
             t = time.time()
             try:
                 if label.startswith("modelopt"):
                     qdq = mdir / f"{name}-{which.replace(' ', '-')}-qdq.onnx"
-                    modelopt_qdq(models[which], qdq, calib_imgs)
-                    # the same QDQ model on onnxruntime's CPU: separates ModelOpt's calibration
-                    # from TensorRT's build of it (the two should agree closely)
-                    qs = ort.InferenceSession(str(qdq), providers=["CPUExecutionProvider"])
-                    qin = qs.get_inputs()[0]
-                    cast = np.float16 if "float16" in qin.type else np.float32
-                    preds[f"{label} (ort cpu)"] = decode([qs.run(None, {qin.name: x.astype(cast)})[0] for x in xs])
-                    extra[f"{label} (ort cpu)"] = {"latency_ms": float("nan")}
-                    engine = build(qdq, "qdq", None, mdir)
+                    if not qdq.exists():
+                        modelopt_qdq(models[which], qdq, calib_imgs)
+                    if f"{base} (ort cpu)" not in preds:
+                        # the same QDQ model on onnxruntime's CPU: separates ModelOpt's calibration
+                        # from TensorRT's build of it (the two should agree closely)
+                        qs = ort.InferenceSession(str(qdq), providers=["CPUExecutionProvider"])
+                        qin = qs.get_inputs()[0]
+                        cast = np.float16 if "float16" in qin.type else np.float32
+                        preds[f"{base} (ort cpu)"] = decode([qs.run(None, {qin.name: x.astype(cast)})[0] for x in xs])
+                        extra[f"{base} (ort cpu)"] = {"latency_ms": float("nan")}
+                    engine = build(qdq, "qdq", None, mdir, fp16=fp16)
                 else:
-                    engine = build(models[which], "fp16" if "fp16" in label else "int8", calib_imgs, mdir)
+                    engine = build(models[which], "fp16" if base == "trt fp16" else "int8", calib_imgs, mdir, fp16=fp16)
                 build_s = time.time() - t
                 outs, ms = run_engine(engine, xs)
                 preds[label] = decode(outs)

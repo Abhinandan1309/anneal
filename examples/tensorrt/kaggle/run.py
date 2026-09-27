@@ -7,9 +7,11 @@ edited per run. The repository is public, so the kernel clones it.
 import subprocess
 import sys
 
-MODELS = "mobilenet_v3_large,efficientnet_b0,efficientnet_b1,efficientvit_b0"
+MODELS = "efficientvit_b0,efficientnet_b0,efficientnet_b1,mobilenet_v3_large"
 IMAGES = "1000"
-VARIANTS = "trt int8,modelopt int8,modelopt int8 + eq,modelopt int8 + eq res"  # empty = all
+VARIANTS = ("trt int8,trt int8 #2,trt int8 #3,trt int8 + eq,trt int8 + eq #2,trt int8 + eq #3,"
+            "trt int8 (no fp16),trt int8 + eq (no fp16),modelopt int8,modelopt int8 (no fp16),"
+            "modelopt int8 + eq,modelopt int8 + eq (no fp16)")  # empty = all
 REF = "main"
 
 
