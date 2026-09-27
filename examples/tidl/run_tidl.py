@@ -108,6 +108,15 @@ VARIANTS = {
     "tidl 8-bit + equalised (per-tensor) + 16-bit features 0-1": (
         "equalised_pt", {**COMMON, "_16bit_re": r"/features/features\.[01]/"}),
     "tidl 8-bit + 16-bit features 0-1": ("plain", {**COMMON, "_16bit_re": r"/features/features\.[01]/"}),
+    "tidl 8-bit + equalised (per-tensor grid) + 16-bit features 0-3": (
+        "equalised_pt_grid", {**COMMON, "_16bit_re": r"/features/features\.[0-3]/"}),
+    # timm naming (LCNet, FBNetV3): the stem and the first block stages
+    "tidl 8-bit + equalised (per-tensor) + 16-bit timm stem-1": (
+        "equalised_pt", {**COMMON, "_16bit_re": r"/conv_stem/|/blocks\.[01]/"}),
+    "tidl 8-bit + equalised (per-tensor) + 16-bit timm stem-2": (
+        "equalised_pt", {**COMMON, "_16bit_re": r"/conv_stem/|/blocks\.[0-2]/"}),
+    "tidl 8-bit + equalised (per-tensor grid) + 16-bit timm stem-2": (
+        "equalised_pt_grid", {**COMMON, "_16bit_re": r"/conv_stem/|/blocks\.[0-2]/"}),
     "tidl prequant qdq (per-channel act qdq kept)": ("qdq_pc_keep", {**COMMON, "advanced_options:prequantized_model": 1}),
 }
 
@@ -206,11 +215,11 @@ def main() -> None:
         mdir = work / name
         mdir.mkdir(parents=True, exist_ok=True)
         src = mdir / f"{name}-fp32.onnx"
-        if not src.exists():
-            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "zoo_gated"))
-            from export_models import TIMM as ZOO_TIMM
-            from export_models import export_any
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "zoo_gated"))
+        from export_models import TIMM as ZOO_TIMM
+        from export_models import export_any
 
+        if not src.exists():
             if any(f.split(".")[0] == name for f in ZOO_TIMM):  # timm models (LCNet, MobileViT, ...)
                 export_any(name, src)
             else:
@@ -222,6 +231,16 @@ def main() -> None:
             d.ClearField("dim_param")
             d.dim_value = 1
         onnx.save(m, str(src))
+        if any(f.split(".")[0] == name for f in ZOO_TIMM) and not (mdir / ".folded").exists():
+            # timm exports keep dynamic-shape ops (Shape/Gather/Unsqueeze/Cast: ~170 in MobileViT-S),
+            # on which TIDL's importer segfaulted; with batch 1 onnxruntime folds them to constants
+            import onnxruntime as _ort
+
+            so = _ort.SessionOptions()
+            so.graph_optimization_level = _ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
+            so.optimized_model_filepath = str(src)
+            _ort.InferenceSession(str(src), so, providers=["CPUExecutionProvider"])
+            (mdir / ".folded").touch()
         shape = sample_shape(src)
         calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=1, limit=64, sample_shape=shape)
         calib_imgs = list(calib.calibration_batches(64))
