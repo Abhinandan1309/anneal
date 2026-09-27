@@ -80,6 +80,11 @@ GATE_MUL_PREFIX = "anneal_eq_gate_mul_"
 GATE_CONV_PREFIX = "anneal_eq_gate_conv_"
 DEFAULT_SLACK = 0.1
 DEFAULT_MAX_SCALE = 1e3
+#: Longest chain of residual Adds a gated residual site may carry its scale through.
+MAX_RESIDUAL_CHAIN = 8
+#: A producer channel whose calibrated range (max - min) is below this fraction of its magnitude
+#: is constant (dead weights, bias only): the weight-balance term of ``mix`` leaves it alone.
+DEAD_CHANNEL_RTOL = 1e-3
 
 
 @dataclass
@@ -97,6 +102,9 @@ class _Site:
     conv_p: Any | None = None
     consumers_z: list = field(default_factory=list)
     z: str | None = None
+    #: Residual sites whose z feeds further residual Adds (z2 = P2(...) + z, ...): those P's
+    #: take the scale too, and ``consumers_z`` holds the convs reading any z in the chain.
+    extra_p: list = field(default_factory=list)
     #: Squeeze-excite sites only (kind "gated-se" or "relu-se"): y also feeds ``pool`` (GlobalAveragePool or
     #: ReduceMean over H, W), whose only consumer ``fc1`` (a Conv) takes the scale out of its
     #: input channels, and ``se_mul`` (z = y * e). ``conv_b`` is then z's first consumer.
@@ -353,10 +361,34 @@ def find_sites(model, *, residual: bool = False, se: bool = False) -> list[_Site
         if not conv_with_const_weights(p) or len(consumers.get(others[0], [])) != 1:
             return None
         z = add.output[0]
-        cs = z_consumers_ok(z, (b.input[1], p.input[1]))
-        if cs is None:
-            return None
-        return b, add, p, cs, z
+        # Follow a chain of residual Adds (FBNetV3's stem feeds two in a row): each further
+        # z_k = P_k(...) + z_{k-1} carries s when P_k's output channels take it too.
+        ps, cs_all, cur = [p], [], z
+        for _ in range(MAX_RESIDUAL_CHAIN):
+            outs = consumers.get(cur, [])
+            adds = [o for o in outs if o.op_type == "Add"]
+            if not adds:
+                cs = z_consumers_ok(cur, (b.input[1], *(q.input[1] for q in ps)))
+                if cs is None:
+                    return None
+                return b, add, p, cs_all + cs, z, ps[1:]
+            if cur in graph_outputs or len(adds) != 1 or len(adds[0].input) != 2 or list(adds[0].input).count(cur) != 1:
+                return None
+            nxt = adds[0]
+            other = next(i for i in nxt.input if i != cur)
+            p_k = producer.get(other)
+            if not conv_with_const_weights(p_k) or consumers.get(other, []) != [nxt]:
+                return None
+            convs = [o for o in outs if o is not nxt]
+            for c in convs:
+                if not conv_with_const_weights(c) or c.input[0] != cur:
+                    return None
+                if not (is_depthwise(c) or _attr(c, "group", 1) == 1):
+                    return None
+            cs_all += convs
+            ps.append(p_k)
+            cur = nxt.output[0]
+        return None
 
     def is_spatial_mean(node, y: str) -> bool:
         """GlobalAveragePool(y), or ReduceMean(y) over H and W of an NCHW tensor, keepdims."""
@@ -423,8 +455,8 @@ def find_sites(model, *, residual: bool = False, se: bool = False) -> list[_Site
             return
         found = residual_consumers(y) if kind == "gated" else None
         if found is not None:
-            b, add, p, cs, z = found
-            sites.append(_Site(kind, a, act, gate, b, x, y, add, p, cs, z))
+            b, add, p, cs, z, extra_p = found
+            sites.append(_Site(kind, a, act, gate, b, x, y, add, p, cs, z, extra_p=extra_p))
             return
         found_se = se_consumers(a, y) if kind == "gated" else None
         if found_se is not None:
@@ -571,13 +603,19 @@ def pow2_alignment_gain(lo: np.ndarray, hi: np.ndarray, s: np.ndarray, levels: i
 
 
 def _mixed_scales(
-    s: np.ndarray, weight_a, weight_b, alpha: float, beta: float, b_axis: int = 0
+    s: np.ndarray, weight_a, weight_b, alpha: float, beta: float, b_axis: int = 0,
+    live: np.ndarray | None = None,
 ) -> np.ndarray:
     """``sign(s) |s|^alpha s_cle^beta``: activation and cross-layer weight equalisation combined.
 
     Multiplying every scale by one constant changes nothing after quantization (every step
     scales with it), so s_cle needs no normalisation. Channels with an all-zero weight row keep 1.
     ``b_axis`` is the axis of ``weight_b`` that s divides (1 for a dense consumer's input channels).
+    ``live`` marks the channels whose measured activation varies; the others keep 1 as well. A
+    dead channel is its bias alone (FBNetV3's stem: weight rows of 1e-12 and 1e-6, constant
+    outputs), so balancing its weights gains nothing, and sqrt(w_b / w_a) would scale a constant
+    by ~1e3 into the shared activation range (and through a residual chain: FBNetV3 stayed at
+    -74pp under per-tensor int8 with it).
     """
     from onnx import numpy_helper
 
@@ -585,6 +623,8 @@ def _mixed_scales(
     wb = np.moveaxis(np.abs(numpy_helper.to_array(weight_b).astype(np.float64)), b_axis, 0)
     wb = wb.reshape(len(s), -1).max(axis=1)
     ok = (wa > 0) & (wb > 0)
+    if live is not None:
+        ok &= np.asarray(live, bool)
     cle = np.ones(len(s))
     cle[ok] = np.sqrt(wb[ok] / wa[ok])
     return (np.sign(s) * np.abs(s) ** alpha * cle ** beta).astype(np.float32)
@@ -753,8 +793,8 @@ def equalise(
             names.append(site.conv_b.input[1])
         if len(site.conv_a.input) > 2 and site.conv_a.input[2]:
             names.append(site.conv_a.input[2])
-        if site.conv_p is not None:
-            names += [n for n in site.conv_p.input[1:3] if n]
+        for p in ([site.conv_p] if site.conv_p is not None else []) + site.extra_p:
+            names += [n for n in p.input[1:3] if n]
         if site.fc1 is not None:
             names.append(site.fc1.input[1])  # FC1's bias is untouched: its output is unchanged
         names += [c.input[1] for c in site.consumers_z]
@@ -767,7 +807,10 @@ def equalise(
             # For a squeeze-excite site the weight balanced against A's is the projection's (z's first
             # consumer), along its input channels unless it is depthwise.
             b_axis = 0 if site.fc1 is None or _is_depthwise_weight(site.conv_b, inits) else 1
-            s_mixed = _mixed_scales(s, inits[site.conv_a.input[1]], inits[site.conv_b.input[1]], *mix, b_axis=b_axis)
+            lo_x, hi_x = ranges[site.x]
+            live = (hi_x - lo_x) > DEAD_CHANNEL_RTOL * np.maximum(np.abs(lo_x), np.abs(hi_x))
+            s_mixed = _mixed_scales(s, inits[site.conv_a.input[1]], inits[site.conv_b.input[1]], *mix,
+                                    b_axis=b_axis, live=live)
             # Bounded only at gated residual sites, whose scale also multiplies the other branch's
             # producer: bounding every site cost EfficientNet-B1 on XINT8 (best recipe -3.5 -> -9.1pp).
             s = _bounded_spread(s_mixed, s) if site.conv_p is not None else s_mixed
@@ -787,10 +830,12 @@ def equalise(
             w = w / s64.reshape((1, -1) + (1,) * (w.ndim - 2))
             inits[site.fc1.input[1]].CopyFrom(numpy_helper.from_array(w.astype(np.float32), site.fc1.input[1]))
         if site.conv_p is not None:
-            # z = P(...) + y: scale P's output channels too, so z' = s * z ...
-            for name in site.conv_p.input[1:3]:
-                if name:
-                    rescale(name, s64)
+            # z = P(...) + y: scale P's output channels too, so z' = s * z (and so for every
+            # further Add of a chain) ...
+            for p in [site.conv_p, *site.extra_p]:
+                for name in p.input[1:3]:
+                    if name:
+                        rescale(name, s64)
         if site.z is not None:
             # ... (or z = y * e, which carries s already) and divide s out of every consumer of z:
             # a depthwise conv's input channel c is its output channel c (exact); a dense conv's

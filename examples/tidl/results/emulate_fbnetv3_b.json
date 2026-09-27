@@ -1,0 +1,47 @@
+{
+ "model": "fbnetv3_b",
+ "n": 1000,
+ "rules": {
+  "per_channel": false,
+  "activation_type": "int8",
+  "activation_symmetric": true,
+  "pow2_activation_scales": true,
+  "calibrate_method": "minmax",
+  "calib_samples": 64
+ },
+ "rows": {
+  "plain": {
+   "delta_pp": -74.6,
+   "ci95_pp": [
+    -77.29800247294179,
+    -71.90199752705821
+   ]
+  },
+  "eq-pt": {
+   "delta_pp": -15.1,
+   "ci95_pp": [
+    -17.686895588151945,
+    -12.513104411848053
+   ],
+   "vs_plain_pp": [
+    59.5,
+    56.45741958199951,
+    62.54258041800048,
+    1.542348713665846e-179
+   ]
+  },
+  "eq-pt-grid": {
+   "delta_pp": -21.7,
+   "ci95_pp": [
+    -24.60656171033749,
+    -18.793438289662507
+   ],
+   "vs_plain_pp": [
+    52.900000000000006,
+    49.80618485620101,
+    55.993815143799,
+    1.1380524797363597e-159
+   ]
+  }
+ }
+}

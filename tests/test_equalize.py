@@ -612,6 +612,49 @@ def test_residual_sites_are_opt_in_and_exact_in_float(tmp_path: Path, consumer_g
     assert np.abs(after - before).max() <= 1e-4 * max(1.0, np.abs(before).max())
 
 
+def _chained_residual_model(path: Path) -> Path:
+    """FBNetV3's stem: z = P(dw(y)) + y feeds a depthwise conv and a second Add, z2 = P2(dw2(z)) + z."""
+    src = _residual_model(path, consumer_group=C)
+    m = onnx.load(str(src))
+    g = m.graph
+    rng = np.random.default_rng(5)
+    g.initializer.extend([numpy_helper.from_array((rng.standard_normal((C, C, 1, 1)) * 0.3).astype(np.float32), "wp2"),
+                          numpy_helper.from_array(rng.standard_normal(C).astype(np.float32), "bp2"),
+                          numpy_helper.from_array(rng.standard_normal((5, C, 1, 1)).astype(np.float32), "wd")])
+    g.node.extend([
+        helper.make_node("Conv", ["out", "wp2", "bp2"], ["p2"], name="conv_p2"),
+        helper.make_node("Add", ["z", "p2"], ["z2"], name="res2"),
+        helper.make_node("Conv", ["z2", "wd"], ["out2"], name="conv_d"),
+    ])
+    del g.output[:]
+    g.output.append(helper.make_tensor_value_info("out2", TensorProto.FLOAT, ["N", 5, 8, 8]))
+    onnx.checker.check_model(m)
+    onnx.save(m, str(path))
+    return path
+
+
+def test_chained_residual_site_is_found_and_exact(tmp_path: Path):
+    src = _chained_residual_model(tmp_path / "m.onnx")
+    [site] = find_sites(onnx.load(str(src)), residual=True)
+    assert [p.name for p in site.extra_p] == ["conv_p2"]
+    assert sorted(c.name for c in site.consumers_z) == ["conv_c", "conv_d"]
+    dst = tmp_path / "eq.onnx"
+    result = equalise(src, dst, _batches(), residual=True, mix=(0.5, 0.5))
+    assert [s.kind for s in result.sites] == ["gated-residual"]
+    x = _batches(1, seed=7)[0]
+    before, after = _run(src, x), _run(dst, x)
+    assert np.abs(after - before).max() <= 1e-4 * max(1.0, np.abs(before).max())
+
+
+def test_chained_residual_needs_a_conv_on_every_other_branch(tmp_path: Path):
+    src = _chained_residual_model(tmp_path / "m.onnx")
+    m = onnx.load(str(src))
+    p2 = next(n for n in m.graph.node if n.name == "conv_p2")
+    m.graph.node.insert(list(m.graph.node).index(p2), helper.make_node("Relu", ["out"], ["p2"], name="relu_p2"))
+    m.graph.node.remove(p2)
+    assert find_sites(m, residual=True) == []
+
+
 def test_residual_site_needs_a_conv_on_the_other_branch(tmp_path: Path):
     src = _residual_model(tmp_path / "m.onnx")
     m = onnx.load(str(src))
