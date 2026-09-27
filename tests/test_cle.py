@@ -109,7 +109,7 @@ def _model(path: Path, pattern: str = "relu") -> Path:
         [helper.make_tensor_value_info(out, TensorProto.FLOAT, ["batch", None, None, None])],
         [numpy_helper.from_array(w[k], k) for k in inits] + extra,
     )
-    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", opset)])
+    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", opset)], ir_version=8)
     onnx.checker.check_model(model)
     onnx.save(model, str(path))
     return path
@@ -258,7 +258,7 @@ def _depthwise_model(path: Path, pad: bool = True, multiplier: int = 2, relu6: b
         [numpy_helper.from_array(w1, "w1"), numpy_helper.from_array(w2, "w2"),
          numpy_helper.from_array(np.array([0, 0, 1, 1, 0, 0, 1, 1], np.int64), "pads")] + clip_inits,
     )
-    onnx.save(helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)]), str(path))
+    onnx.save(helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)], ir_version=8), str(path))
     return path
 
 
@@ -368,7 +368,7 @@ def test_gemm_pairs_are_exact_and_balanced(tmp_path: Path, trans_b):
         [f(w1, "w1"), f(b1, "b1"), f(w2, "w2")],
     )
     src = tmp_path / "mlp.onnx"
-    onnx.save(helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)]), str(src))
+    onnx.save(helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)], ir_version=8), str(src))
     dst = tmp_path / "cle.onnx"
     result = cross_layer_equalise(src, dst)
     assert [p.kind for p in result.pairs] == ["gemm"] and result.pairs[0].balance_after > 0.999
