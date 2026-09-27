@@ -140,7 +140,7 @@ def test_advise_command(tmp_path: Path):
 
 
 def test_the_search_tries_the_advised_recipe_first():
-    from anneal.agent.policy import HeuristicPolicy
+    from anneal.search.policy import HeuristicPolicy
     from test_policy import fresh_ledger, state_for
 
     state = state_for(fresh_ledger(0.90))

@@ -1,26 +1,13 @@
-"""Search policies: what to try next, given what has been measured.
+"""The search policy: what to try next, given what has been measured.
 
-Two implementations ship:
-
-:class:`HeuristicPolicy`
-    A curriculum distilled from how edge engineers actually work: probe the families of
-    transform, look at what the measurements say, then escalate selective quantization
-    if accuracy broke or tune for speed if it did not. Deterministic, needs no API key,
-    and is the honest baseline the LLM policy has to beat.
-
-:class:`ClaudePolicy`
-    Hands the measured ledger to Claude each turn and lets it choose. It sees the same
-    numbers the heuristic does and nothing else — no hidden hints — so a comparison
-    between the two is meaningful.
-
-Keeping both is the point. An agentic system that cannot be compared against a competent
-non-agentic baseline is a demo, not an engineering result.
+:class:`HeuristicPolicy` is a curriculum distilled from how edge engineers actually work:
+probe the families of transform, look at what the measurements say, then escalate selective
+quantization if accuracy broke or tune for speed if it did not. Deterministic: the same ledger
+always gives the same next proposal.
 """
 
 from __future__ import annotations
 
-import json
-import os
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
@@ -487,114 +474,7 @@ class HeuristicPolicy:
         return None
 
 
-# ---------------------------------------------------------------------------
-# Claude
-# ---------------------------------------------------------------------------
-
-
-class ClaudePolicy:
-    """Lets Claude choose the next transform from the measured ledger."""
-
-    name = "claude"
-
-    def __init__(
-        self,
-        model: str = "claude-sonnet-5",
-        *,
-        api_key: str | None = None,
-        max_tokens: int = 1024,
-        client: Any = None,
-    ) -> None:
-        #: ``client`` is injectable so the proposal-parsing logic can be tested without
-        #: network access — that parsing is where the bugs live, not in the HTTP call.
-        if client is None:
-            try:
-                import anthropic
-            except ImportError as exc:
-                raise ImportError(
-                    "the Claude policy needs the optional llm extra: pip install 'anneal[llm]'"
-                ) from exc
-
-            key = api_key or os.environ.get("ANTHROPIC_API_KEY")
-            if not key:
-                raise RuntimeError(
-                    "ANTHROPIC_API_KEY is not set. Either export it, or run with "
-                    "--policy heuristic, which needs no API access."
-                )
-            client = anthropic.Anthropic(api_key=key)
-
-        self._client = client
-        self._model = model
-        self._max_tokens = max_tokens
-        self._stop_reason = ""
-        #: Kept for the report, so a reader can audit what the model was thinking.
-        self.transcript: list[dict[str, Any]] = []
-
-    @property
-    def stop_reason(self) -> str:
-        return self._stop_reason
-
-    def propose(self, state: SearchState) -> Proposal | None:
-        from anneal.agent import prompts
-
-        user = prompts.render_state(
-            state.ledger,
-            state.transforms,
-            state.budget_remaining,
-            state.constraints.describe(),
-        )
-
-        response = self._client.messages.create(
-            model=self._model,
-            max_tokens=self._max_tokens,
-            system=prompts.SYSTEM,
-            tools=prompts.build_tools(state.transforms),
-            tool_choice={"type": "any"},
-            messages=[{"role": "user", "content": user}],
-        )
-
-        block = next((b for b in response.content if b.type == "tool_use"), None)
-        if block is None:
-            self._stop_reason = "model returned no tool call"
-            return None
-
-        self.transcript.append(
-            {
-                "trial_index": state.ledger.next_index(),
-                "tool": block.name,
-                "input": block.input,
-                "usage": {
-                    "input_tokens": response.usage.input_tokens,
-                    "output_tokens": response.usage.output_tokens,
-                },
-            }
-        )
-
-        if block.name == "stop":
-            self._stop_reason = str(block.input.get("reason", "model chose to stop"))
-            return None
-
-        data = block.input
-        params = data.get("params") or {}
-        if isinstance(params, str):
-            # Models occasionally hand back a JSON string for an object-typed field.
-            try:
-                params = json.loads(params)
-            except json.JSONDecodeError:
-                params = {}
-
-        base_index = int(data.get("base_trial", BASELINE))
-        return Proposal(
-            transform=str(data["transform"]),
-            params=dict(params),
-            base_index=base_index,
-            rationale=str(data.get("rationale", "")),
-        )
-
-
-def build_policy(name: str, *, model: str = "claude-sonnet-5") -> Policy:
+def build_policy(name: str = "heuristic") -> Policy:
     if name == "heuristic":
         return HeuristicPolicy()
-    if name == "claude":
-        return ClaudePolicy(model=model)
-    raise ValueError(f"unknown policy {name!r}; expected 'heuristic' or 'claude'")
+    raise ValueError(f"unknown policy {name!r}; expected 'heuristic'")

@@ -10,7 +10,7 @@ Two defences:
 * :func:`snapshot` records AC/battery state and CPU clock limits, and :func:`warnings_for`
   turns a bad state into a loud warning before any number is produced.
 * The optimisation loop re-measures the baseline at the end of a run; if it has drifted,
-  every latency in the run is flagged (see ``anneal.agent.loop``).
+  every latency in the run is flagged (see ``anneal.search.loop``).
 
 Everything here is best-effort: on a platform where the facts cannot be read, they are
 reported as unknown rather than guessed.

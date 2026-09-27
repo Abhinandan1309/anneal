@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "anneal"
 version = "0.1.0"
-description = "An agent that optimizes neural networks for the hardware they'll actually run on."
+description = "Measured INT8 quantization for the hardware a model will actually run on: find why it breaks, apply exact fixes, verify by measurement."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Abhinandan Adalegere Rajendra", email = "abhinandanar6@gmail.com" }]
-keywords = ["edge-ai", "quantization", "onnx", "agent", "llm", "inference", "pareto"]
+keywords = ["edge-ai", "quantization", "onnx", "inference", "pareto"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
@@ -26,7 +26,6 @@ dependencies = [
 
 [project.optional-dependencies]
 torch = ["torch>=2.0", "torchvision>=0.15"]
-llm = ["anthropic>=0.40"]
 dev = ["pytest>=7.4"]
 
 [project.scripts]

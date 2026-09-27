@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from anneal.agent.loop import OptimizationRun, RunConfig
-from anneal.agent.policy import HeuristicPolicy
+from anneal.search.loop import OptimizationRun, RunConfig
+from anneal.search.policy import HeuristicPolicy
 from anneal.core.artifact import ModelArtifact
 from anneal.core.dataset import SyntheticEvalSet
 from anneal.core.targets import get_target

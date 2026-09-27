@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from anneal.agent.policy import BASELINE, Constraints, HeuristicPolicy, Proposal, SearchState
+from anneal.search.policy import BASELINE, Constraints, HeuristicPolicy, Proposal, SearchState
 from anneal.core.artifact import ModelArtifact, TransformRecord
 from anneal.core.ledger import Ledger
 from anneal.core.transforms import REGISTRY

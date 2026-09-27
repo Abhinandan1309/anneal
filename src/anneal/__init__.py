@@ -1,9 +1,9 @@
-"""Anneal — an agent that optimizes neural networks for the hardware they'll actually run on.
+"""Anneal — measured INT8 quantization for the hardware a model will actually run on.
 
 The library is organised around one idea: *nothing is estimated, everything is measured*.
-An agent proposes a transform, Anneal applies it, benchmarks the result on a real
-runtime, and writes the measured outcome into a ledger. The agent's next move is
-conditioned on those measurements.
+It diagnoses why a model breaks under INT8 on a given target, applies exact fixes
+(equalisation, surrogates, safeguards), and verifies each candidate recipe by benchmarking
+it on a real runtime and recording the measured outcome in a ledger.
 """
 
 __version__ = "0.1.0"

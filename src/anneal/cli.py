@@ -25,8 +25,8 @@ def _console():
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    from anneal.agent.loop import OptimizationRun, RunConfig
-    from anneal.agent.policy import Constraints, build_policy
+    from anneal.search.loop import OptimizationRun, RunConfig
+    from anneal.search.policy import Constraints, build_policy
     from anneal.core.dataset import load_calibset, load_evalset
     from anneal.core.targets import TargetUnavailable, default_target, get_target
     from anneal.core.artifact import model_batch_dim, sample_shape
@@ -116,7 +116,7 @@ def cmd_run(args: argparse.Namespace) -> int:
             )
 
     try:
-        policy = build_policy(args.policy, model=args.llm_model)
+        policy = build_policy()
     except (ImportError, RuntimeError, ValueError) as exc:
         console.print(f"[red]policy error:[/red] {exc}")
         return 2
@@ -1355,8 +1355,8 @@ def cmd_report(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="anneal",
-        description="An agent that optimises neural networks for the hardware they'll "
-        "actually run on.",
+        description="Measured INT8 quantization for the hardware a model will actually run on: "
+        "find why it breaks, apply exact fixes, verify by measurement.",
     )
     parser.add_argument("--version", action="version", version=f"anneal {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -1375,8 +1375,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run.add_argument("--eval-limit", type=int, default=256, help="max eval images")
     run.add_argument("--eval-batch", type=int, default=16, help="eval batch size")
-    run.add_argument("--policy", default="heuristic", choices=["heuristic", "claude"])
-    run.add_argument("--llm-model", default="claude-sonnet-5", help="model id for --policy claude")
     run.add_argument("--budget", type=int, default=10, help="trials after the baseline")
     run.add_argument("--batch-size", type=int, default=1, help="inference batch size")
     run.add_argument("--image-size", type=int, default=224)

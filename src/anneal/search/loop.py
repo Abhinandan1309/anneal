@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
-from anneal.agent.policy import BASELINE, Constraints, Policy, Proposal, SearchState
+from anneal.search.policy import BASELINE, Constraints, Policy, Proposal, SearchState
 from anneal.core import environment
 from anneal.core.artifact import ModelArtifact
 from anneal.core.ledger import Ledger, Trial

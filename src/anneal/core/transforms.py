@@ -1,4 +1,4 @@
-"""The action space: transforms the agent can apply to a model.
+"""The action space: transforms Anneal can apply to a model.
 
 Each transform is a pure function from (artifact, params) to a new artifact on disk. They
 compose, and the composition is recorded in the artifact's lineage, so any point on the
@@ -8,7 +8,7 @@ The interesting member of this family is :func:`quantize_dynamic_sensitive`. Bla
 quantization is a blunt instrument — a handful of layers are typically responsible for
 most of the accuracy loss, and excluding just those recovers most of the accuracy while
 keeping most of the speed. Anneal ranks layers by weight-quantization error and lets the
-agent choose how many to spare, turning "quantize or don't" into a tunable dial.
+search choose how many to spare, turning "quantize or don't" into a tunable dial.
 """
 
 from __future__ import annotations
@@ -276,7 +276,7 @@ class TransformError(RuntimeError):
 
 @dataclass(frozen=True)
 class TransformSpec:
-    """Declarative description of a transform — also the source of the agent's tool schema."""
+    """Declarative description of a transform — also the source of the search's parameter schema."""
 
     name: str
     summary: str
@@ -315,7 +315,7 @@ def weight_quantization_error(w: np.ndarray, per_channel: bool = True) -> float:
     This is a *proxy* for how much a layer will suffer under INT8, not a measurement of
     end-to-end accuracy loss — it ignores activation range and error propagation. It is
     cheap (no inference required) and empirically ranks layers well enough to be a useful
-    prior for the agent's search. Anneal never reports it as an accuracy number.
+    prior for the search. Anneal never reports it as an accuracy number.
     """
     w = np.asarray(w, dtype=np.float32)
     if w.size == 0:

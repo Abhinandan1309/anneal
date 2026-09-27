@@ -40,7 +40,7 @@
 
 # Anneal: the full record
 
-**An agent that optimises neural networks for the hardware they'll actually run on.**
+**Measured INT8 quantization for the hardware a model will actually run on.**
 
 Anneal proposes a model transform, applies it, benchmarks it on a real runtime, and
 conditions its next proposal on what it measured. It returns a Pareto frontier across
@@ -77,7 +77,7 @@ Two things make it worth automating:
 ```
     ┌──────────────────────────────────────────────┐
     │  policy — what should we try next?           │
-    │  heuristic curriculum, or Claude             │
+    │  deterministic heuristic curriculum          │
     └───────────────────┬──────────────────────────┘
                         │ proposal
                         ▼
@@ -806,31 +806,17 @@ exists for plumbing tests and is labelled meaningless everywhere it appears.
 
 ---
 
-## Two policies, on purpose
-
-| | `--policy heuristic` | `--policy claude` |
-|---|---|---|
-| Needs an API key | no | yes |
-| Deterministic | yes | no |
-| Sees | the measured ledger | the same measured ledger |
+## The search policy
 
 `HeuristicPolicy` is a curriculum distilled from how edge engineers actually work: probe
 each transform family, then react. Candidate came out slower than FP32? Retry per-tensor
 before writing off the transform. Accuracy broke? Escalate selective quantization with
-increasing `k`. Accuracy held? Push harder on speed. Every trial above came from it.
+increasing `k`. Accuracy held? Push harder on speed. It is deterministic: the same ledger
+always gives the same next proposal. Every trial above came from it.
 
-`ClaudePolicy` hands Claude the same rendered ledger each turn and lets it call a
-`propose_transform` tool. Each turn is stateless — the ledger is re-rendered rather than
-accumulated as conversation — so context stays bounded and each decision is auditable
-alone.
-
-Shipping both is deliberate. **An agentic system that cannot be compared against a
-competent non-agentic baseline is a demo, not an engineering result.**
-
-> **Disclosure:** the Claude policy is implemented and unit-tested against a stubbed
-> client, but it has **not** been run against the live API — no key was available in the
-> environment where this was built. Every measured number in this README came from
-> `--policy heuristic`. Treat the LLM path as reviewed code, not as a validated result.
+(An LLM policy that proposed transforms from the same ledger was built and removed on
+2026-09-27: the results came from diagnosis and exact transforms, not from search, and a
+nondeterministic proposer added cost without adding evidence.)
 
 ---
 
@@ -842,7 +828,6 @@ cd anneal
 pip install -e ".[torch]"    # torch extra only needed to export torchvision models
 ```
 
-For the Claude policy: `pip install -e ".[llm]"` and set `ANTHROPIC_API_KEY`.
 
 ## Commands
 
@@ -927,9 +912,8 @@ src/anneal/
     advise.py       Recipe advisor: architecture family x INT8 path -> recipe, with evidence.
     dataset.py      Imagenette, scored 1000-way. Labelled synthetic fallback.
     ledger.py       Append-only trial record + Pareto frontier.
-  agent/
-    policy.py       HeuristicPolicy and ClaudePolicy.
-    prompts.py      Ledger rendering and tool schemas.
+  search/
+    policy.py       HeuristicPolicy.
     loop.py         propose → apply → measure → record.
   report.py         Rich tables, Markdown, dependency-free SVG.
   cli.py
@@ -967,7 +951,6 @@ not running on the S24.]*
 - **The action space is quantization and graph optimisation.** No pruning, distillation, or
   NAS. Those are real transforms with real payoffs and they are absent; the registry is the
   extension point.
-- **The Claude policy has not been run against the live API.** See the disclosure above.
 - **The original ResNet-18 and MobileNetV3 search runs predate three fixes:** calibration on
   held-out images, the reduce_range retry, and the machine-state check. ResNet-18 has been
   re-run with all three (`examples/resnet18-cpu1t-v2/`); MobileNetV3 has not. The originals

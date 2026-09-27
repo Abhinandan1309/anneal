@@ -1,9 +1,9 @@
-"""The ledger: every trial the agent ran, and the Pareto frontier over them.
+"""The ledger: every trial the search ran, and the Pareto frontier over them.
 
 Two design choices worth stating.
 
 **Failures are recorded, not swallowed.** A transform that produced an unloadable graph
-is a trial with an error, and it stays in the ledger. It is signal for the agent (don't
+is a trial with an error, and it stays in the ledger. It is signal for the search (don't
 try that again) and it is signal for the reader (this tool does not hide its misses).
 
 **The answer is a frontier, not a winner.** "The best model" is not well defined across
@@ -118,7 +118,7 @@ class Ledger:
         return [t for t in self.trials if t.ok]
 
     def attempted_recipes(self) -> set[str]:
-        """Every lineage already tried, successful or not — the agent should not repeat."""
+        """Every lineage already tried, successful or not — the search should not repeat."""
         return {t.artifact.lineage_key for t in self.trials}
 
     def scored(self) -> list[Trial]:
