@@ -97,11 +97,15 @@ VARIANTS = {
     "tidl prequant qdq (per-channel)": ("qdq_pc", {**COMMON, "advanced_options:prequantized_model": 1}),
     "tidl prequant qdq (per-channel pow2)": ("qdq_pc_pow2", {**COMMON, "advanced_options:prequantized_model": 1}),
     "tidl prequant qdq (per-channel) + equalised": ("qdq_eq_pc", {**COMMON, "advanced_options:prequantized_model": 1}),
+    # ResNet-18 imports faithfully, MobileNetV2 (-2.4 in onnxruntime) comes out garbage: is it the
+    # Q/DQ we drop between a Conv and its Clip (ReLU6)? Keep them here.
+    "tidl prequant qdq (per-channel, act qdq kept)": ("qdq_pc_keep", {**COMMON, "advanced_options:prequantized_model": 1}),
 }
 
 #: which float model each pre-quantized variant quantizes, and how
 QDQ_BUILDS = {"qdq_pt": ("plain", False, False), "qdq_pc": ("plain", True, False),
-              "qdq_pc_pow2": ("plain", True, True), "qdq_eq_pc": ("equalised", True, False)}
+              "qdq_pc_pow2": ("plain", True, True), "qdq_eq_pc": ("equalised", True, False),
+              "qdq_pc_keep": ("plain", True, False, ["--keep-act-qdq"])}
 
 
 def session(model: Path, providers: list[str], options: dict | None):
@@ -243,10 +247,10 @@ def main() -> None:
             # TIDL's onnx/onnxruntime pair cannot import onnxruntime.quantization: build in a clean env
             qdq_python = os.environ.get("QDQ_PYTHON", sys.executable)
             for key in sorted(needed & set(QDQ_BUILDS)):
-                base, per_channel, pow2 = QDQ_BUILDS[key]
+                base, per_channel, pow2, *extra = QDQ_BUILDS[key]
                 models[key] = mdir / f"{name}-{key}.onnx"
                 cmd = [qdq_python, str(Path(__file__).with_name("build_qdq.py")), str(models[base]), str(models[key])]
-                cmd += ["--per-channel"] * per_channel + ["--pow2"] * pow2
+                cmd += ["--per-channel"] * per_channel + ["--pow2"] * pow2 + (extra[0] if extra else [])
                 env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}  # keep TIDL's packages out
                 subprocess.run(cmd, check=True, env=env)
                 q = onnx.load(str(models[key]))

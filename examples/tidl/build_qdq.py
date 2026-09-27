@@ -3,7 +3,7 @@
 Runs outside TIDL's Python environment (its onnx/onnxruntime pair cannot import
 onnxruntime.quantization), in a clean one: run_tidl.py calls it through $QDQ_PYTHON.
 
-    python build_qdq.py SRC DST [--per-channel] [--pow2] [--calib 64]
+    python build_qdq.py SRC DST [--per-channel] [--pow2] [--keep-act-qdq] [--calib 64]
 """
 
 from __future__ import annotations
@@ -59,6 +59,7 @@ def main() -> None:
     ap.add_argument("dst")
     ap.add_argument("--per-channel", action="store_true")
     ap.add_argument("--pow2", action="store_true")
+    ap.add_argument("--keep-act-qdq", action="store_true", help="keep the Q/DQ between a Conv and its activation")
     ap.add_argument("--calib", type=int, default=64)
     args = ap.parse_args()
     src, dst = Path(args.src), Path(args.dst)
@@ -74,7 +75,7 @@ def main() -> None:
     # TIDL's older onnx/onnxruntime read this file: keep the source model's IR version
     ir = onnx.load(str(src), load_external_data=False).ir_version
     q = onnx.load(str(dst))
-    fused = drop_qdq_before_fused_activation(q)
+    fused = 0 if args.keep_act_qdq else drop_qdq_before_fused_activation(q)
     q.ir_version = min(q.ir_version, ir)
     # TIDL's import needs every tensor's shape in the file ("Input/output shape unknown" on every
     # node of the quantizer's output made it fail)
