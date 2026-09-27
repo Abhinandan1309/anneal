@@ -29,9 +29,14 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "examples" / "tasks"))
 sys.path.insert(0, str(ROOT / "examples" / "tidl"))
 
-from run_tidl import COMMON, session  # noqa: E402
+from run_tidl import AL9, COMMON, session  # noqa: E402
 
 VARIANTS = {
+    "tidl 8-bit al9": ("plain", AL9),
+    "tidl 8-bit al9 no clip": ("plain", {**AL9, "advanced_options:weight_clipping": 0, "advanced_options:activation_clipping": 0}),
+    "tidl 8-bit al9 ch-wise": ("plain", {**AL9, "advanced_options:channel_wise_quantization": 1}),
+    "tidl 8-bit al9 ch-wise no clip": ("plain", {**AL9, "advanced_options:channel_wise_quantization": 1,
+                                                "advanced_options:weight_clipping": 0, "advanced_options:activation_clipping": 0}),
     "tidl 16-bit": ("plain", {**COMMON, "tensor_bits": 16}),
     "tidl 8-bit": ("plain", COMMON),
     "tidl 8-bit + equalised": ("equalised", COMMON),

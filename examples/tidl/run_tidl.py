@@ -44,7 +44,17 @@ COMMON = {"debug_level": 0, "tensor_bits": 8, "accuracy_level": 1,
           "advanced_options:weight_clipping": 1, "advanced_options:bias_calibration": 1,
           "advanced_options:channel_wise_quantization": 0, "advanced_options:add_data_convert_ops": 3,
           "advanced_options:inference_mode": 0, "advanced_options:num_cores": 1}
+# TIDL honours advanced_options (clipping, bias calibration, channel-wise weights) only at
+# accuracy_level 9; at level 1 (COMMON) it applies its own defaults and ignores them (LRASPP: five
+# option settings gave the identical -40.31 mIoU pts).
+AL9 = {**COMMON, "accuracy_level": 9}
 VARIANTS = {
+    "tidl 8-bit al9": ("plain", AL9),
+    "tidl 8-bit al9 no clip": ("plain", {**AL9, "advanced_options:weight_clipping": 0, "advanced_options:activation_clipping": 0}),
+    "tidl 8-bit al9 ch-wise": ("plain", {**AL9, "advanced_options:channel_wise_quantization": 1}),
+    "tidl 8-bit al9 ch-wise no clip": ("plain", {**AL9, "advanced_options:channel_wise_quantization": 1,
+                                                "advanced_options:weight_clipping": 0, "advanced_options:activation_clipping": 0}),
+    "tidl 8-bit al9 ch-wise + equalised (per-tensor grid)": ("equalised_pt_grid", {**AL9, "advanced_options:channel_wise_quantization": 1}),
     "tidl 8-bit": ("plain", COMMON),
     "tidl 8-bit + equalised": ("equalised", COMMON),
     "tidl 16-bit": ("plain", {**COMMON, "tensor_bits": 16}),
