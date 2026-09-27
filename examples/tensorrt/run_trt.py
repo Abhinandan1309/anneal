@@ -104,7 +104,7 @@ def build(onnx_path: Path, mode: str, calib_batches, work: Path, fp16: bool = Tr
         # INT8 only for convolutions and fully connected layers; every other layer (attention's
         # matmuls, divisions, reductions, gates) pinned to FP16, so TensorRT's tactic timing can no
         # longer pick INT8 for them (EfficientViT-B0: -0.1 / -8.9 / -25.4 / -70.3 across builds)
-        keep = {trt.LayerType.CONVOLUTION, trt.LayerType.FULLY_CONNECTED}
+        keep = {trt.LayerType.CONVOLUTION}  # TensorRT 10 has no FULLY_CONNECTED layer type
         for i in range(network.num_layers):
             layer = network.get_layer(i)
             if layer.type not in keep and layer.type not in (trt.LayerType.CONSTANT, trt.LayerType.SHUFFLE):
@@ -148,7 +148,7 @@ def run_engine(engine, xs: list[np.ndarray]) -> tuple[list[np.ndarray], float]:
     return ys, float(np.median(times[10:] if len(times) > 20 else times))
 
 
-def modelopt_qdq(src: Path, dst: Path, calib_batches) -> None:
+def modelopt_qdq(src: Path, dst: Path, calib_batches, exclude: list[str] | None = None) -> None:
     """ModelOpt's explicit INT8 QDQ. Calibrated on the CPU (its GPU calibration failed on Kaggle
     with onnxruntime's "CopyTensorAsync is not implemented"), and with the unquantized ops left in
     FP32: newer ModelOpt converts them to FP16 by default, which also retypes the model's input."""
@@ -160,7 +160,7 @@ def modelopt_qdq(src: Path, dst: Path, calib_batches) -> None:
     name = onnx.load(str(src)).graph.input[0].name
     kw = dict(onnx_path=str(src), quantize_mode="int8", calibration_data={name: np.concatenate(calib_batches)},
               calibration_method="entropy", output_path=str(dst), calibration_eps=["cpu"],
-              high_precision_dtype="fp32")
+              high_precision_dtype="fp32", nodes_to_exclude=exclude or None)
     accepted = inspect.signature(quantize).parameters
     dropped = [k for k in kw if k not in accepted]
     if dropped:
@@ -224,9 +224,11 @@ def main() -> None:
         shape = sample_shape(src)
         calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=1, limit=128, sample_shape=shape)
         calib_imgs = list(calib.calibration_batches(128))
-        models = {"plain": src, "eq": mdir / f"{name}-eq.onnx", "eq res": mdir / f"{name}-eq-res.onnx"}
+        models = {"plain": src, "eq": mdir / f"{name}-eq.onnx", "eq res": mdir / f"{name}-eq-res.onnx",
+                  "eq grid": mdir / f"{name}-eq-grid.onnx"}
         n_sites = {"eq": len(equalise(src, models["eq"], calib_imgs[:64]).sites),
-                   "eq res": len(equalise(src, models["eq res"], calib_imgs[:64], residual=True).sites)}
+                   "eq res": len(equalise(src, models["eq res"], calib_imgs[:64], residual=True).sites),
+                   "eq grid": len(equalise(src, models["eq grid"], calib_imgs[:64], grid_inverse=True).sites)}
         print(f"{name}: equalised sites {n_sites}", flush=True)
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)
         pairs = list(ev.batches())
@@ -247,13 +249,18 @@ def main() -> None:
             base = label.split(" #")[0].replace(" (no fp16)", "").replace(" (conv-only int8)", "")
             fp16 = "(no fp16)" not in label
             conv_only = "(conv-only int8)" in label
-            which = "eq res" if base.endswith("eq res") else "eq" if base.endswith("+ eq") else "plain"
+            gates_out = base.endswith(" (gates excluded)")
+            base = base.replace(" (gates excluded)", "")
+            which = ("eq res" if base.endswith("eq res") else "eq grid" if base.endswith("eq grid")
+                     else "eq" if base.endswith("+ eq") else "plain")
             t = time.time()
             try:
                 if label.startswith("modelopt"):
-                    qdq = mdir / f"{name}-{which.replace(' ', '-')}-qdq.onnx"
+                    qdq = mdir / f"{name}-{which.replace(' ', '-')}{'-nogates' if gates_out else ''}-qdq.onnx"
                     if not qdq.exists():
-                        modelopt_qdq(models[which], qdq, calib_imgs)
+                        # the gate-side Mul(x', 1/s) nodes (and their Sigmoid) left unquantized
+                        modelopt_qdq(models[which], qdq, calib_imgs,
+                                     exclude=[r"anneal_eq_gate_mul_.*"] if gates_out else None)
                     if f"{base} (ort cpu)" not in preds:
                         # the same QDQ model on onnxruntime's CPU: separates ModelOpt's calibration
                         # from TensorRT's build of it (the two should agree closely)
