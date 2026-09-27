@@ -1504,7 +1504,10 @@ REGISTRY: dict[str, TransformSpec] = {
                     "instead of an element-wise Mul. Same float function; on NPUs that fuse Conv + "
                     "activation (TI TIDL, AMD XINT8) the imbalanced x'/s is then never quantized per "
                     "tensor, which alone cost EfficientNet-B1 ~37pp there. With sigmoid_surrogate the "
-                    "surrogate's per-term scale and shift fold into copies of that conv."
+                    "surrogate's per-term scale and shift fold into copies of that conv. Unproven: AMD "
+                    "Quark's XINT8 output quantizes every such conv's output (195/195 HardSigmoids read "
+                    "an 8-bit input), and B1 did not improve (-54.2 vs -50.1pp); whether a device "
+                    "compiler fuses the pair is untested."
                 ),
             },
             "float_mixed_outputs": {
