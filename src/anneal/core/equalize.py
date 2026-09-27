@@ -590,6 +590,22 @@ def _mixed_scales(
     return (np.sign(s) * np.abs(s) ** alpha * cle ** beta).astype(np.float32)
 
 
+def _bounded_spread(s_mixed: np.ndarray, s_act: np.ndarray) -> np.ndarray:
+    """Limit the mixed scales' spread (max/min |s|) to the activation scales' own spread.
+
+    The weight term sqrt(w_b / w_a) goes extreme where a weight row is nearly dead: at LRASPP's
+    stem residual site the mixed scales spanned 4.8e-5..6.5 (activation scales: 1..14), shrinking
+    channels below one 8-bit step of their per-tensor weight scale (79% pixel agreement with FP32;
+    99% with activation scales). Bounded, the mix can rebalance weights but never shrink a channel
+    further than activation balance asked. Any s keeps the rewrite exact.
+    """
+    a_act = np.abs(np.asarray(s_act, np.float64))
+    spread = float(a_act.max() / max(a_act.min(), 1e-30))
+    a = np.abs(np.asarray(s_mixed, np.float64))
+    floor = a.max() / max(spread, 1.0)
+    return (np.sign(s_mixed) * np.maximum(a, floor)).astype(np.asarray(s_mixed).dtype)
+
+
 def _rank(
     sites: list[_Site],
     ranges: dict[str, tuple[np.ndarray, np.ndarray]],
@@ -747,14 +763,12 @@ def equalise(
 
         lo_y, hi_y = ranges[site.y]
         s = _site_scales(site, ranges, **scale_kw)
-        # No weight mix on a gated residual site: its scale also multiplies the other branch's
-        # producer, and the mixed scale zeroed 44% of LRASPP's stem channels under per-tensor
-        # weights (79% pixel agreement with FP32; pure activation scales: 99%).
-        if mix is not None and site.conv_p is None:
+        if mix is not None:
             # For a squeeze-excite site the weight balanced against A's is the projection's (z's first
             # consumer), along its input channels unless it is depthwise.
             b_axis = 0 if site.fc1 is None or _is_depthwise_weight(site.conv_b, inits) else 1
-            s = _mixed_scales(s, inits[site.conv_a.input[1]], inits[site.conv_b.input[1]], *mix, b_axis=b_axis)
+            s_mixed = _mixed_scales(s, inits[site.conv_a.input[1]], inits[site.conv_b.input[1]], *mix, b_axis=b_axis)
+            s = _bounded_spread(s_mixed, s)
         if pow2_align:
             s = (s * pow2_alignment_gain(*ranges[site.y], s)).astype(s.dtype)
         if grid_inverse and site.kind in ("gated", "gated-se"):  # 1/s is a quantized constant

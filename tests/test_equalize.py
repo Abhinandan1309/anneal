@@ -1259,13 +1259,21 @@ def test_grid_inverse_keeps_the_rewrite_exact(tmp_path: Path, activation: str):
             assert np.allclose(k, np.round(k), atol=1e-3)
 
 
-def test_residual_sites_take_pure_activation_scales_even_with_a_mix(tmp_path: Path):
-    """The weight mix is not applied to a gated residual site (it zeroed LRASPP's stem channels)."""
+def test_mixed_scales_never_spread_wider_than_the_activation_scales():
+    """The weight mix can go extreme on a nearly dead row; its spread is bounded (LRASPP's stem)."""
+    from anneal.core.equalize import _bounded_spread
+
+    s_act = np.array([1.0, 2.0, 14.0, 5.0])
+    s_mixed = np.array([6.5, -4.8e-5, 3.0, 1.0])
+    b = _bounded_spread(s_mixed, s_act)
+    assert np.all(np.sign(b) == np.sign(s_mixed))
+    assert np.abs(b).max() / np.abs(b).min() <= 14.0 + 1e-9
+    assert np.isclose(np.abs(b).max(), 6.5)
+
+
+def test_residual_sites_with_a_mix_stay_exact(tmp_path: Path):
     src = _residual_model(tmp_path / "m.onnx")
-    plain = equalise(src, tmp_path / "a.onnx", _batches(), residual=True)
     mixed = equalise(src, tmp_path / "b.onnx", _batches(), residual=True, mix=(0.5, 0.5))
-    a = [s for s in plain.sites if s.kind == "gated-residual"][0]
-    b = [s for s in mixed.sites if s.kind == "gated-residual"][0]
-    assert np.isclose(a.scale_median, b.scale_median)
+    assert any(s.kind == "gated-residual" for s in mixed.sites)
     x = _batches(1, seed=7)[0]
     assert np.allclose(_run(src, x), _run(tmp_path / "b.onnx", x), rtol=1e-4, atol=1e-4)
