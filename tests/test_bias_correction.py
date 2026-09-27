@@ -60,3 +60,35 @@ def test_per_channel_quantization_leaves_little_to_correct():
     assert per_c <= per_t
     pow2 = quantize_weights(w, False, pow2=True)
     assert np.abs(w - pow2).max() <= np.abs(w).max() / 127 * 2  # step at most doubles
+
+
+def test_measured_weights_from_a_qdq_model(tmp_path):
+    """Q(W) read from a QDQ model equals the tool's dequantized weight, and drives the correction."""
+    from onnxruntime.quantization import CalibrationDataReader, QuantFormat, QuantType, quantize_static
+
+    from anneal.core.bias_correction import weights_from_qdq
+
+    rng = np.random.default_rng(3)
+    w = (rng.standard_normal((8, 8, 3, 3)) * np.linspace(0.02, 2.0, 8).reshape(-1, 1, 1, 1)).astype(np.float32)
+    b = rng.standard_normal(8).astype(np.float32)
+    src = _model(tmp_path / "f.onnx", w, b)
+    m = onnx.load(str(src))
+    m.graph.node[0].name = "conv0"
+    onnx.save(m, str(src))
+    xs = [(rng.standard_normal((1, 8, 6, 6)) + 1.5).astype(np.float32) for _ in range(8)]
+
+    class R(CalibrationDataReader):
+        def __init__(self):
+            self.it = iter([{"x": x} for x in xs])
+
+        def get_next(self):
+            return next(self.it, None)
+
+    qdq = tmp_path / "q.onnx"
+    quantize_static(str(src), str(qdq), R(), quant_format=QuantFormat.QDQ, per_channel=False,
+                    weight_type=QuantType.QInt8, activation_type=QuantType.QInt8)
+    got = weights_from_qdq(qdq)
+    assert set(got) == {"conv0"}
+    assert np.allclose(got["conv0"], quantize_weights(w, False), atol=1e-6)
+    r = correct_biases(src, tmp_path / "bc.onnx", xs, quantized=got)
+    assert r.layers == ["conv0"]

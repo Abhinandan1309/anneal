@@ -108,7 +108,10 @@ VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xi
             # weights-only emulation B1 -17.3 -> -0.8
             "xint8 percentile cal + anneal pt-eq + bias corr + surrogate",
             "xint8 percentile cal + anneal pt-eq + bias corr + surrogate + a16 gates",
-            "xint8 percentile cal + anneal pt-eq + bias corr + surrogate + float gates"]
+            "xint8 percentile cal + anneal pt-eq + bias corr + surrogate + float gates",
+            # the formula's Q(W) was wrong for Quark (bias corr hurt): read Quark's own Q(W) instead
+            "xint8 percentile cal + anneal pt-eq + surrogate + bias corr (measured)",
+            "xint8 percentile cal + anneal pt-eq + surrogate + a16 gates + bias corr (measured)"]
 
 
 def hardsigmoid_copy(src: Path, dst: Path) -> None:
@@ -237,7 +240,21 @@ def main() -> None:
             dst = mdir / (label.replace(" ", "_").replace("+", "plus") + ".onnx")
             t = time.time()
             try:
-                if label == "fp32 hardsigmoid":
+                if "bias corr (measured)" in label:
+                    # two passes: quantize, read Quark's own Q(W), correct biases, quantize again
+                    from anneal.core.bias_correction import correct_biases, weights_from_qdq
+
+                    base_label = label.replace(" + bias corr (measured)", "")
+                    first = mdir / "bc-first-pass.onnx"
+                    ModelQuantizer(qconfig(base_label, gate_nodes(models["pt sur"]))).quantize_model(
+                        str(models["pt sur"]), str(first), Reader(inp, calib_imgs))
+                    qw = weights_from_qdq(first)
+                    corrected = mdir / "pt-sur-bc-measured.onnx"
+                    r = correct_biases(models["pt sur"], corrected, calib_imgs, quantized=qw)
+                    print(f"    measured Q(W) for {len(qw)} layers, corrected {len(r.layers)} biases", flush=True)
+                    ModelQuantizer(qconfig(base_label, gate_nodes(corrected))).quantize_model(
+                        str(corrected), str(dst), Reader(inp, calib_imgs))
+                elif label == "fp32 hardsigmoid":
                     hardsigmoid_copy(src, dst)
                 elif label == "fp32 surrogate":
                     shutil.copy(models["sur"], dst)

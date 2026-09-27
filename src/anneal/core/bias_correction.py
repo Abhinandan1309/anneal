@@ -15,7 +15,10 @@ vanish. The error is systematic, not noise, and it compounds through depth: on E
 under TIDL-like rules per-tensor weights alone cost ~17pp after equalisation. Per-channel weights
 make it negligible, so this is for per-tensor targets.
 
-Q must match the target's weight quantizer. Supported: symmetric int8 in [-127, 127], per tensor
+Q must match the target's weight quantizer, or be read from it: ``weights_from_qdq`` takes the
+dequantized weights out of a QDQ model the target's own tool produced (measured, not assumed;
+AMD Quark chooses its XINT8 weight scales by error minimisation, which a formula would miss).
+Otherwise Supported: symmetric int8 in [-127, 127], per tensor
 or per output channel, scales float or rounded up to a power of two (XINT8). The weights are not
 changed, so Q(W) after correction is the Q(W) the correction assumed: exact on average. The
 approximation is E[x] from float activations and zero padding ignored (border outputs see fewer
@@ -47,6 +50,52 @@ def quantize_weights(w: np.ndarray, per_channel: bool, pow2: bool = False) -> np
     if pow2:  # power-of-two scale covering the range
         scale = 2.0 ** np.ceil(np.log2(scale))
     return (np.clip(np.round(flat / scale), -127, 127) * scale).reshape(w.shape)
+
+
+def weights_from_qdq(qdq_path: Path) -> dict[str, np.ndarray]:
+    """Node name -> dequantized weight, for each Conv/Gemm in a QDQ model whose weight input is a
+    DequantizeLinear of an initializer (the tool's own Q(W))."""
+    import onnx
+    from onnx import numpy_helper
+
+    m = onnx.load(str(qdq_path))
+    g = m.graph
+    inits = {i.name: i for i in g.initializer}
+    prod = {o: n for n in g.node for o in n.output}
+    out = {}
+    for n in g.node:
+        if n.op_type not in ("Conv", "Gemm") or len(n.input) < 2 or not n.name:
+            continue
+        dq = prod.get(n.input[1])
+        # DequantizeLinear, or a vendor's (Quark: VitisDequantizeLinear) with the same inputs
+        if dq is None or not dq.op_type.endswith("DequantizeLinear") or dq.input[1] not in inits:
+            continue
+        scale = numpy_helper.to_array(inits[dq.input[1]]).astype(np.float64)
+        zp_init = inits.get(dq.input[2]) if len(dq.input) > 2 else None
+        zp = numpy_helper.to_array(zp_init).astype(np.float64) if zp_init is not None else np.zeros_like(scale)
+        axis = next((a.i for a in dq.attribute if a.name == "axis"), 1)
+        if dq.input[0] in inits:  # weight stored quantized
+            q = numpy_helper.to_array(inits[dq.input[0]]).astype(np.float64)
+        else:  # weight stored float behind a QuantizeLinear: apply it
+            ql = prod.get(dq.input[0])
+            if ql is None or not ql.op_type.endswith("QuantizeLinear") or ql.input[0] not in inits:
+                continue
+            w = numpy_helper.to_array(inits[ql.input[0]]).astype(np.float64)
+            lo, hi = (-128, 127) if zp_init is None or zp_init.data_type == onnx.TensorProto.INT8 else (0, 255)
+            if zp_init is not None and zp_init.data_type in (onnx.TensorProto.INT16, onnx.TensorProto.UINT16):
+                lo, hi = (-32768, 32767) if zp_init.data_type == onnx.TensorProto.INT16 else (0, 65535)
+            s_b, z_b = scale, zp
+            if scale.ndim == 1 and scale.size > 1:
+                shape = [1] * w.ndim
+                shape[axis] = -1
+                s_b, z_b = scale.reshape(shape), zp.reshape(shape)
+            q = np.clip(np.round(w / s_b) + z_b, lo, hi)
+        if scale.ndim == 1 and scale.size > 1:
+            shape = [1] * q.ndim
+            shape[axis] = -1
+            scale, zp = scale.reshape(shape), zp.reshape(shape)
+        out[n.name] = (q - zp) * scale
+    return out
 
 
 def _layers(g) -> list[tuple[int, str]]:
@@ -92,8 +141,11 @@ def input_means(model_path: Path, batches: Iterable[np.ndarray], names: list[str
 
 
 def correct_biases(src: Path, dst: Path, batches: Iterable[np.ndarray], *, per_channel: bool = False,
-                   pow2: bool = False) -> BiasCorrectionResult:
+                   pow2: bool = False, quantized: dict[str, np.ndarray] | None = None) -> BiasCorrectionResult:
     """Write ``dst``: ``src`` with every Conv/Gemm bias shifted by E[(W - Q(W)) x].
+
+    ``quantized`` (node name -> Q(W), from ``weights_from_qdq``) replaces the formula; layers it
+    does not cover are left alone.
 
     Float outputs change by exactly that shift (the correction is for the quantized model).
     Weights that other nodes share are skipped.
@@ -109,13 +161,17 @@ def correct_biases(src: Path, dst: Path, batches: Iterable[np.ndarray], *, per_c
     for n in g.node:
         for i in n.input:
             uses[i] = uses.get(i, 0) + 1
-    layers = [(idx, kind) for idx, kind in _layers(g) if uses.get(g.node[idx].input[1], 0) == 1]
+    layers = [(idx, kind) for idx, kind in _layers(g) if uses.get(g.node[idx].input[1], 0) == 1
+              and (quantized is None or g.node[idx].name in quantized)]
     means = input_means(src, list(batches), sorted({g.node[idx].input[0] for idx, _ in layers}))
     result = BiasCorrectionResult()
     for idx, kind in layers:
         n = g.node[idx]
         w = numpy_helper.to_array(inits[n.input[1]]).astype(np.float64)
-        err = w - quantize_weights(w, per_channel, pow2)
+        qw = quantized[n.name] if quantized is not None else quantize_weights(w, per_channel, pow2)
+        if qw.shape != w.shape:
+            continue
+        err = w - qw
         mu = means[n.input[0]]
         if kind == "gemm":
             delta = err @ mu
