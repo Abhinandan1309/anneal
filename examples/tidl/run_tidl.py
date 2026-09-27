@@ -208,16 +208,17 @@ def main() -> None:
             onnx.shape_inference.infer_shapes_path(str(p), str(p))
         needed = {VARIANTS[v.strip()][0] for v in args.variants.split(",") if v.strip() in VARIANTS}
         if needed & set(QDQ_BUILDS):
-            from anneal.core.artifact import ModelArtifact
-            from anneal.core.transforms import TransformContext, apply_transform
+            import subprocess
 
-            qctx = TransformContext(workdir=mdir / "qdq", calibset=calib)
+            # TIDL's onnx/onnxruntime pair cannot import onnxruntime.quantization: build in a clean env
+            qdq_python = os.environ.get("QDQ_PYTHON", sys.executable)
             for key in sorted(needed & set(QDQ_BUILDS)):
                 base, per_channel, pow2 = QDQ_BUILDS[key]
-                params = {"per_channel": per_channel, "activation_type": "int8", "activation_symmetric": True,
-                          "pow2_activation_scales": pow2, "calibrate_method": "minmax", "calib_samples": 64,
-                          "float_mixed_outputs": False}
-                models[key] = apply_transform("quantize_static_int8", params, ModelArtifact(path=models[base]), qctx).path
+                models[key] = mdir / f"{name}-{key}.onnx"
+                cmd = [qdq_python, str(Path(__file__).with_name("build_qdq.py")), str(models[base]), str(models[key])]
+                cmd += ["--per-channel"] * per_channel + ["--pow2"] * pow2
+                env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}  # keep TIDL's packages out
+                subprocess.run(cmd, check=True, env=env)
                 q = onnx.load(str(models[key]))
                 print(f"  {name}: {key} from {base}: {sum(n.op_type == 'QuantizeLinear' for n in q.graph.node)} Q, "
                       f"{sum(n.op_type == 'DequantizeLinear' for n in q.graph.node)} DQ, opset "

@@ -40,6 +40,11 @@ jobs:
           python -m pip install --no-deps -e .
           python -m pip install onnx numpy pillow rich
           python -c "import onnxruntime as o; print(o.__version__, o.get_available_providers())"
+      - name: Clean env for QDQ builds (TIDL's onnx cannot import onnxruntime.quantization)
+        run: |
+          python -m venv /tmp/qdqenv
+          /tmp/qdqenv/bin/python -m pip install -q -e .
+          echo "QDQ_PYTHON=/tmp/qdqenv/bin/python" >> "$GITHUB_ENV"
       - uses: actions/cache@v4
         with:
           path: ~/.anneal_cache
