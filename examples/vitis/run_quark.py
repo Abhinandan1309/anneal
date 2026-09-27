@@ -214,6 +214,19 @@ def main() -> None:
                 else:
                     ModelQuantizer(qconfig(label)).quantize_model(str(models[which]), str(dst), Reader(inp, calib_imgs))
                 timing[label] = {"quantize_s": time.time() - t}
+                if "gate-conv" in label:  # does Quark leave the gate conv's output unquantized (fused)?
+                    import onnx as _onnx
+
+                    qm = _onnx.load(str(dst))
+                    prod = {o: n for n in qm.graph.node for o in n.output}
+                    between, total = 0, 0
+                    for n in qm.graph.node:
+                        if n.op_type == "HardSigmoid":
+                            total += 1
+                            src_node = prod.get(n.input[0])
+                            if src_node is not None and src_node.op_type == "DequantizeLinear":
+                                between += 1
+                    print(f"    fusion check: {between}/{total} HardSigmoids read a dequantized (8-bit) input", flush=True)
                 preds[label] = predict(dst, label)
             except Exception as exc:  # a variant the toolchain cannot quantize is a result too
                 rows[label] = {"error": f"{type(exc).__name__}: {exc}"[:500]}
