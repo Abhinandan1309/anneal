@@ -89,7 +89,19 @@ VARIANTS = {
     # Anneal's all-8-bit fixes first, then TIDL's own mixed-precision search on what remains
     "tidl auto mixed + equalised (per-tensor)": ("equalised_pt", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
     "tidl auto mixed + cle (max scale 4)": ("cle4", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
+    # Pre-quantized import (docs/quantization.md, "Pre-quantized Models"): TIDL takes an ONNX QDQ
+    # model's own scales instead of calibrating. Its QDQ layer table lists per-channel symmetric
+    # weights for convolutions, which its own PTQ on TDA4VM does not give (ch-wise: 0% at al9).
+    # TDA4VM needs symmetric activations. Scales from Anneal's quantizer (onnxruntime, min-max).
+    "tidl prequant qdq (per-tensor)": ("qdq_pt", {**COMMON, "advanced_options:prequantized_model": 1}),
+    "tidl prequant qdq (per-channel)": ("qdq_pc", {**COMMON, "advanced_options:prequantized_model": 1}),
+    "tidl prequant qdq (per-channel pow2)": ("qdq_pc_pow2", {**COMMON, "advanced_options:prequantized_model": 1}),
+    "tidl prequant qdq (per-channel) + equalised": ("qdq_eq_pc", {**COMMON, "advanced_options:prequantized_model": 1}),
 }
+
+#: which float model each pre-quantized variant quantizes, and how
+QDQ_BUILDS = {"qdq_pt": ("plain", False, False), "qdq_pc": ("plain", True, False),
+              "qdq_pc_pow2": ("plain", True, True), "qdq_eq_pc": ("equalised", True, False)}
 
 
 def session(model: Path, providers: list[str], options: dict | None):
@@ -194,6 +206,22 @@ def main() -> None:
                   "cle": cle_path, "cle16": cle16, "cle4": cle4, "cle_t05": cle_t05}
         for p in models.values():
             onnx.shape_inference.infer_shapes_path(str(p), str(p))
+        needed = {VARIANTS[v.strip()][0] for v in args.variants.split(",") if v.strip() in VARIANTS}
+        if needed & set(QDQ_BUILDS):
+            from anneal.core.artifact import ModelArtifact
+            from anneal.core.transforms import TransformContext, apply_transform
+
+            qctx = TransformContext(workdir=mdir / "qdq", calibset=calib)
+            for key in sorted(needed & set(QDQ_BUILDS)):
+                base, per_channel, pow2 = QDQ_BUILDS[key]
+                params = {"per_channel": per_channel, "activation_type": "int8", "activation_symmetric": True,
+                          "pow2_activation_scales": pow2, "calibrate_method": "minmax", "calib_samples": 64,
+                          "float_mixed_outputs": False}
+                models[key] = apply_transform("quantize_static_int8", params, ModelArtifact(path=models[base]), qctx).path
+                q = onnx.load(str(models[key]))
+                print(f"  {name}: {key} from {base}: {sum(n.op_type == 'QuantizeLinear' for n in q.graph.node)} Q, "
+                      f"{sum(n.op_type == 'DequantizeLinear' for n in q.graph.node)} DQ, opset "
+                      f"{[o.version for o in q.opset_import if o.domain in ('', 'ai.onnx')]}", flush=True)
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)
         xs, ys = zip(*[(x, int(y[0])) for x, y in ev.batches()])
         ys = np.array(ys)
@@ -212,6 +240,8 @@ def main() -> None:
 
         preds = {"fp32": predict(session(src, ["CPUExecutionProvider"], None))}
         rows, timing, rankings = {}, {}, {}
+        for key in sorted(needed & set(QDQ_BUILDS)):  # the same QDQ model in onnxruntime: does TIDL follow it?
+            preds[f"onnxruntime {key}"] = predict(session(models[key], ["CPUExecutionProvider"], None), key)
         wanted = [v.strip() for v in args.variants.split(",") if v.strip()]
         unknown = [v for v in wanted if v not in VARIANTS]
         if unknown:  # fail before minutes of export and compilation, not after

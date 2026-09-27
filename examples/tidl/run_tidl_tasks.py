@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import os
+import re
 import shutil
 import sys
 import time
@@ -95,7 +95,6 @@ def select_16bit(model_path: Path, rules: list[str]) -> list[str]:
     every Add; ``re:<regex>``: every Conv/Add/Mul output whose name matches.
     """
     import onnx
-
     from run_tidl import FUSED, fused_end
 
     g = onnx.load(str(model_path)).graph
