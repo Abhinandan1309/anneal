@@ -78,6 +78,35 @@ class UNetFidelity:
         return outputs[0][0].argmax(0) == 1
 
 
+def trace_layers(label: str, model_path, art, task, api, img_id: int, inp: str) -> None:
+    """Run one image with TIDL's layer traces on and keep everything needed to diff it offline."""
+    import glob
+    import os
+
+    out = Path("tidl-traces") / re.sub(r"[^A-Za-z0-9]+", "_", label.replace("+", "plus")).strip("_")
+    out.mkdir(parents=True, exist_ok=True)
+    roots = ["/tmp", os.getcwd(), str(art)]
+    before = {f for r in roots for f in glob.glob(os.path.join(r, "**", "*"), recursive=True)}
+    x, _ = task.preprocess(api, img_id)
+    np.save(out / "input.npy", x)
+    shutil.copy(model_path, out / "model_float.onnx")
+    s = session(model_path, ["TIDLExecutionProvider", "CPUExecutionProvider"],
+                {"artifacts_folder": str(art), "debug_level": 3})
+    y = s.run(None, {inp: x})
+    np.save(out / "tidl_output.npy", y[0])
+    del s
+    new = [f for r in roots for f in glob.glob(os.path.join(r, "**", "*"), recursive=True)
+           if f not in before and os.path.isfile(f) and "tidl-traces" not in f]
+    keep = [f for f in new if "trace" in os.path.basename(f).lower() or f.endswith((".y", ".bin"))]
+    for f in keep[:4000]:
+        shutil.copy(f, out / os.path.basename(f))
+    for f in glob.glob(os.path.join(str(art), "**", "*"), recursive=True):
+        if os.path.isfile(f) and (f.endswith(".txt") or "layer_info" in f or f.endswith(".svg")):
+            shutil.copy(f, out / ("art_" + os.path.basename(f)))
+    print(f"  {label}: traced {len(keep)} files ({len(new)} new in total) -> {out}", flush=True)
+    print("    examples:", [os.path.basename(f) for f in keep[:6]], flush=True)
+
+
 def main() -> None:
     import onnx
     import run_tasks as rt
@@ -92,6 +121,9 @@ def main() -> None:
     ap.add_argument("--calib-images", type=int, default=16)
     ap.add_argument("--variants", default=",".join(VARIANTS))
     ap.add_argument("--out", required=True)
+    ap.add_argument("--trace", action="store_true",
+                    help="also run one image with TIDL layer traces (debug_level 3) and keep them, the "
+                         "layer info, the float model and the input under tidl-traces/ for a per-layer diff")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
     tools = os.environ.get("TIDL_TOOLS_PATH")
@@ -180,6 +212,8 @@ def main() -> None:
                                       {"artifacts_folder": str(art), "debug_level": 0})
             timing[label] = {"compile_s": time.time() - t}
             print(f"  {label}: compiled ({timing[label]['compile_s']:.0f}s)", flush=True)
+            if args.trace:
+                trace_layers(label, models[which], art, task, api, ids[0], inp)
         except Exception as exc:  # a variant the toolchain cannot compile is a result too
             rows[label] = {"error": f"{type(exc).__name__}: {exc}"[:500]}
             print(f"  {label}: FAILED {rows[label]['error']}", flush=True)

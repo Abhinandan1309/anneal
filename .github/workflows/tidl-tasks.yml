@@ -14,6 +14,9 @@ on:
       variants:
         description: "comma-separated variant labels (see examples/tidl/run_tidl_tasks.py)"
         default: "tidl 16-bit,tidl 8-bit,tidl 8-bit + equalised"
+      trace:
+        description: "keep TIDL layer traces of one image (per-layer diff)"
+        default: "false"
 
 jobs:
   tidl:
@@ -51,9 +54,11 @@ jobs:
         run: |
           source edgeai-tidl-tools/scripts/setup/setup_env.sh J721E
           python examples/tidl/run_tidl_tasks.py --model "${{ inputs.model }}" --images "${{ inputs.images }}" \
-            --variants "${{ inputs.variants }}" --out tidl-tasks-result.json
+            --variants "${{ inputs.variants }}" --out tidl-tasks-result.json             ${{ inputs.trace == 'true' && '--trace' || '' }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: tidl-tasks-result
-          path: tidl-tasks-result.json
+          path: |
+            tidl-tasks-result.json
+            tidl-traces/
