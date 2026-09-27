@@ -102,7 +102,11 @@ VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xi
             "xint8 percentile cal + anneal pt-eq gate-conv + surrogate",
             # EfficientNet-B1 loses ~37pp in the gate branches (emulation): keep only those ops wider
             "xint8 percentile cal + anneal pt-eq + surrogate + float gates",
-            "xint8 percentile cal + anneal pt-eq + surrogate + a16 gates"]
+            "xint8 percentile cal + anneal pt-eq + surrogate + a16 gates",
+            # analytic bias correction for XINT8's per-tensor pow2 weights (anneal.core.bias_correction):
+            # weights-only emulation B1 -17.3 -> -0.8
+            "xint8 percentile cal + anneal pt-eq + bias corr + surrogate",
+            "xint8 percentile cal + anneal pt-eq + bias corr + surrogate + a16 gates"]
 
 
 def hardsigmoid_copy(src: Path, dst: Path) -> None:
@@ -193,13 +197,18 @@ def main() -> None:
         cross_layer_equalise(pt, pt, max_scale=4.0)
         pt_sur = mdir / f"{name}-pt-equalised-surrogate.onnx"
         replace_sigmoids(pt, pt_sur, calib_imgs, k_terms=3)
+        from anneal.core.bias_correction import correct_biases
+
+        pt_bc_sur = mdir / f"{name}-pt-equalised-bc-surrogate.onnx"  # XINT8: per-tensor pow2 weights
+        correct_biases(pt, mdir / f"{name}-pt-equalised-bc.onnx", calib_imgs, per_channel=False, pow2=True)
+        replace_sigmoids(mdir / f"{name}-pt-equalised-bc.onnx", pt_bc_sur, calib_imgs, k_terms=3)
         pt_gc = mdir / f"{name}-pt-equalised-gate-conv.onnx"
         equalise(src, pt_gc, calib_imgs, residual=True, se=True, mix=(0.5, 0.5), gate_conv=True)
         cross_layer_equalise(pt_gc, pt_gc, max_scale=4.0)
         pt_gc_sur = mdir / f"{name}-pt-equalised-gate-conv-surrogate.onnx"
         replace_sigmoids(pt_gc, pt_gc_sur, calib_imgs, k_terms=3)
         models = {"plain": src, "eq": eq, "sur": sur, "eq sur": eq_sur, "pt": pt, "pt sur": pt_sur,
-                  "pt gc sur": pt_gc_sur}
+                  "pt gc sur": pt_gc_sur, "pt bc sur": pt_bc_sur}
 
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)  # batch 1: Quark may fix it
         batches = list(ev.batches())
@@ -219,7 +228,7 @@ def main() -> None:
         preds = {"fp32": predict(src, "fp32")}
         rows, timing = {}, {}
         for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
-            which = ("pt gc sur" if "gate-conv" in label
+            which = ("pt bc sur" if "bias corr" in label else "pt gc sur" if "gate-conv" in label
                      else "pt sur" if "pt-eq" in label and "surrogate" in label else "pt" if "pt-eq" in label
                      else "eq sur" if "anneal eq" in label and "surrogate" in label else "eq" if "anneal eq" in label
                      else "sur" if "surrogate" in label else "plain")

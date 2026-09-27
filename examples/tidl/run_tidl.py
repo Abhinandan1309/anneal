@@ -56,6 +56,9 @@ VARIANTS = {
     # per-tensor-weight aware (TIDL quantizes weights per tensor): squeeze-excite and residual sites,
     # activation/weight mix t=0.5, then ReLU cross-layer equalisation
     "tidl 8-bit + equalised (per-tensor)": ("equalised_pt", COMMON),
+    # + Anneal's analytic bias correction for per-tensor weights (anneal.core.bias_correction); TIDL
+    # runs its own iterative bias calibration too, so this measures whether ours adds anything
+    "tidl 8-bit + equalised (per-tensor) + bias corr": ("equalised_pt_bc", COMMON),
     # ReLU/ReLU6 cross-layer equalisation (anneal.core.cle), full and with scales capped at 16x,
     # since uncapped CLE can widen per-tensor activation ranges ~650x on MobileNetV2
     "tidl 8-bit + cle": ("cle", COMMON),
@@ -159,7 +162,12 @@ def main() -> None:
         cross_layer_equalise(src, cle4, max_scale=4.0)
         cle_t05 = mdir / f"{name}-cle-t05.onnx"
         cross_layer_equalise(src, cle_t05, batches=calib_imgs, t=0.5)
+        from anneal.core.bias_correction import correct_biases
+
+        eq_pt_bc = mdir / f"{name}-equalised-per-tensor-bc.onnx"  # per-tensor int8 weights, as TIDL
+        correct_biases(eq_pt, eq_pt_bc, calib_imgs, per_channel=False)
         models = {"plain": src, "equalised": eq, "equalised_res": eq_res, "equalised_pt": eq_pt,
+                  "equalised_pt_bc": eq_pt_bc,
                   "cle": cle_path, "cle16": cle16, "cle4": cle4, "cle_t05": cle_t05}
         for p in models.values():
             onnx.shape_inference.infer_shapes_path(str(p), str(p))
