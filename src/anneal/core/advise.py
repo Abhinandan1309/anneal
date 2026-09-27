@@ -440,7 +440,8 @@ def _advise_target(prof: ModelProfile, int8_path: str, target: str) -> Advice:
                 "bias correction): EfficientNet-B0 -75.1 -> -0.9pp, B1 -75.8 -> -3.1, B2 -79.6 -> -0.8, "
                 "B3 -80.8 -> -0.5, EfficientNetV2-S -80.6 -> -1.1, MobileNetV3-Small -64.7 -> -1.7, "
                 "MobileNetV3-Large -44.8 -> -1.7, LCNet -67.0 -> -2.9, MobileViT-S -76.7 -> -0.9: best "
-                "or within ~1pp of the best variant on 9 of 10 models.")
+                "or within ~1pp of the best variant on 9 of 10 models. FBNetV3-B (stem feeding chained "
+                "residual Adds, dead stem channels) -74.6 -> -2.3 once both were handled.")
             evidence.append("AMD's Sigmoid -> HardSigmoid swap in float: EfficientNet-B0 -48.8pp, "
                             "B1 -75.7pp; with sigmoid_surrogate 3: +0.2pp / -0.5pp.")
             evidence.append("AMD Quark XINT8 (Imagenette 1,000): EfficientNet-B0 -75.1pp -> -3.5pp with "
