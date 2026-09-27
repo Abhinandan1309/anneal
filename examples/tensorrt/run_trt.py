@@ -205,6 +205,19 @@ ANNEAL_TRT = {"calib_samples": 64, "calib_percentile": 99.99, "calibrate_method"
               "quantize_ops": "conv", "equalize": True, "equalize_residual": True, "equalize_dense": True}
 
 
+def build_anneal_qdq(src: Path, qdq: Path, shape: tuple, wide: bool, workdir: Path) -> None:
+    """Anneal's quantization of ``src`` (batch 1), made TensorRT-buildable at ``qdq``."""
+    from anneal.core.artifact import ModelArtifact
+    from anneal.core.dataset import load_calibset
+    from anneal.core.transforms import TransformContext, apply_transform
+
+    cal = load_calibset("imagenette", cache_dir=CACHE, batch_size=1, limit=64, sample_shape=shape)
+    params = {**ANNEAL_TRT, **({"int16_top_k": 4} if wide else {})}
+    raw = apply_transform("quantize_static_int8", params, ModelArtifact(path=src),
+                          TransformContext(workdir=workdir, calibset=cal)).path
+    print(f"    anneal qdq: {trt_ready_qdq(Path(raw), qdq)}", flush=True)
+
+
 def trt_ready_qdq(src: Path, dst: Path) -> dict:
     """Make an onnxruntime QDQ model TensorRT-buildable: float biases (TensorRT has no int32
     DequantizeLinear) and no 16-bit Q/DQ (no int16 in TensorRT: those tensors stay float, FP16)."""
@@ -343,15 +356,17 @@ def main() -> None:
                     wide = " 4 float" in label
                     qdq = mdir / f"{name}-anneal-qdq{'-4float' if wide else ''}.onnx"
                     if not qdq.exists():
-                        from anneal.core.artifact import ModelArtifact
-                        from anneal.core.dataset import load_calibset as _lc
-                        from anneal.core.transforms import TransformContext, apply_transform
+                        # A fresh interpreter: ModelOpt patches onnxruntime's calibrators in-process, after
+                        # which onnxruntime's own calibration collects no histograms ("Histogram has not been
+                        # collected" on every model in Kaggle v10).
+                        import multiprocessing as mp
 
-                        cal = _lc("imagenette", cache_dir=CACHE, batch_size=1, limit=64, sample_shape=shape)  # the model is batch 1
-                        params = {**ANNEAL_TRT, **({"int16_top_k": 4} if wide else {})}
-                        raw = apply_transform("quantize_static_int8", params, ModelArtifact(path=src),
-                                              TransformContext(workdir=mdir / "anneal", calibset=cal)).path
-                        print(f"    anneal qdq: {trt_ready_qdq(Path(raw), qdq)}", flush=True)
+                        proc = mp.get_context("spawn").Process(target=build_anneal_qdq,
+                                                               args=(src, qdq, tuple(shape), wide, mdir / "anneal"))
+                        proc.start()
+                        proc.join()
+                        if proc.exitcode != 0 or not qdq.exists():
+                            raise RuntimeError(f"anneal qdq build failed (exit code {proc.exitcode})")
                     if f"{label} (ort cpu)" not in preds:
                         qs = ort.InferenceSession(str(qdq), providers=["CPUExecutionProvider"])
                         preds[f"{label} (ort cpu)"] = decode([qs.run(None, {qs.get_inputs()[0].name: x})[0] for x in xs])
