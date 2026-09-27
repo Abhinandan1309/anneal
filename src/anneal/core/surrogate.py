@@ -540,3 +540,48 @@ def _output_change(a: Path, b: Path, batch: np.ndarray) -> float:
         s = ort.InferenceSession(str(p), providers=["CPUExecutionProvider"])
         outs.append(s.run(None, {s.get_inputs()[0].name: batch}))
     return float(max(np.abs(x - y).max() for x, y in zip(*outs, strict=True)))
+
+
+#: Sigmoid is within 3.4e-4 of its asymptotes beyond +-8.
+SIGMOID_CLIP = 8.0
+
+
+def clip_gate_inputs(src: Path, dst: Path) -> int:
+    """Put a Clip right before every HardSigmoid (exact: it is flat outside its linear span) and
+    Sigmoid (within 3.4e-4 beyond +-8). Returns the number of gates clipped.
+
+    Calibration gives a gate's input the full observed range (often tens), so an 8-bit scale
+    spends most of its levels where the gate is flat. Quantizers fold a Clip into the range of
+    the tensor feeding it (onnxruntime's removable activations; DPU/NPU Conv+Clip fusion), so the
+    gate input gets all its levels inside the span the gate can see. Pairs with gate-conv, where
+    that tensor is the output of one fusable Conv.
+    """
+    import onnx
+    from onnx import helper, numpy_helper
+
+    m = onnx.load(str(src))
+    g = m.graph
+    taken = {n.name for n in g.node} | {o for n in g.node for o in n.output} | {i.name for i in g.initializer}
+    new = []
+    count = 0
+    for n in g.node:
+        if n.op_type == "HardSigmoid":
+            attrs = {a.name: a.f for a in n.attribute}
+            a, b = attrs.get("alpha", 0.2), attrs.get("beta", 0.5)
+            lo, hi = -b / a, (1.0 - b) / a
+        elif n.op_type == "Sigmoid":
+            lo, hi = -SIGMOID_CLIP, SIGMOID_CLIP
+        else:
+            continue
+        base = _unique(f"anneal_gclip_{count}", taken)
+        lo_n, hi_n, out = f"{base}_lo", f"{base}_hi", f"{base}_out"
+        taken |= {lo_n, hi_n, out}
+        g.initializer.extend([numpy_helper.from_array(np.array(lo, np.float32), lo_n),
+                              numpy_helper.from_array(np.array(hi, np.float32), hi_n)])
+        new.append((n, helper.make_node("Clip", [n.input[0], lo_n, hi_n], [out], name=base)))
+        n.input[0] = out
+        count += 1
+    for gate, clip in new:
+        g.node.insert(list(g.node).index(gate), clip)
+    onnx.save(m, str(dst))
+    return count

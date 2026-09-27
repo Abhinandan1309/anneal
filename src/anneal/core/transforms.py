@@ -971,6 +971,7 @@ def quantize_static_int8(
             **({"quantize_ops": quantize_ops} if quantize_ops != "default" else {}),
             **({"sigmoid_surrogate": surrogate_k} if surrogate_k else {}),
             **({"calib_percentile": percentile} if calib_method.startswith("percentile") and "calib_percentile" in params else {}),
+            **({"float_nodes": sorted(str(n) for n in params["float_nodes"])} if params.get("float_nodes") else {}),
         },
     )
     out = ctx.path_for(artifact, record)
@@ -1173,6 +1174,9 @@ def quantize_static_int8(
             base_exclude = base_exclude + [n for n in f["tail_nodes"] if n not in base_exclude]
         mixed_meta = {"mixed_range_outputs": [{k: v for k, v in f.items() if k != "tail_nodes"} | {
             "float_nodes": len(f["tail_nodes"])} for f in flagged]}
+    float_nodes = [str(n) for n in (params.get("float_nodes") or [])]
+    if float_nodes:  # diagnostic: named nodes stay float (bisecting where a model breaks)
+        base_exclude = base_exclude + [n for n in float_nodes if n not in base_exclude]
     run_quantizer(base_exclude)
     concat_meta: dict[str, Any] = {}
     if concat_shared:
@@ -1572,6 +1576,13 @@ REGISTRY: dict[str, TransformSpec] = {
                     "asymptotes, fitted per gate on its calibration inputs (x^2-weighted for SiLU). "
                     "AMD's plain swap costs EfficientNet-B0 48.8pp and B1 75.7pp top-1 in float; "
                     "3 terms: +0.2pp and -0.5pp vs FP32 (Imagenette 1000). Applied after equalisation; 0 = off."
+                ),
+            },
+            "float_nodes": {
+                "type": "array",
+                "description": (
+                    "Diagnostic: node names to keep in float, to bisect which part of a model "
+                    "breaks under a target's quantization rules. Not a deployment recipe."
                 ),
             },
             "float_gates": {

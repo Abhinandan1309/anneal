@@ -441,8 +441,13 @@ def _advise_target(prof: ModelProfile, int8_path: str, target: str) -> Advice:
                 "Deeper SiLU nets (EfficientNet-B1) stay far from FP32 at 8 bits: the gate branches "
                 "cost most of it. Keep the gate ops at 16 bits in Quark (specific_layer_config with "
                 "Int16Spec input/output tensors on the nodes named anneal_sur_* and "
-                "anneal_eq_gate_mul_*): B1 -50.1pp -> -33.9pp. Do not add a formula-based bias "
-                "correction on XINT8: its assumed weight rounding is not Quark's, and it cost 10pp.")
+                "anneal_eq_gate_mul_*): B1 -50.1pp -> -33.9pp.")
+            caveats.append(
+                "Then correct the biases for Quark's own weight rounding, in two passes: quantize, "
+                "read the weights back (anneal.core.bias_correction.weights_from_qdq), "
+                "correct_biases(..., quantized=those), quantize again. With 16-bit gates: B1 -33.9pp "
+                "-> -18.0pp, B0 -2.2 -> -1.5, MobileNetV3-Large -8.9 -> -3.3. Never the formula "
+                "version on XINT8: it assumes a rounding Quark does not use and cost B1 10pp.")
             confidence = "medium"
         rec = Candidate(label, params, why)
     elif prof.family == "cnn":
