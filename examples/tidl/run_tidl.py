@@ -151,6 +151,12 @@ def run_isolated(fn, timeout_s: float = float(os.environ.get("ANNEAL_TIDL_VARIAN
     recv, send = ctx.Pipe(duplex=False)
 
     def child() -> None:
+        # Cap the child's memory: TIDL's MobileViT import took the whole 16 GB runner down twice,
+        # with no output; over the cap it fails as this variant's error instead.
+        import resource
+
+        cap = int(float(os.environ.get("ANNEAL_TIDL_MEM_GB", "12")) * 2**30)
+        resource.setrlimit(resource.RLIMIT_AS, (cap, cap))
         try:
             send.send((fn(), None))
         except BaseException as exc:  # noqa: BLE001 - every failure is reported to the parent
