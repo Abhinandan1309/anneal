@@ -1,0 +1,48 @@
+{
+  "soc": "J721E (TDA4VM)",
+  "model": "yolov8n",
+  "n": 300,
+  "calibration_images": 16,
+  "equalised_sites": 0,
+  "equalised_dense_sites": 11,
+  "variants": {
+    "tidl 8-bit + concat eq": {
+      "metric": 0.38643575892474347,
+      "delta_pts": -3.321638126276749,
+      "ci95_pts": [
+        -2.9938341278244662,
+        -1.6189752787825473
+      ],
+      "compile_s": 525.582594871521
+    },
+    "tidl auto mixed + concat eq": {
+      "metric": 0.4058785099764515,
+      "delta_pts": -1.3773630211059484,
+      "ci95_pts": [
+        -2.488556138369386,
+        -0.6673680913290749
+      ],
+      "compile_s": 5280.823308706284
+    },
+    "tidl 8-bit + head concat on arm": {
+      "metric": 0.38650951756391,
+      "delta_pts": -3.3142622623600957,
+      "ci95_pts": [
+        -3.3161144032005123,
+        -1.77932581957866
+      ],
+      "compile_s": 523.7764482498169
+    },
+    "tidl auto mixed + head concat on arm": {
+      "metric": 0.40973366990575116,
+      "delta_pts": -0.9918470281759795,
+      "ci95_pts": [
+        -2.254036850869733,
+        0.1031779236411047
+      ],
+      "compile_s": 5217.874975681305
+    }
+  },
+  "metric": "COCO box mAP@[.5:.95]",
+  "fp32": 0.41965214018751096
+}

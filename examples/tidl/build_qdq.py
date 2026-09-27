@@ -75,8 +75,7 @@ def main() -> None:
     ir = onnx.load(str(src), load_external_data=False).ir_version
     q = onnx.load(str(dst))
     fused = drop_qdq_before_fused_activation(q)
-    if q.ir_version > ir:
-        q.ir_version = ir
+    q.ir_version = min(q.ir_version, ir)
     onnx.save(q, str(dst))
     print(f"removed {fused} Q/DQ pairs between a Conv and its fused activation", file=sys.stderr)
     print(f"built {dst} (ir {q.ir_version}, opset {[o.version for o in q.opset_import]})", file=sys.stderr)

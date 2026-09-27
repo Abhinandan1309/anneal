@@ -429,9 +429,18 @@ def _advise_target(prof: ModelProfile, int8_path: str, target: str) -> Advice:
                 label + ", no surrogate", dict(params),
                 "Without the HardSigmoid surrogate: what the float Sigmoid would give if the NPU kept it."))
             params["sigmoid_surrogate"] = 3
-            label += " + sigmoid surrogate"
+            params["equalize_residual"] = True
+            params["equalize_grid_inverse"] = True
+            label += " + residual sites + grid 1/s + sigmoid surrogate"
             why += (" Each Sigmoid becomes a fitted sum of 3 HardSigmoids, because AMD's NPU "
-                    "replaces Sigmoid by HardSigmoid.")
+                    "replaces Sigmoid by HardSigmoid. Gated residual sites are equalised too, and "
+                    "every gate-side 1/s lies on the int8 grid so XINT8 stores it exactly.")
+            evidence.append(
+                "AMD Quark XINT8 sweep (Imagenette 1,000, this recipe + gate ops at 16 bits + measured "
+                "bias correction): EfficientNet-B0 -75.1 -> -0.9pp, B1 -75.8 -> -3.1, B2 -79.6 -> -0.8, "
+                "B3 -80.8 -> -0.5, EfficientNetV2-S -80.6 -> -1.1, MobileNetV3-Small -64.7 -> -1.7, "
+                "MobileNetV3-Large -44.8 -> -1.7, LCNet -67.0 -> -2.9, MobileViT-S -76.7 -> -0.9: best "
+                "or within ~1pp of the best variant on 9 of 10 models.")
             evidence.append("AMD's Sigmoid -> HardSigmoid swap in float: EfficientNet-B0 -48.8pp, "
                             "B1 -75.7pp; with sigmoid_surrogate 3: +0.2pp / -0.5pp.")
             evidence.append("AMD Quark XINT8 (Imagenette 1,000): EfficientNet-B0 -75.1pp -> -3.5pp with "
@@ -450,8 +459,8 @@ def _advise_target(prof: ModelProfile, int8_path: str, target: str) -> Advice:
             caveats.append(
                 "Then correct the biases for Quark's own weight rounding, in two passes: quantize, "
                 "read the weights back (anneal.core.bias_correction.weights_from_qdq), "
-                "correct_biases(..., quantized=those), quantize again. With 16-bit gates: B1 -33.9pp "
-                "-> -18.0pp, B0 -2.2 -> -1.5, MobileNetV3-Large -8.9 -> -3.3. Never the formula "
+                "correct_biases(..., quantized=those), quantize again. It is essential: EfficientNet-B1 with "
+                "16-bit gates (gate-conv variant) -43.6pp without it, -3.5 with it. Never the formula "
                 "version on XINT8: it assumes a rounding Quark does not use and cost B1 10pp.")
             confidence = "medium"
         rec = Candidate(label, params, why)
