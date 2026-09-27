@@ -212,7 +212,10 @@ def test_gated_nets_get_per_tensor_equalisation_with_se_sites_and_capped_cle(tmp
     # AMD's NPU runs HardSigmoid only: SiLU nets get the surrogate there, not on TIDL.
     assert rec.get("sigmoid_surrogate") == (3 if target == "amd-xint8" else None)
     if target == "amd-xint8":
-        assert a.confidence == "low" and any("35.1pp" in c for c in a.caveats)
+        # percentile calibration: AMD's default MinMSE cost EfficientNet-B0 ~25pp on XINT8
+        assert rec["calibrate_method"] == "percentile"
+        assert a.confidence == "medium" and any("Percentile" in c for c in a.caveats)
+        assert any("-3.5pp" in e for e in a.evidence)
     json.dumps(a.to_dict())
 
 

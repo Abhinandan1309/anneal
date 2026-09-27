@@ -378,6 +378,10 @@ def _advise_target(prof: ModelProfile, int8_path: str, target: str) -> Advice:
     """Per-tensor weights, symmetric power-of-two feature maps: TIDL and AMD XINT8."""
     name = TARGET_NAMES[target]
     base = {"calib_samples": BASE["calib_samples"], "calibrate_method": "minmax", **ACCELERATOR_EMULATION}
+    if target == "amd-xint8":
+        # AMD's default power-of-two MinMSE calibration cost EfficientNet-B0 ~25pp on XINT8 (with
+        # per-tensor equalisation, exact sigmoid): -28.6pp, MinMax -24.2, Percentile -3.7.
+        base = {**base, "calibrate_method": "percentile", "calib_percentile": 99.999}
     control = Candidate(
         "8-bit control", dict(base),
         f"Control: {name}'s plain 8-bit quantization, per-tensor weights, no equalisation.",
@@ -419,11 +423,14 @@ def _advise_target(prof: ModelProfile, int8_path: str, target: str) -> Advice:
                     "replaces Sigmoid by HardSigmoid.")
             evidence.append("AMD's Sigmoid -> HardSigmoid swap in float: EfficientNet-B0 -48.8pp, "
                             "B1 -75.7pp; with sigmoid_surrogate 3: +0.2pp / -0.5pp.")
+            evidence.append("AMD Quark XINT8 (Imagenette 1,000): EfficientNet-B0 -75.1pp -> -3.5pp with "
+                            "percentile calibration + this recipe + sigmoid_surrogate 3; each part alone "
+                            "stays near -75pp. EfficientNet-B1 -75.7 -> -49.9pp (not solved).")
             caveats.append(
-                "AMD's NPU replaces Sigmoid by HardSigmoid, hence sigmoid_surrogate 3. Even with the "
-                "surrogate and equalisation, full XINT8 (power-of-two scales) still cost "
-                "EfficientNet-B0 35.1pp: no recipe here makes SiLU nets accurate on XINT8 yet.")
-            confidence = "low"
+                "AMD's NPU replaces Sigmoid by HardSigmoid, hence sigmoid_surrogate 3. In Quark, "
+                "calibrate activations with CalibMethod.Percentile: its default MinMSE cost "
+                "EfficientNet-B0 ~25pp. Deeper SiLU nets (EfficientNet-B1) remain far from FP32.")
+            confidence = "medium"
         rec = Candidate(label, params, why)
     elif prof.family == "cnn":
         rec = Candidate(
