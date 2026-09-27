@@ -836,6 +836,7 @@ def quantize_static_int8(
     equalize_dense = bool(params.get("equalize_dense", False))
     equalize_residual = bool(params.get("equalize_residual", False))
     equalize_se = bool(params.get("equalize_se", False))
+    equalize_gate_conv = bool(params.get("equalize_gate_conv", False))
     slack = float(params.get("equalize_slack", EQUALIZE_SLACK))
     top_k = params.get("equalize_top_k")
     min_gain = params.get("equalize_min_gain")
@@ -882,6 +883,8 @@ def quantize_static_int8(
         raise TransformError("equalize_residual only applies together with equalize")
     if equalize_se and not equalize:
         raise TransformError("equalize_se only applies together with equalize")
+    if equalize_gate_conv and not equalize:
+        raise TransformError("equalize_gate_conv only applies together with equalize")
     if float_gates and not (equalize or equalize_dense):
         raise TransformError("float_gates only applies together with equalize or equalize_dense")
     if equalize_dense and not per_channel:
@@ -945,6 +948,7 @@ def quantize_static_int8(
             **({"equalize_top_k": top_k} if top_k is not None else {}),
             **({"equalize_residual": True} if equalize_residual else {}),
             **({"equalize_se": True} if equalize_se else {}),
+            **({"equalize_gate_conv": True} if equalize_gate_conv else {}),
             **({"equalize_min_gain": min_gain} if min_gain is not None else {}),
             **({"equalize_min_damage": min_damage} if min_damage is not None else {}),
             # Recorded only when set (always for per-tensor equalisation, whose default is 0.5),
@@ -1022,6 +1026,7 @@ def quantize_static_int8(
             residual=equalize_residual,
             se=equalize_se,
             mix=None if eq_mix is None else (1.0 - eq_mix, eq_mix),
+            gate_conv=equalize_gate_conv,
         )
         src = eq_path
         if float_gates:
@@ -1064,6 +1069,8 @@ def quantize_static_int8(
         if base_exclude:
             # float_gates named the Sigmoid nodes it keeps in float; keep their replacements.
             replaced = {g["node"]: g["nodes"] for g in report["per_gate"] if g["node"]}
+            # A gate conv folded into the surrogate's terms is gone; its copies are among "nodes".
+            replaced.update({g["folded"]: [] for g in report["per_gate"] if g.get("folded")})
             base_exclude = [n for old in base_exclude for n in replaced.get(old, [old])]
         eq_meta["sigmoid_surrogate"] = {k: v for k, v in report.items() if k != "per_gate"}
         eq_meta["sigmoid_surrogate_gates"] = [
@@ -1488,6 +1495,16 @@ REGISTRY: dict[str, TransformSpec] = {
                     "squeeze-excite block (EfficientNet's and MobileNetV3's depthwise conv -> "
                     "SiLU/Hardswish/ReLU -> SE -> projection). The depthwise conv's output channels take the scale; the "
                     "SE's first FC and the projection divide it out of their input channels."
+                ),
+            },
+            "equalize_gate_conv": {
+                "type": "boolean",
+                "description": (
+                    "With equalize: feed each gate x'/s through a depthwise 1x1 Conv (weight 1/s) "
+                    "instead of an element-wise Mul. Same float function; on NPUs that fuse Conv + "
+                    "activation (TI TIDL, AMD XINT8) the imbalanced x'/s is then never quantized per "
+                    "tensor, which alone cost EfficientNet-B1 ~37pp there. With sigmoid_surrogate the "
+                    "surrogate's per-term scale and shift fold into copies of that conv."
                 ),
             },
             "float_mixed_outputs": {

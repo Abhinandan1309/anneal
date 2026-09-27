@@ -21,6 +21,12 @@ calibration images. A SiLU gate (a Sigmoid whose output multiplies its own input
 error itself, unweighted. Measured in float on Imagenette against FP32 (examples/vitis/
 surrogate_float.py): K=3 recovers EfficientNet-B0 to +0.2pp and EfficientNet-B1 to -0.5pp (LM fit, Imagenette 1000),
 from AMD's -48.8pp and -75.7pp.
+
+Folding into a gate conv. When the Sigmoid's input comes from a depthwise 1x1 Conv used by
+nothing else (equalisation's ``gate_conv=True`` feeds each SiLU gate through one, weight 1/s),
+each term's k_i and b_i go into a copy of that conv (weight k_i * W, bias k_i * B + b_i), so every
+term is ``Conv -> HardSigmoid``, which an NPU can fuse: no separately quantized ``k_i x + b_i`` and
+no quantized imbalanced x in between.
 """
 
 from __future__ import annotations
@@ -68,18 +74,55 @@ class Gate:
     output: str
     #: The output multiplies the gate's own input (possibly rescaled by a constant): a SiLU.
     silu: bool
+    #: Index in graph.node of a depthwise 1x1 Conv whose output is only this gate's input; the
+    #: surrogate's per-term scale and shift are folded into copies of it.
+    conv: int | None = None
 
 
-def _scaled_sources(tensor: str, producer: dict[str, Any], consts: set[str]) -> set[str]:
-    """``tensor`` and the tensors it is a constant multiple of (through Mul/Div by constants).
+def _pointwise_depthwise(nd, inits: dict[str, Any]) -> bool:
+    """A Conv computing ``W_c * x_c + B_c`` per channel: constant weights (C, 1, 1, ...),
+    group C, no padding, stride or dilation, and a constant bias if any."""
+    from onnx import helper
 
-    Equalisation feeds a SiLU's gate ``x' * (1/s)`` while the Mul multiplies by ``x'``
-    (see :mod:`anneal.core.equalize`); that is still a SiLU, up to a per-channel scale.
+    if nd.op_type != "Conv" or len(nd.input) < 2 or nd.input[1] not in inits:
+        return False
+    if len(nd.input) > 2 and nd.input[2] and nd.input[2] not in inits:
+        return False
+    dims = list(inits[nd.input[1]].dims)
+    if len(dims) < 3 or any(d != 1 for d in dims[1:]):
+        return False
+    attrs = {a.name: helper.get_attribute_value(a) for a in nd.attribute}
+    if attrs.get("group", 1) != dims[0]:
+        return False
+    if attrs.get("auto_pad", b"NOTSET") not in (b"NOTSET", b"VALID", "NOTSET", "VALID"):
+        return False
+    return (all(v == 0 for v in attrs.get("pads", []))
+            and all(v == 1 for v in attrs.get("strides", []))
+            and all(v == 1 for v in attrs.get("dilations", [])))
+
+
+def _zero_bias(nd, inits: dict[str, Any]) -> bool:
+    from onnx import numpy_helper
+
+    return len(nd.input) < 3 or not nd.input[2] or not numpy_helper.to_array(inits[nd.input[2]]).any()
+
+
+def _scaled_sources(tensor: str, producer: dict[str, Any], consts: set[str],
+                    inits: dict[str, Any] | None = None) -> set[str]:
+    """``tensor`` and the tensors it is a constant multiple of (through Mul/Div by constants,
+    or a bias-free depthwise 1x1 Conv).
+
+    Equalisation feeds a SiLU's gate ``x' * (1/s)`` (or ``Conv1x1dw(x', 1/s)``) while the Mul
+    multiplies by ``x'`` (see :mod:`anneal.core.equalize`); that is still a SiLU, up to a
+    per-channel scale.
     """
+    inits = inits or {}
     out = {tensor}
     while tensor in producer:
         nd = producer[tensor]
-        if nd.op_type == "Mul" and len(nd.input) == 2:
+        if _pointwise_depthwise(nd, inits) and _zero_bias(nd, inits):
+            tensor = nd.input[0]
+        elif nd.op_type == "Mul" and len(nd.input) == 2:
             a, c = nd.input
             if c in consts:
                 tensor = a
@@ -105,7 +148,10 @@ def sigmoid_gates(model) -> list[Gate]:
     consts = {i.name for i in g.initializer} | {
         n.output[0] for n in g.node if n.op_type == "Constant"
     }
+    inits = {i.name: i for i in g.initializer}
     producer = {o: n for n in g.node for o in n.output}
+    index = {o: i for i, n in enumerate(g.node) for o in n.output}
+    graph_outputs = {o.name for o in g.output}
     consumers: dict[str, list[Any]] = {}
     for n in g.node:
         for i in n.input:
@@ -115,14 +161,17 @@ def sigmoid_gates(model) -> list[Gate]:
         if nd.op_type != "Sigmoid":
             continue
         x, y = nd.input[0], nd.output[0]
-        sources = _scaled_sources(x, producer, consts)
+        sources = _scaled_sources(x, producer, consts, inits)
         silu = False
         for c in consumers.get(y, []):
             if c.op_type == "Mul" and len(c.input) == 2:
                 other = c.input[1] if c.input[0] == y else c.input[0]
                 if other in sources:
                     silu = True
-        gates.append(Gate(nd.name, idx, x, y, silu))
+        conv = producer.get(x)
+        foldable = (conv is not None and _pointwise_depthwise(conv, inits) and x not in graph_outputs
+                    and len(consumers.get(x, [])) == 1)
+        gates.append(Gate(nd.name, idx, x, y, silu, index[x] if foldable else None))
     return gates
 
 
@@ -242,6 +291,8 @@ class SurrogateGate:
     samples: int
     #: Nodes that replaced the Sigmoid (to keep in float, like the gate they replace).
     nodes: list[str] = field(default_factory=list)
+    #: The depthwise 1x1 Conv folded into the terms (and removed), if any.
+    folded: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         def r(v):
@@ -368,7 +419,9 @@ def replace_sigmoids(
     Mul(w_i)``, the terms summed by a chain of Adds whose last output keeps the Sigmoid's output
     name, so nothing downstream changes. (For K=1, w=1 exactly and its Mul is left out.) The
     scale and shift are explicit Mul/Add rather than folded into HardSigmoid's alpha/beta,
-    because the DPU fixes alpha = 1/6 and beta = 1/2.
+    because the DPU fixes alpha = 1/6 and beta = 1/2. When the Sigmoid's input is the output of
+    a depthwise 1x1 Conv used by nothing else, they are folded into a copy of that conv per term
+    instead (``Conv(k_i W, k_i B + b_i) -> HardSigmoid -> Mul(w_i)``) and the conv is removed.
 
     Returns a report: per gate the fitted parameters, the fit loss and the max abs error on the
     samples, plus (``check``) the max abs output change on the first calibration batch.
@@ -388,6 +441,8 @@ def replace_sigmoids(
         i.name for i in g.initializer} | {i.name for i in g.input}
     fits: dict[tuple[str, bool], tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
     replacement: dict[int, list[Any]] = {}
+    inits = {i.name: i for i in g.initializer}
+    folded: list[int] = []
     for gi, gate in enumerate(gates):
         xs = samples[gate.input]
         key = (gate.input, gate.silu)
@@ -398,19 +453,38 @@ def replace_sigmoids(
         k, b = k.astype(np.float32), b.astype(np.float32)
         base = f"{PREFIX}{gi}"
         nodes, terms = [], []
+        conv = g.node[gate.conv] if gate.conv is not None else None
+        if conv is not None:
+            cw = numpy_helper.to_array(inits[conv.input[1]]).astype(np.float64)
+            cb = (numpy_helper.to_array(inits[conv.input[2]]).astype(np.float64)
+                  if len(conv.input) > 2 and conv.input[2] else np.zeros(cw.shape[0]))
+            folded.append(gate.conv)
         for j in range(len(w)):
             p = f"{base}_{j}"
             names = {nm: _unique(f"{p}_{nm}", taken) for nm in ("k", "b", "w", "kx", "u", "h", "t")}
-            g.initializer.extend([numpy_helper.from_array(np.array(k[j], np.float32), names["k"]),
-                                  numpy_helper.from_array(np.array(b[j], np.float32), names["b"])])
             last = len(w) == 1
             h_out = gate.output if last else names["h"]
-            nodes += [
-                helper.make_node("Mul", [gate.input, names["k"]], [names["kx"]], name=_unique(f"{p}_mul_k", taken)),
-                helper.make_node("Add", [names["kx"], names["b"]], [names["u"]], name=_unique(f"{p}_add_b", taken)),
-                helper.make_node("HardSigmoid", [names["u"]], [h_out], name=_unique(f"{p}_hardsigmoid", taken),
-                                 alpha=ALPHA, beta=BETA),
-            ]
+            if conv is not None:
+                # h(k (W x' + B) + b) = h((k W) x' + (k B + b)): one fusable Conv -> HardSigmoid.
+                g.initializer.extend([
+                    numpy_helper.from_array((float(k[j]) * cw).astype(np.float32), names["k"]),
+                    numpy_helper.from_array((float(k[j]) * cb + float(b[j])).astype(np.float32), names["b"]),
+                ])
+                cnode = helper.make_node("Conv", [conv.input[0], names["k"], names["b"]], [names["u"]],
+                                         name=_unique(f"{p}_conv", taken))
+                cnode.attribute.extend(conv.attribute)
+                nodes.append(cnode)
+            else:
+                g.initializer.extend([numpy_helper.from_array(np.array(k[j], np.float32), names["k"]),
+                                      numpy_helper.from_array(np.array(b[j], np.float32), names["b"])])
+                nodes += [
+                    helper.make_node("Mul", [gate.input, names["k"]], [names["kx"]],
+                                     name=_unique(f"{p}_mul_k", taken)),
+                    helper.make_node("Add", [names["kx"], names["b"]], [names["u"]],
+                                     name=_unique(f"{p}_add_b", taken)),
+                ]
+            nodes.append(helper.make_node("HardSigmoid", [names["u"]], [h_out],
+                                          name=_unique(f"{p}_hardsigmoid", taken), alpha=ALPHA, beta=BETA))
             if not last:
                 g.initializer.append(numpy_helper.from_array(np.array(w[j], np.float32), names["w"]))
                 nodes.append(helper.make_node("Mul", [names["h"], names["w"]], [names["t"]],
@@ -432,13 +506,24 @@ def replace_sigmoids(
             max_abs_silu_error=float(np.abs(xs64 * err).max()),
             x_min=ranges[gate.input][0], x_max=ranges[gate.input][1], samples=int(xs.size),
             nodes=[n.name for n in nodes],
+            folded=(conv.name or None) if conv is not None else None,
         ))
 
+    # A folded conv's only consumer was its Sigmoid: it goes, and so do its initializers if
+    # nothing else uses them.
+    dropped = {t for i in folded for t in g.node[i].input[1:] if t}
+    for i in folded:
+        replacement[i] = []
     new_nodes = []
     for i, nd in enumerate(g.node):
         new_nodes.extend(replacement.get(i, [nd]))
     del g.node[:]
     g.node.extend(new_nodes)
+    dropped -= {i for n in g.node for i in n.input}
+    if dropped:
+        keep = [t for t in g.initializer if t.name not in dropped]
+        del g.initializer[:]
+        g.initializer.extend(keep)
     onnx.checker.check_model(model)
     dst.parent.mkdir(parents=True, exist_ok=True)
     onnx.save(model, str(dst))

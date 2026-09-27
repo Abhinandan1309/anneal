@@ -1167,3 +1167,63 @@ def test_pow2_alignment_puts_the_peak_on_a_power_of_two_grid_and_stays_exact(tmp
     x = _batches(1, seed=7)[0]
     before, after = _run(src, x), _run(dst, x)
     assert np.abs(after - before).max() <= 1e-4 * max(1.0, np.abs(before).max())
+
+
+# ----- gate conv: the gate fed through a depthwise 1x1 Conv instead of a Mul ------
+
+
+@pytest.mark.parametrize("activation", ["silu", "hardswish", "hardswish_fused"])
+def test_gate_conv_is_exact_in_float_and_replaces_the_gate_mul(tmp_path: Path, activation: str):
+    from anneal.core.equalize import GATE_CONV_PREFIX
+
+    src = _model(tmp_path / "m.onnx", activation)
+    dst = tmp_path / "eq.onnx"
+    result = equalise(src, dst, _batches(), gate_conv=True)
+    assert len(result.sites) == 1
+    _assert_same(src, dst)
+    m = onnx.load(str(dst))
+    assert _gate_muls(dst) == []
+    [conv] = [n for n in m.graph.node if n.name.startswith(GATE_CONV_PREFIX)]
+    inits = {i.name: numpy_helper.to_array(i) for i in m.graph.initializer}
+    w = inits[conv.input[1]]
+    assert conv.op_type == "Conv" and w.shape == (C, 1, 1, 1) and not inits[conv.input[2]].any()
+    assert {a.name: helper.get_attribute_value(a) for a in conv.attribute}["group"] == C
+    # The gate reads the conv; the conv reads the balanced tensor x'.
+    gate = next(n for n in m.graph.node if n.input and n.input[0] == conv.output[0])
+    assert gate.op_type in ("Sigmoid", "HardSigmoid") and conv.input[0] == "x"
+    assert result.gate_nodes == [conv.name, gate.name]
+    # Same scales as the Mul form: the conv's weight is its 1/s.
+    plain = equalise(src, tmp_path / "mul.onnx", _batches())
+    mm = onnx.load(str(tmp_path / "mul.onnx"))
+    [mul] = [n for n in mm.graph.node if n.name.startswith(GATE_MUL_PREFIX)]
+    inv = {i.name: numpy_helper.to_array(i) for i in mm.graph.initializer}[mul.input[1]]
+    np.testing.assert_allclose(w.ravel(), inv.ravel(), rtol=1e-6)
+    assert plain.sites[0].scale_max == result.sites[0].scale_max
+
+
+@pytest.mark.parametrize("act2", ["silu", "hardswish_fused"])
+def test_gate_conv_composes_with_se_mix_and_pow2_align(tmp_path: Path, act2: str):
+    from anneal.core.equalize import GATE_CONV_PREFIX
+
+    src = _se_model(tmp_path / "m.onnx", act2)
+    dst = tmp_path / "eq.onnx"
+    result = equalise(src, dst, _batches(), se=True, mix=(0.5, 0.5), pow2_align=True, gate_conv=True)
+    assert sorted(s.kind for s in result.sites) == ["gated", "gated-se"]
+    assert len(result.gate_nodes) == 4
+    names = {n.name for n in onnx.load(str(dst)).graph.node}
+    assert set(result.gate_nodes) <= names
+    assert sum(n.startswith(GATE_CONV_PREFIX) for n in result.gate_nodes) == 2
+    assert _gate_muls(dst) == []
+    _assert_same(src, dst)
+
+
+def test_static_quantization_records_gate_conv(tmp_path: Path, calib):
+    src = _se_model(tmp_path / "m.onnx")
+    out = _static(tmp_path, calib, src, "gc", equalize=True, equalize_se=True, equalize_gate_conv=True,
+                  float_gates=True)
+    assert out.lineage[-1].params["equalize_gate_conv"] is True
+    assert out.meta["equalisation"]["max_abs_logit_change"] < 1e-3
+    plain = _static(tmp_path, calib, src, "plain", equalize=True)
+    assert "equalize_gate_conv" not in plain.lineage[-1].params
+    with pytest.raises(TransformError):
+        _static(tmp_path, calib, src, "bad", equalize_gate_conv=True)

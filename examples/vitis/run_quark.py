@@ -80,7 +80,10 @@ VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xi
             # residual sites, activation/weight mix t=0.5, ReLU CLE capped at 4x
             "xint8 + anneal pt-eq", "xint8 + anneal pt-eq + surrogate", "a8w8 + anneal pt-eq",
             # the deployable NPU path: percentile calibration (MinMSE cost EfficientNet-B0 ~25pp)
-            "xint8 percentile cal + anneal pt-eq + surrogate", "xint8 percentile cal + surrogate"]
+            "xint8 percentile cal + anneal pt-eq + surrogate", "xint8 percentile cal + surrogate",
+            # each gate fed x' through a depthwise 1x1 conv (weight 1/s) instead of Mul(x', 1/s), the
+            # surrogate folded into it: the NPU fuses Conv + HardSigmoid, never quantizing imbalanced x
+            "xint8 percentile cal + anneal pt-eq gate-conv + surrogate"]
 
 
 def hardsigmoid_copy(src: Path, dst: Path) -> None:
@@ -171,7 +174,13 @@ def main() -> None:
         cross_layer_equalise(pt, pt, max_scale=4.0)
         pt_sur = mdir / f"{name}-pt-equalised-surrogate.onnx"
         replace_sigmoids(pt, pt_sur, calib_imgs, k_terms=3)
-        models = {"plain": src, "eq": eq, "sur": sur, "eq sur": eq_sur, "pt": pt, "pt sur": pt_sur}
+        pt_gc = mdir / f"{name}-pt-equalised-gate-conv.onnx"
+        equalise(src, pt_gc, calib_imgs, residual=True, se=True, mix=(0.5, 0.5), gate_conv=True)
+        cross_layer_equalise(pt_gc, pt_gc, max_scale=4.0)
+        pt_gc_sur = mdir / f"{name}-pt-equalised-gate-conv-surrogate.onnx"
+        replace_sigmoids(pt_gc, pt_gc_sur, calib_imgs, k_terms=3)
+        models = {"plain": src, "eq": eq, "sur": sur, "eq sur": eq_sur, "pt": pt, "pt sur": pt_sur,
+                  "pt gc sur": pt_gc_sur}
 
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)  # batch 1: Quark may fix it
         batches = list(ev.batches())
@@ -191,7 +200,8 @@ def main() -> None:
         preds = {"fp32": predict(src, "fp32")}
         rows, timing = {}, {}
         for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
-            which = ("pt sur" if "pt-eq" in label and "surrogate" in label else "pt" if "pt-eq" in label
+            which = ("pt gc sur" if "gate-conv" in label
+                     else "pt sur" if "pt-eq" in label and "surrogate" in label else "pt" if "pt-eq" in label
                      else "eq sur" if "anneal eq" in label and "surrogate" in label else "eq" if "anneal eq" in label
                      else "sur" if "surrogate" in label else "plain")
             dst = mdir / (label.replace(" ", "_").replace("+", "plus") + ".onnx")

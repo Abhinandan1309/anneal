@@ -33,6 +33,15 @@ activations such as SiLU and Hardswish do not satisfy; HPTQ (Habi et al., 2021) 
 equalisation for Swish as a likely cause of EfficientNet's INT8 loss. The gate-side ``1/s``
 removes that requirement at the cost of one element-wise Mul per block.
 
+Gate conv (opt-in, ``gate_conv=True``). The Mul's output x'/s = x is the conv's *original*,
+channel-imbalanced tensor, and an accelerator that quantizes it per tensor (TI TIDL, AMD XINT8:
+symmetric power-of-two scales) loses the gate: on EfficientNet-B1 that alone costs ~37pp. The
+same 1/s can instead be a depthwise 1x1 Conv (weight 1/s per channel, bias 0) feeding the gate,
+``x' -> Conv1x1dw(1/s) -> gate``. The float function is identical, and on hardware that fuses a
+Conv with the activation after it, the tensors quantized are x' (balanced) and the gate's
+(bounded) output, never x. :func:`anneal.core.surrogate.replace_sigmoids` folds its per-term
+scale and shift into copies of that conv, so each term stays Conv -> HardSigmoid.
+
 Squeeze-excite (opt-in, ``se=True``). After the depthwise conv, EfficientNet and MobileNetV3
 run ``y = x * gate(x)``, ``z = y * SE(mean_hw(y))`` and a 1x1 projection of z. Scaling the
 depthwise conv's output channels by s scales x, y, the pooled mean and z; the SE's first FC and
@@ -67,6 +76,8 @@ GATE_OPS = ("Sigmoid", "HardSigmoid")
 FUSED_GATED_OPS = ("HardSwish",)
 #: Name prefix of the Mul inserted before each gate; `gate_nodes` lists them for exclusion.
 GATE_MUL_PREFIX = "anneal_eq_gate_mul_"
+#: Name prefix of the depthwise 1x1 Conv inserted before each gate instead (``gate_conv=True``).
+GATE_CONV_PREFIX = "anneal_eq_gate_conv_"
 DEFAULT_SLACK = 0.1
 DEFAULT_MAX_SCALE = 1e3
 
@@ -611,6 +622,7 @@ def equalise(
     se: bool = False,
     mix: tuple[float, float] | None = None,
     pow2_align: bool = False,
+    gate_conv: bool = False,
 ) -> EqualisationResult:
     """Write an equalised copy of ``src`` to ``dst`` and describe what changed.
 
@@ -640,6 +652,11 @@ def equalise(
     ``sign(s) * |s|**alpha * s_cle**beta``, with ``s`` the activation equalisation above and
     ``s_cle = sqrt(max|B_c| / max|A_c|)`` the cross-layer weight equalisation of Nagel et al.
     (2019), which balances the two weight tensors. (1, 0) is the default; (0, 1) is plain CLE.
+
+    ``gate_conv`` feeds each gate through a depthwise 1x1 Conv with weight 1/s (named with
+    :data:`GATE_CONV_PREFIX`) instead of the element-wise ``Mul(x', 1/s)``: the same function, but
+    an NPU that fuses Conv + activation then never quantizes the imbalanced x'/s (see the module
+    docstring). ``gate_nodes`` lists that Conv and the gate, as it lists the Mul otherwise.
     """
     import onnx
     from onnx import helper, numpy_helper
@@ -760,16 +777,27 @@ def equalise(
         if site.kind in ("gated", "gated-se"):
             inv = f"anneal_eq_inv_{k}"
             unscaled = f"anneal_eq_unscaled_{k}"
-            mul_name = f"{GATE_MUL_PREFIX}{k}"
-            g.initializer.append(
-                numpy_helper.from_array((1.0 / s64).reshape(1, -1, 1, 1).astype(np.float32), inv)
-            )
-            g.node.insert(
-                list(g.node).index(site.gate),
-                helper.make_node("Mul", [site.x, inv], [unscaled], name=mul_name),
-            )
+            if gate_conv:
+                # Depthwise 1x1: weight (C, 1, 1, ...) of the producer's rank, bias 0.
+                rank = len(inits[site.conv_a.input[1]].dims)
+                c = int(s64.shape[0])
+                bias = f"anneal_eq_inv_bias_{k}"
+                g.initializer.extend([
+                    numpy_helper.from_array((1.0 / s64).reshape((c,) + (1,) * (rank - 1)).astype(np.float32), inv),
+                    numpy_helper.from_array(np.zeros(c, np.float32), bias),
+                ])
+                node_name = f"{GATE_CONV_PREFIX}{k}"
+                node = helper.make_node("Conv", [site.x, inv, bias], [unscaled], name=node_name,
+                                        group=c, kernel_shape=[1] * (rank - 2))
+            else:
+                node_name = f"{GATE_MUL_PREFIX}{k}"
+                g.initializer.append(
+                    numpy_helper.from_array((1.0 / s64).reshape(1, -1, 1, 1).astype(np.float32), inv)
+                )
+                node = helper.make_node("Mul", [site.x, inv], [unscaled], name=node_name)
+            g.node.insert(list(g.node).index(site.gate), node)
             site.gate.input[0] = unscaled
-            result.gate_nodes += [mul_name, site.gate.name]
+            result.gate_nodes += [node_name, site.gate.name]
 
         lo_y2 = np.minimum(s64 * lo_y, s64 * hi_y)
         hi_y2 = np.maximum(s64 * lo_y, s64 * hi_y)

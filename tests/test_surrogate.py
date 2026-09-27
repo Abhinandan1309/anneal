@@ -196,3 +196,100 @@ def test_recipes_without_the_surrogate_keep_their_lineage_keys(tmp_path: Path, c
     with pytest.raises(TransformError):
         apply_transform("quantize_static_int8", {"sigmoid_surrogate": True}, ModelArtifact(path=src),
                         TransformContext(workdir=tmp_path / "w2", calibset=calib))
+
+
+# ----- folding into equalisation's gate conv ---------------------------------------
+
+
+def _as_gate_mul(src: Path, dst: Path) -> Path:
+    """The same equalised model with each gate conv written as the equivalent Mul(x', 1/s)."""
+    from anneal.core.equalize import GATE_CONV_PREFIX
+
+    m = onnx.load(str(src))
+    invs = set()
+    for n in m.graph.node:
+        if n.name.startswith(GATE_CONV_PREFIX):
+            invs.add(n.input[1])
+            n.op_type = "Mul"
+            del n.input[2]
+            del n.attribute[:]
+    for i in m.graph.initializer:
+        if i.name in invs:
+            i.CopyFrom(numpy_helper.from_array(numpy_helper.to_array(i).reshape(1, -1, 1, 1), i.name))
+    onnx.save(m, str(dst))
+    return dst
+
+
+def test_the_surrogate_folds_into_a_gate_conv(tmp_path: Path, calib):
+    from anneal.core.equalize import GATE_CONV_PREFIX, equalise
+
+    src = _model(tmp_path / "m.onnx", "silu")
+    eq = tmp_path / "eq.onnx"
+    equalise(src, eq, calib.calibration_batches(32), gate_conv=True)
+    (gate,) = sigmoid_gates(onnx.load(str(eq)))
+    assert gate.silu and gate.conv is not None  # a SiLU through the conv, and foldable
+
+    report = replace_sigmoids(eq, tmp_path / "s.onnx", calib.calibration_batches(32), k_terms=3)
+    [g] = report["per_gate"]
+    assert g["folded"].startswith(GATE_CONV_PREFIX)
+    model = onnx.load(str(tmp_path / "s.onnx"))
+    names = {n.name for n in model.graph.node}
+    assert g["folded"] not in names and set(g["nodes"]) <= names
+    producer = {o: n for n in model.graph.node for o in n.output}
+    hs = [n for n in model.graph.node if n.op_type == "HardSigmoid"]
+    assert len(hs) == 3
+    for n in hs:  # Conv -> HardSigmoid (the DPU's fixed gate), the conv reading the balanced x'
+        attrs = {a.name: a.f for a in n.attribute}
+        assert attrs["alpha"] == pytest.approx(ALPHA) and attrs["beta"] == pytest.approx(BETA)
+        conv = producer[n.input[0]]
+        assert conv.op_type == "Conv" and conv.input[0] == "x"
+    # Only the w_i Muls, the sum and the SiLU's own Mul remain: no Mul(k)/Add(b) before a gate.
+    ops = [n.op_type for n in model.graph.node]
+    assert ops.count("Mul") == 3 + 1 and ops.count("Add") == 2
+    # The folded conv's 1/s and zero bias went with it.
+    used = {i for n in model.graph.node for i in n.input}
+    assert all(i.name in used for i in model.graph.initializer)
+
+    # Folding is exact against the unfolded surrogate of the same fit ...
+    replace_sigmoids(_as_gate_mul(eq, tmp_path / "eq_mul.onnx"), tmp_path / "s_mul.onnx",
+                     calib.calibration_batches(32), k_terms=3)
+    x = np.random.default_rng(5).standard_normal((4, C_IN, 8, 8)).astype(np.float32)
+    ref = _run(src, x)
+    folded, mul = _run(tmp_path / "s.onnx", x), _run(tmp_path / "s_mul.onnx", x)
+    assert np.abs(folded - mul).max() <= 1e-4 * max(1.0, np.abs(ref).max())
+    # ... and as close to the original model as the plain surrogate is.
+    assert np.abs(folded - ref).max() < 0.03 * np.abs(ref).max()
+
+
+def test_a_gate_conv_with_another_consumer_is_not_folded(tmp_path: Path, calib):
+    from anneal.core.equalize import GATE_CONV_PREFIX, equalise
+
+    src = _model(tmp_path / "m.onnx", "silu")
+    eq = tmp_path / "eq.onnx"
+    equalise(src, eq, calib.calibration_batches(32), gate_conv=True)
+    m = onnx.load(str(eq))
+    conv = next(n for n in m.graph.node if n.name.startswith(GATE_CONV_PREFIX))
+    m.graph.output.append(helper.make_tensor_value_info(conv.output[0], TensorProto.FLOAT, ["N", "C", "H", "W"]))
+    onnx.save(m, str(tmp_path / "side.onnx"))
+    (gate,) = sigmoid_gates(onnx.load(str(tmp_path / "side.onnx")))
+    assert gate.conv is None and gate.silu
+    report = replace_sigmoids(tmp_path / "side.onnx", tmp_path / "s.onnx", calib.calibration_batches(32))
+    assert report["per_gate"][0]["folded"] is None
+    assert conv.name in {n.name for n in onnx.load(str(tmp_path / "s.onnx")).graph.node}
+
+
+def test_the_transform_folds_the_surrogate_into_gate_convs(tmp_path: Path, calib):
+    src = _model(tmp_path / "m.onnx", "silu")
+    out = apply_transform(
+        "quantize_static_int8",
+        {"per_channel": True, "equalize": True, "equalize_gate_conv": True, "float_gates": True,
+         "sigmoid_surrogate": 3},
+        ModelArtifact(path=src),
+        TransformContext(workdir=tmp_path / "w", calibset=calib),
+    )
+    params = out.lineage[-1].params
+    assert params["equalize_gate_conv"] is True and params["sigmoid_surrogate"] == 3
+    assert out.meta["sigmoid_surrogate"]["silu_gates"] == 1
+    assert out.meta["sigmoid_surrogate_gates"][0]["folded"]
+    q = onnx.load(str(out.path))
+    assert "Sigmoid" not in {n.op_type for n in q.graph.node}
