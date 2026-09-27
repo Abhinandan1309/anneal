@@ -41,7 +41,17 @@ import numpy as np
 CACHE = Path.home() / ".anneal_cache"
 
 
-def qconfig(label: str):
+def gate_nodes(path: Path) -> list[str]:
+    """The gate ops Anneal inserted: surrogate HardSigmoid terms and the gate-side 1/s rescale."""
+    import onnx
+
+    from anneal.core.equalize import GATE_MUL_PREFIX
+    from anneal.core.surrogate import PREFIX
+
+    return [n.name for n in onnx.load(str(path)).graph.node if n.name.startswith((PREFIX, GATE_MUL_PREFIX))]
+
+
+def qconfig(label: str, gates: list[str] | None = None):
     from quark.onnx import CLEConfig, Int8Spec, QConfig, QLayerConfig, QuantGranularity
     from quark.onnx.quantization.config.custom_config import A8W8_QCONFIG, XINT8_QCONFIG
 
@@ -69,6 +79,12 @@ def qconfig(label: str):
         cfg.extra_options["ConvertReduceMeanToDPUVersion"] = False
     if "cle" in label:
         cfg.algo_config = [CLEConfig()]
+    if "float gates" in label:  # upper bound: the gate ops stay float
+        cfg.exclude = list(gates or [])
+    if "a16 gates" in label:  # deployable: 16-bit activations on the gate ops only (NPU A16W8 path)
+        from quark.onnx import Int16Spec, XInt8Spec
+
+        cfg.specific_layer_config = {QLayerConfig(activation=Int16Spec(), weight=XInt8Spec()): list(gates or [])}
     return cfg
 
 
@@ -83,7 +99,10 @@ VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xi
             "xint8 percentile cal + anneal pt-eq + surrogate", "xint8 percentile cal + surrogate",
             # each gate fed x' through a depthwise 1x1 conv (weight 1/s) instead of Mul(x', 1/s), the
             # surrogate folded into it: the NPU fuses Conv + HardSigmoid, never quantizing imbalanced x
-            "xint8 percentile cal + anneal pt-eq gate-conv + surrogate"]
+            "xint8 percentile cal + anneal pt-eq gate-conv + surrogate",
+            # EfficientNet-B1 loses ~37pp in the gate branches (emulation): keep only those ops wider
+            "xint8 percentile cal + anneal pt-eq + surrogate + float gates",
+            "xint8 percentile cal + anneal pt-eq + surrogate + a16 gates"]
 
 
 def hardsigmoid_copy(src: Path, dst: Path) -> None:
@@ -212,7 +231,10 @@ def main() -> None:
                 elif label == "fp32 surrogate":
                     shutil.copy(models["sur"], dst)
                 else:
-                    ModelQuantizer(qconfig(label)).quantize_model(str(models[which]), str(dst), Reader(inp, calib_imgs))
+                    gates = gate_nodes(models[which])
+                    if "gates" in label:
+                        print(f"    {len(gates)} gate ops kept wider", flush=True)
+                    ModelQuantizer(qconfig(label, gates)).quantize_model(str(models[which]), str(dst), Reader(inp, calib_imgs))
                 timing[label] = {"quantize_s": time.time() - t}
                 if "gate-conv" in label:  # does Quark leave the gate conv's output unquantized (fused)?
                     import onnx as _onnx
