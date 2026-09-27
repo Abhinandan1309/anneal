@@ -50,6 +50,9 @@ VARIANTS = {
     # isolate LRASPP's regression: squeeze-excite sites without the mix, and the mix without them
     "tidl 8-bit + equalised (se only)": ("eq_se", COMMON),
     "tidl 8-bit + equalised (mix only)": ("eq_mix", COMMON),
+    # TIDL's own mixed-precision search, alone and on top of Anneal's equalisation
+    "tidl auto mixed": ("plain", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
+    "tidl auto mixed + equalised": ("equalised", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
 }
 
 
