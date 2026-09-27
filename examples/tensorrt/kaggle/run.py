@@ -9,9 +9,8 @@ import sys
 
 MODELS = "efficientvit_b0,efficientnet_b0"
 IMAGES = "1000"
-VARIANTS = ("trt int8 (conv-only int8),trt int8 + eq (conv-only int8),"
-            "modelopt int8 (modelopt convs only),modelopt int8 + eq (modelopt convs only),"
-            "trt int8 + eq pos #2,trt int8 + eq pos #3")  # empty = all
+VARIANTS = ("anneal qdq (sym),anneal qdq (sym 4 float),modelopt int8 + eq (modelopt convs only),"
+            "trt int8 + eq pos")  # empty = all
 REF = "main"
 
 

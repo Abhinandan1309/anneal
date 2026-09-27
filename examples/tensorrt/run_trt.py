@@ -189,6 +189,62 @@ def modelopt_qdq(src: Path, dst: Path, calib_batches, exclude: list[str] | None 
           f"{onnx.TensorProto.DataType.Name(elem)}", flush=True)
 
 
+#: Anneal's EfficientViT recipe as TensorRT can run it: symmetric int8 activations (TensorRT has no
+#: zero points), per-channel weights, only Conv/Gemm quantized (the linear attention stays float),
+#: gated + residual + dense equalisation. onnxruntime on CPU, EfficientViT-B0, Imagenette 1,000:
+#: -12.9pp; with the 4 most damaging tensors in higher precision -8.4 (ModelOpt + eq: -33.5).
+ANNEAL_TRT = {"calib_samples": 64, "calib_percentile": 99.99, "calibrate_method": "percentile",
+              "activation_type": "int8", "activation_symmetric": True, "per_channel": True,
+              "quantize_ops": "conv", "equalize": True, "equalize_residual": True, "equalize_dense": True}
+
+
+def trt_ready_qdq(src: Path, dst: Path) -> dict:
+    """Make an onnxruntime QDQ model TensorRT-buildable: float biases (TensorRT has no int32
+    DequantizeLinear) and no 16-bit Q/DQ (no int16 in TensorRT: those tensors stay float, FP16)."""
+    import onnx
+    from onnx import numpy_helper
+
+    m = onnx.load(str(src))
+    g = m.graph
+    inits = {i.name: i for i in g.initializer}
+    prod = {o: n for n in g.node for o in n.output}
+    drop, biases, wide = [], 0, 0
+    for n in g.node:
+        if n.op_type != "DequantizeLinear" or n.input[0] not in inits:
+            continue
+        q = numpy_helper.to_array(inits[n.input[0]])
+        if q.dtype != np.int32:
+            continue
+        scale = numpy_helper.to_array(inits[n.input[1]]).astype(np.float64)
+        g.initializer.append(numpy_helper.from_array((q * scale).astype(np.float32), n.output[0]))
+        drop.append(n)
+        biases += 1
+    rename: dict[str, str] = {}
+    for n in g.node:
+        if n.op_type != "QuantizeLinear" or len(n.input) < 3 or n.input[2] not in inits:
+            continue
+        if numpy_helper.to_array(inits[n.input[2]]).dtype not in (np.int16, np.uint16):
+            continue
+        dqs = [c for c in g.node if n.output[0] in c.input and c.op_type == "DequantizeLinear"]
+        for dq in dqs:
+            rename[dq.output[0]] = n.input[0]
+            drop.append(dq)
+        drop.append(n)
+        wide += 1
+    for n in drop:
+        g.node.remove(n)
+    for n in g.node:
+        for k, name in enumerate(n.input):
+            if name in rename:
+                n.input[k] = rename[name]
+    for o in g.output:
+        if o.name in rename:  # a graph output that was a DQ output: keep its name
+            g.node.append(onnx.helper.make_node("Identity", [rename[o.name]], [o.name]))
+    del prod
+    onnx.save(m, str(dst))
+    return {"float_biases": biases, "wide_tensors_float": wide}
+
+
 def main() -> None:
     import onnx
 
@@ -275,7 +331,26 @@ def main() -> None:
                      else "eq" if base.endswith("+ eq") else "plain")
             t = time.time()
             try:
-                if label.startswith("modelopt"):
+                if label.startswith("anneal qdq"):
+                    # Anneal's own quantization of the float model, built by TensorRT as explicit QDQ
+                    wide = " 4 float" in label
+                    qdq = mdir / f"{name}-anneal-qdq{'-4float' if wide else ''}.onnx"
+                    if not qdq.exists():
+                        from anneal.core.artifact import ModelArtifact
+                        from anneal.core.dataset import load_calibset as _lc
+                        from anneal.core.transforms import TransformContext, apply_transform
+
+                        cal = _lc("imagenette", cache_dir=CACHE, batch_size=8, limit=64, sample_shape=shape)
+                        params = {**ANNEAL_TRT, **({"int16_top_k": 4} if wide else {})}
+                        raw = apply_transform("quantize_static_int8", params, ModelArtifact(path=src),
+                                              TransformContext(workdir=mdir / "anneal", calibset=cal)).path
+                        print(f"    anneal qdq: {trt_ready_qdq(Path(raw), qdq)}", flush=True)
+                    if f"{label} (ort cpu)" not in preds:
+                        qs = ort.InferenceSession(str(qdq), providers=["CPUExecutionProvider"])
+                        preds[f"{label} (ort cpu)"] = decode([qs.run(None, {qs.get_inputs()[0].name: x})[0] for x in xs])
+                        extra[f"{label} (ort cpu)"] = {"latency_ms": float("nan")}
+                    engine = build(qdq, "qdq", None, mdir, fp16=fp16)
+                elif label.startswith("modelopt"):
                     qdq = mdir / f"{name}-{which.replace(' ', '-')}{'-nogates' if gates_out else ''}{'-convonly' if mo_conv_only else ''}-qdq.onnx"
                     if not qdq.exists():
                         # the gate-side Mul(x', 1/s) nodes (and their Sigmoid) left unquantized
