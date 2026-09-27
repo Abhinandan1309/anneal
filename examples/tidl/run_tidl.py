@@ -99,6 +99,15 @@ VARIANTS = {
     "tidl prequant qdq (per-channel) + equalised": ("qdq_eq_pc", {**COMMON, "advanced_options:prequantized_model": 1}),
     # ResNet-18 imports faithfully, MobileNetV2 (-2.4 in onnxruntime) comes out garbage: is it the
     # Q/DQ we drop between a Conv and its Clip (ReLU6)? Keep them here.
+    # LRASPP on TIDL: equalised + 16-bit backbone stages 0-1 (4 layers) -44.7 -> -1.2 mIoU pts.
+    # The same on the classifiers still broken on TIDL (B1 -54.7 at best, MNv3-S -7.7).
+    "tidl 8-bit + equalised (per-tensor grid) + 16-bit features 0-1": (
+        "equalised_pt_grid", {**COMMON, "_16bit_re": r"/features/features\.[01]/"}),
+    "tidl 8-bit + equalised (per-tensor grid) + 16-bit features 0-2": (
+        "equalised_pt_grid", {**COMMON, "_16bit_re": r"/features/features\.[0-2]/"}),
+    "tidl 8-bit + equalised (per-tensor) + 16-bit features 0-1": (
+        "equalised_pt", {**COMMON, "_16bit_re": r"/features/features\.[01]/"}),
+    "tidl 8-bit + 16-bit features 0-1": ("plain", {**COMMON, "_16bit_re": r"/features/features\.[01]/"}),
     "tidl prequant qdq (per-channel act qdq kept)": ("qdq_pc_keep", {**COMMON, "advanced_options:prequantized_model": 1}),
 }
 
@@ -304,6 +313,19 @@ def main() -> None:
                     opts["advanced_options:output_feature_16bit_names_list"] = ",".join(top)
                     tim["int16_tensors"] = top
                     print(f"  {name} {label}: 16-bit {top}", flush=True)
+                re16 = opts.pop("_16bit_re", None)
+                if re16:  # every Conv/Add/Mul whose output name matches, as TIDL names the fused layer
+                    g16 = onnx.load(str(models[which])).graph
+                    top = []
+                    for n in g16.node:
+                        if n.op_type in ("Conv", "Add", "Mul") and re.search(re16, n.output[0]):
+                            end = fused_end(models[which], n.output[0])
+                            if end not in top:
+                                top.append(end)
+                    opts["advanced_options:output_feature_16bit_names_list"] = ",".join(top)
+                    tim["int16_tensors"] = top
+                    print(f"  {name} {label}: {len(top)} layers in 16 bits", flush=True)
+                    k16 = len(top)
                 comp = session(models[which], ["TIDLCompilationProvider", "CPUExecutionProvider"],
                                {**opts, "artifacts_folder": str(art), "tidl_tools_path": tools})
                 inp = comp.get_inputs()[0].name
