@@ -84,7 +84,8 @@ def qconfig(label: str, gates: list[str] | None = None):
     if "a16 gates" in label:  # deployable: 16-bit activations on the gate ops only (NPU A16W8 path)
         from quark.onnx import Int16Spec, XInt8Spec
 
-        cfg.specific_layer_config = {QLayerConfig(activation=Int16Spec(), weight=XInt8Spec()): list(gates or [])}
+        cfg.specific_layer_config = {QLayerConfig(input_tensors=Int16Spec(), output_tensors=Int16Spec(),
+                                                  weight=XInt8Spec()): list(gates or [])}
     return cfg
 
 
@@ -106,7 +107,8 @@ VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xi
             # analytic bias correction for XINT8's per-tensor pow2 weights (anneal.core.bias_correction):
             # weights-only emulation B1 -17.3 -> -0.8
             "xint8 percentile cal + anneal pt-eq + bias corr + surrogate",
-            "xint8 percentile cal + anneal pt-eq + bias corr + surrogate + a16 gates"]
+            "xint8 percentile cal + anneal pt-eq + bias corr + surrogate + a16 gates",
+            "xint8 percentile cal + anneal pt-eq + bias corr + surrogate + float gates"]
 
 
 def hardsigmoid_copy(src: Path, dst: Path) -> None:
