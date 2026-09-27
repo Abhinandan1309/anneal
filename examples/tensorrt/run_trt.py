@@ -84,7 +84,7 @@ class Calibrator:
         return _C()
 
 
-def build(onnx_path: Path, mode: str, calib_batches, work: Path, fp16: bool = True):
+def build(onnx_path: Path, mode: str, calib_batches, work: Path, fp16: bool = True, conv_only_int8: bool = False):
     import tensorrt as trt
 
     logger = trt.Logger(trt.Logger.WARNING)
@@ -100,6 +100,18 @@ def build(onnx_path: Path, mode: str, calib_batches, work: Path, fp16: bool = Tr
     if mode == "int8":
         config.set_flag(trt.BuilderFlag.INT8)
         config.int8_calibrator = Calibrator(calib_batches, work / f"{onnx_path.stem}.calib")
+    if conv_only_int8:
+        # INT8 only for convolutions and fully connected layers; every other layer (attention's
+        # matmuls, divisions, reductions, gates) pinned to FP16, so TensorRT's tactic timing can no
+        # longer pick INT8 for them (EfficientViT-B0: -0.1 / -8.9 / -25.4 / -70.3 across builds)
+        keep = {trt.LayerType.CONVOLUTION, trt.LayerType.FULLY_CONNECTED}
+        for i in range(network.num_layers):
+            layer = network.get_layer(i)
+            if layer.type not in keep and layer.type not in (trt.LayerType.CONSTANT, trt.LayerType.SHUFFLE):
+                layer.precision = trt.float16
+                for k in range(layer.num_outputs):
+                    layer.set_output_type(k, trt.float16)
+        config.set_flag(trt.BuilderFlag.OBEY_PRECISION_CONSTRAINTS)
     elif mode == "qdq":
         config.set_flag(trt.BuilderFlag.INT8)  # explicit: scales come from the QDQ nodes
     plan = builder.build_serialized_network(network, config)
@@ -232,8 +244,9 @@ def main() -> None:
         for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
             # "... (no fp16)" builds without FP16 fallback; "... #k" is an independent rebuild (TensorRT's
             # INT8 build is not deterministic: EfficientViT-B0 plain scored -69.4 and -0.2 in two runs)
-            base = label.split(" #")[0].replace(" (no fp16)", "")
+            base = label.split(" #")[0].replace(" (no fp16)", "").replace(" (conv-only int8)", "")
             fp16 = "(no fp16)" not in label
+            conv_only = "(conv-only int8)" in label
             which = "eq res" if base.endswith("eq res") else "eq" if base.endswith("+ eq") else "plain"
             t = time.time()
             try:
@@ -251,7 +264,8 @@ def main() -> None:
                         extra[f"{base} (ort cpu)"] = {"latency_ms": float("nan")}
                     engine = build(qdq, "qdq", None, mdir, fp16=fp16)
                 else:
-                    engine = build(models[which], "fp16" if base == "trt fp16" else "int8", calib_imgs, mdir, fp16=fp16)
+                    engine = build(models[which], "fp16" if base == "trt fp16" else "int8", calib_imgs, mdir, fp16=fp16,
+                                   conv_only_int8=conv_only)
                 build_s = time.time() - t
                 outs, ms = run_engine(engine, xs)
                 preds[label] = decode(outs)

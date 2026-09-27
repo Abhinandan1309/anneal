@@ -7,11 +7,10 @@ edited per run. The repository is public, so the kernel clones it.
 import subprocess
 import sys
 
-MODELS = "efficientvit_b0,efficientnet_b0,efficientnet_b1,mobilenet_v3_large"
+MODELS = "efficientvit_b0,efficientnet_b0"
 IMAGES = "1000"
-VARIANTS = ("trt int8,trt int8 #2,trt int8 #3,trt int8 + eq,trt int8 + eq #2,trt int8 + eq #3,"
-            "trt int8 (no fp16),trt int8 + eq (no fp16),modelopt int8,modelopt int8 (no fp16),"
-            "modelopt int8 + eq,modelopt int8 + eq (no fp16)")  # empty = all
+VARIANTS = ("trt int8 (conv-only int8),trt int8 (conv-only int8) #2,trt int8 (conv-only int8) #3,"
+            "trt int8 + eq (conv-only int8),trt int8 + eq (conv-only int8) #2,modelopt int8 + eq")  # empty = all
 REF = "main"
 
 
@@ -33,3 +32,11 @@ sh(f"{sys.executable} -m pip list 2>/dev/null | grep -i -E 'tensorrt|modelopt|on
 extra = f'--variants "{VARIANTS}"' if VARIANTS else ""
 sh(f"cd /kaggle/temp/anneal && {sys.executable} examples/tensorrt/run_trt.py --models {MODELS} --images {IMAGES} "
    f"{extra} --out /kaggle/working/trt-result.json")
+
+# Where does TensorRT's engine of the equalised ModelOpt QDQ model diverge from onnxruntime on the
+# same model (ORT CPU -2.5pp, TRT chance)? Polygraphy compares every layer's output.
+sh(f"{sys.executable} -m pip install -q polygraphy --extra-index-url https://pypi.ngc.nvidia.com")
+qdq = "/kaggle/temp/anneal/trt-work/efficientnet_b0/efficientnet_b0-eq-qdq.onnx"
+sh(f"cd /kaggle/temp/anneal && polygraphy run {qdq} --trt --int8 --fp16 --onnxrt --trt-outputs mark all "
+   f"--onnx-outputs mark all --atol 1e-1 --rtol 1e-1 --fail-fast > /kaggle/working/polygraphy.txt 2>&1 || true")
+sh("tail -c 20000 /kaggle/working/polygraphy.txt | grep -E 'FAILED|Error Metrics|mismatch|Comparing Output|PASSED' | head -60 || true")
