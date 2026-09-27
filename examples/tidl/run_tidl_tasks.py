@@ -76,7 +76,52 @@ VARIANTS = {
     # TIDL's own mixed-precision search, alone and on top of Anneal's equalisation
     "tidl auto mixed": ("plain", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
     "tidl auto mixed + equalised": ("equalised", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
+    # Explicit 16-bit feature maps (TIDL's output_feature_16bit_names_list; their weights follow).
+    # Real LRASPP traces (run 36301780043): the worst 8-bit tensors are the linear bottlenecks
+    # (projection convs with no activation, and residual Adds: 1.6-3.8 dB), and the damage starts
+    # at backbone.1's projection (11 -> 2.8 dB). See select_16bit for the rules.
+    "tidl 8-bit + 16-bit linear": ("plain", {**COMMON, "_16bit": ["linear"]}),
+    "tidl 8-bit + 16-bit backbone 0-3": ("plain", {**COMMON, "_16bit": [r"re:/backbone\.[0-3]/"]}),
+    "tidl 8-bit + 16-bit backbone 0-6": ("plain", {**COMMON, "_16bit": [r"re:/backbone\.[0-6]/"]}),
+    "tidl 8-bit + 16-bit linear + backbone 0-3": ("plain", {**COMMON, "_16bit": ["linear", r"re:/backbone\.[0-3]/"]}),
+    "tidl 8-bit + equalised + 16-bit linear": ("equalised", {**COMMON, "_16bit": ["linear"]}),
 }
+
+
+def select_16bit(model_path: Path, rules: list[str]) -> list[str]:
+    """Layer names (as TIDL names fused layers) for its 16-bit list, from rules.
+
+    ``linear``: every Conv whose output is not activated (projection convs, the classifiers) and
+    every Add; ``re:<regex>``: every Conv/Add/Mul output whose name matches.
+    """
+    import onnx
+
+    from run_tidl import FUSED, fused_end
+
+    g = onnx.load(str(model_path)).graph
+    consumers: dict[str, list] = {}
+    for n in g.node:
+        for i in n.input:
+            consumers.setdefault(i, []).append(n)
+    picked: list[str] = []
+    for n in g.node:
+        if n.op_type not in ("Conv", "Add", "Mul"):
+            continue
+        out = n.output[0]
+        for rule in rules:
+            if rule == "linear":
+                cs = consumers.get(out, [])
+                hit = n.op_type == "Add" or (n.op_type == "Conv" and not any(c.op_type in FUSED for c in cs))
+            elif rule.startswith("re:"):
+                hit = re.search(rule[3:], out) is not None
+            else:
+                raise ValueError(f"unknown 16-bit rule {rule!r}")
+            if hit:
+                name = fused_end(model_path, out)
+                if name not in picked:
+                    picked.append(name)
+                break
+    return picked
 
 
 class UNetFidelity:
@@ -232,6 +277,12 @@ def main() -> None:
     for label in wanted:
         which, opts = VARIANTS[label]
         opts = {**opts, "advanced_options:calibration_frames": len(calib)}
+        rules16 = opts.pop("_16bit", None)
+        names16: list[str] = []
+        if rules16:
+            names16 = select_16bit(models[which], rules16)
+            opts["advanced_options:output_feature_16bit_names_list"] = ",".join(names16)
+            print(f"  {label}: {len(names16)} layers in 16 bits", flush=True)
         art = work / "artifacts" / re.sub(r"[^A-Za-z0-9]+", "_", label.replace("+", "plus")).strip("_")  # TI tools run shell commands on this path
         shutil.rmtree(art, ignore_errors=True)
         art.mkdir(parents=True)
@@ -246,6 +297,12 @@ def main() -> None:
                                       {"artifacts_folder": str(art), "debug_level": 0})
             timing[label] = {"compile_s": time.time() - t}
             print(f"  {label}: compiled ({timing[label]['compile_s']:.0f}s)", flush=True)
+            if names16:  # a name TIDL fused away is ignored silently: record which ones it kept
+                known = " ".join(f.read_text(errors="replace") for f in art.rglob("*layer_info*.txt"))
+                timing[label]["int16_layers"] = names16
+                timing[label]["int16_in_layer_info"] = sum(n in known for n in names16)
+                print(f"  {label}: {timing[label]['int16_in_layer_info']}/{len(names16)} 16-bit names in TIDL layer info",
+                      flush=True)
             if args.trace:
                 trace_layers(label, models[which], art, task, api, ids[0], inp)
         except Exception as exc:  # a variant the toolchain cannot compile is a result too
