@@ -47,6 +47,9 @@ VARIANTS = {
     # the per-tensor variant with CLE capped at 4x (MobileNetV2 on TIDL: uncapped -12.9pp, 4x -1.2pp) and without CLE
     "tidl 8-bit + equalised (per-tensor cle4)": ("equalised_pt_cle4", COMMON),
     "tidl 8-bit + equalised (per-tensor no cle)": ("equalised_pt_nocle", COMMON),
+    # isolate LRASPP's regression: squeeze-excite sites without the mix, and the mix without them
+    "tidl 8-bit + equalised (se only)": ("eq_se", COMMON),
+    "tidl 8-bit + equalised (mix only)": ("eq_mix", COMMON),
 }
 
 
@@ -137,11 +140,15 @@ def main() -> None:
     d_pt, _, _ = equalise_dense(eq_ptd, eq_ptd, calib, mix=(0.5, 0.5), any_kernel=True)
     cross_layer_equalise(eq_ptd, eq_ptd)
     print(f"{args.model}: per-tensor dense kxk sites {len(d_pt)}", flush=True)
+    eq_se, eq_mix = work / f"{args.model}-eq-se.onnx", work / f"{args.model}-eq-mix.onnx"
+    equalise(src, eq_se, calib, se=True)
+    equalise(src, eq_mix, calib, mix=(0.5, 0.5))
     eq_nocle, eq_cle4 = work / f"{args.model}-pt-nocle.onnx", work / f"{args.model}-pt-cle4.onnx"
     equalise(src, eq_nocle, calib, residual=True, se=True, mix=(0.5, 0.5))
     cross_layer_equalise(eq_nocle, eq_cle4, max_scale=4.0)
     models = {"plain": src, "equalised": eq, "concat_eq": cat_eq, "concat_eq_cle": cat_eq_cle, "equalised_pt": eq_pt,
-              "equalised_pt_dense": eq_ptd, "equalised_pt_cle4": eq_cle4, "equalised_pt_nocle": eq_nocle}
+              "equalised_pt_dense": eq_ptd, "equalised_pt_cle4": eq_cle4, "equalised_pt_nocle": eq_nocle,
+              "eq_se": eq_se, "eq_mix": eq_mix}
     for p in models.values():
         onnx.shape_inference.infer_shapes_path(str(p), str(p))
 

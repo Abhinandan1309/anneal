@@ -78,7 +78,9 @@ VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xi
             "fp32 surrogate", "xint8 + surrogate", "xint8 + anneal eq + surrogate",
             # per-tensor-aware equalisation (XINT8 quantizes weights per tensor): squeeze-excite and
             # residual sites, activation/weight mix t=0.5, ReLU CLE capped at 4x
-            "xint8 + anneal pt-eq", "xint8 + anneal pt-eq + surrogate", "a8w8 + anneal pt-eq"]
+            "xint8 + anneal pt-eq", "xint8 + anneal pt-eq + surrogate", "a8w8 + anneal pt-eq",
+            # the deployable NPU path: percentile calibration (MinMSE cost EfficientNet-B0 ~25pp)
+            "xint8 percentile cal + anneal pt-eq + surrogate", "xint8 percentile cal + surrogate"]
 
 
 def hardsigmoid_copy(src: Path, dst: Path) -> None:
