@@ -124,7 +124,9 @@ VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xi
             "xint8 percentile cal + anneal pt-eq grid + surrogate",
             "xint8 percentile cal + anneal pt-eq grid + surrogate + bias corr (measured)",
             "xint8 percentile cal + anneal pt-eq grid + surrogate + a16 gates + bias corr (measured)",
-            "xint8 percentile cal + anneal pt-eq grid + surrogate + gate clip + a16 gates + bias corr (measured)"]
+            "xint8 percentile cal + anneal pt-eq grid + surrogate + gate clip + a16 gates + bias corr (measured)",
+            # ablation of the all-8-bit B1 result (-3.5pp): gate-conv + clip without bias correction
+            "xint8 percentile cal + anneal pt-eq gate-conv + surrogate + gate clip"]
 
 
 def hardsigmoid_copy(src: Path, dst: Path) -> None:
