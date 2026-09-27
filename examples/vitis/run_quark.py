@@ -48,7 +48,10 @@ def gate_nodes(path: Path) -> list[str]:
     from anneal.core.equalize import GATE_MUL_PREFIX
     from anneal.core.surrogate import PREFIX
 
-    return [n.name for n in onnx.load(str(path)).graph.node if n.name.startswith((PREFIX, GATE_MUL_PREFIX))]
+    from anneal.core.equalize import GATE_CONV_PREFIX
+
+    return [n.name for n in onnx.load(str(path)).graph.node
+            if n.name.startswith((PREFIX, GATE_MUL_PREFIX, GATE_CONV_PREFIX, "anneal_gclip_"))]
 
 
 def qconfig(label: str, gates: list[str] | None = None):
@@ -111,7 +114,12 @@ VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xi
             "xint8 percentile cal + anneal pt-eq + bias corr + surrogate + float gates",
             # the formula's Q(W) was wrong for Quark (bias corr hurt): read Quark's own Q(W) instead
             "xint8 percentile cal + anneal pt-eq + surrogate + bias corr (measured)",
-            "xint8 percentile cal + anneal pt-eq + surrogate + a16 gates + bias corr (measured)"]
+            "xint8 percentile cal + anneal pt-eq + surrogate + a16 gates + bias corr (measured)",
+            # gate inputs clipped to the span HardSigmoid can see (exact), alone and with the gate-conv form
+            "xint8 percentile cal + anneal pt-eq + surrogate + gate clip + bias corr (measured)",
+            "xint8 percentile cal + anneal pt-eq + surrogate + gate clip + a16 gates + bias corr (measured)",
+            "xint8 percentile cal + anneal pt-eq gate-conv + surrogate + gate clip + bias corr (measured)",
+            "xint8 percentile cal + anneal pt-eq gate-conv + surrogate + gate clip + a16 gates + bias corr (measured)"]
 
 
 def hardsigmoid_copy(src: Path, dst: Path) -> None:
@@ -233,24 +241,33 @@ def main() -> None:
         preds = {"fp32": predict(src, "fp32")}
         rows, timing = {}, {}
         for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
-            which = ("pt bc sur" if "bias corr" in label else "pt gc sur" if "gate-conv" in label
+            which = ("pt bc sur" if "bias corr" in label and "measured" not in label
+                     else "pt gc sur" if "gate-conv" in label
                      else "pt sur" if "pt-eq" in label and "surrogate" in label else "pt" if "pt-eq" in label
                      else "eq sur" if "anneal eq" in label and "surrogate" in label else "eq" if "anneal eq" in label
                      else "sur" if "surrogate" in label else "plain")
             dst = mdir / (label.replace(" ", "_").replace("+", "plus") + ".onnx")
             t = time.time()
             try:
+                base_model = models[which]
+                if "gate clip" in label:  # Clip before every gate: exact for HardSigmoid
+                    from anneal.core.surrogate import clip_gate_inputs
+
+                    clipped = mdir / f"{Path(base_model).stem}-gclip.onnx"
+                    if not clipped.exists():
+                        print(f"    clipped {clip_gate_inputs(base_model, clipped)} gate inputs", flush=True)
+                    base_model = clipped
                 if "bias corr (measured)" in label:
                     # two passes: quantize, read Quark's own Q(W), correct biases, quantize again
                     from anneal.core.bias_correction import correct_biases, weights_from_qdq
 
                     base_label = label.replace(" + bias corr (measured)", "")
                     first = mdir / "bc-first-pass.onnx"
-                    ModelQuantizer(qconfig(base_label, gate_nodes(models["pt sur"]))).quantize_model(
-                        str(models["pt sur"]), str(first), Reader(inp, calib_imgs))
+                    ModelQuantizer(qconfig(base_label, gate_nodes(base_model))).quantize_model(
+                        str(base_model), str(first), Reader(inp, calib_imgs))
                     qw = weights_from_qdq(first)
-                    corrected = mdir / "pt-sur-bc-measured.onnx"
-                    r = correct_biases(models["pt sur"], corrected, calib_imgs, quantized=qw)
+                    corrected = mdir / f"{Path(base_model).stem}-bc-measured.onnx"
+                    r = correct_biases(base_model, corrected, calib_imgs, quantized=qw)
                     print(f"    measured Q(W) for {len(qw)} layers, corrected {len(r.layers)} biases", flush=True)
                     ModelQuantizer(qconfig(base_label, gate_nodes(corrected))).quantize_model(
                         str(corrected), str(dst), Reader(inp, calib_imgs))
@@ -259,10 +276,10 @@ def main() -> None:
                 elif label == "fp32 surrogate":
                     shutil.copy(models["sur"], dst)
                 else:
-                    gates = gate_nodes(models[which])
+                    gates = gate_nodes(base_model)
                     if "gates" in label:
                         print(f"    {len(gates)} gate ops kept wider", flush=True)
-                    ModelQuantizer(qconfig(label, gates)).quantize_model(str(models[which]), str(dst), Reader(inp, calib_imgs))
+                    ModelQuantizer(qconfig(label, gates)).quantize_model(str(base_model), str(dst), Reader(inp, calib_imgs))
                 timing[label] = {"quantize_s": time.time() - t}
                 if "gate-conv" in label:  # does Quark leave the gate conv's output unquantized (fused)?
                     import onnx as _onnx
