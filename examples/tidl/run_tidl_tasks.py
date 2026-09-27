@@ -61,6 +61,13 @@ VARIANTS = {
     "tidl 8-bit no clip": ("plain", {**COMMON, "advanced_options:weight_clipping": 0,
                                      "advanced_options:activation_clipping": 0}),
     "tidl 8-bit ch-wise": ("plain", {**COMMON, "advanced_options:channel_wise_quantization": 1}),
+    # YOLOv8n: each output concatenates three detection scales, which TIDL gives one shared scale.
+    # Exact concat equalisation, or the two head concats kept on the ARM (each scale then keeps its
+    # own scale), alone and with TIDL's mixed precision
+    "tidl auto mixed + concat eq": ("concat_eq", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
+    "tidl 8-bit + head concat on arm": ("plain", {**COMMON, "deny_list:layer_name": "/model.22/Concat,/model.22/Concat_1"}),
+    "tidl auto mixed + head concat on arm": ("plain", {**COMMON, "advanced_options:mixed_precision_factor": 1.2,
+                                                       "deny_list:layer_name": "/model.22/Concat,/model.22/Concat_1"}),
     # TIDL's own mixed-precision search, alone and on top of Anneal's equalisation
     "tidl auto mixed": ("plain", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
     "tidl auto mixed + equalised": ("equalised", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
