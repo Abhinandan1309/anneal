@@ -47,6 +47,13 @@ def export(name: str, dst: Path) -> None:
             torch.onnx.export(model, torch.randn(1, 3, size, size), str(dst), input_names=["input"],
                               output_names=["logits"], opset_version=17, dynamo=False)
     else:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "zoo_gated"))
+        from export_models import TIMM as ZOO_TIMM
+        from export_models import export_any
+
+        if any(f.split(".")[0] == name for f in ZOO_TIMM):  # other timm models (LCNet, MobileViT, ...)
+            export_any(name, dst)
+            return
         from anneal.models import export_torchvision
 
         export_torchvision(name, dst)

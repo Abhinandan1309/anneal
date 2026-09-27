@@ -38,7 +38,7 @@ jobs:
           python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
           # TIDL's setup installs its own onnxruntime build (with the TIDL providers); keep it.
           python -m pip install --no-deps -e .
-          python -m pip install onnx numpy pillow rich
+          python -m pip install onnx numpy pillow rich timm
           python -c "import onnxruntime as o; print(o.__version__, o.get_available_providers())"
       - name: Clean env for QDQ builds (TIDL's onnx cannot import onnxruntime.quantization)
         run: |

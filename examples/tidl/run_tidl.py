@@ -207,7 +207,14 @@ def main() -> None:
         mdir.mkdir(parents=True, exist_ok=True)
         src = mdir / f"{name}-fp32.onnx"
         if not src.exists():
-            export_torchvision(name, src)
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "zoo_gated"))
+            from export_models import TIMM as ZOO_TIMM
+            from export_models import export_any
+
+            if any(f.split(".")[0] == name for f in ZOO_TIMM):  # timm models (LCNet, MobileViT, ...)
+                export_any(name, src)
+            else:
+                export_torchvision(name, src)
         # TIDL wants static shapes: batch 1, and shape-inferred.
         m = onnx.load(str(src))
         for vi in list(m.graph.input) + list(m.graph.output):
