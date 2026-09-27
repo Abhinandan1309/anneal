@@ -1,0 +1,21 @@
+{
+  "device": "Samsung Galaxy S24 (Family)",
+  "n": 1024,
+  "folded": 16,
+  "variants": {
+    "fp32": {
+      "latency_ms": 0.837,
+      "compute_units": {
+        "NPU": 242
+      }
+    },
+    "eq (hub qdq)": {
+      "inference_error": "'NoneType' object has no attribute 'values'",
+      "profile_error": "'execution_summary'"
+    },
+    "eq per-channel gate": {
+      "inference_error": "'NoneType' object has no attribute 'values'",
+      "profile_error": "'execution_summary'"
+    }
+  }
+}
