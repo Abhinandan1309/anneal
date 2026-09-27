@@ -99,7 +99,7 @@ VARIANTS = {
     "tidl prequant qdq (per-channel) + equalised": ("qdq_eq_pc", {**COMMON, "advanced_options:prequantized_model": 1}),
     # ResNet-18 imports faithfully, MobileNetV2 (-2.4 in onnxruntime) comes out garbage: is it the
     # Q/DQ we drop between a Conv and its Clip (ReLU6)? Keep them here.
-    "tidl prequant qdq (per-channel, act qdq kept)": ("qdq_pc_keep", {**COMMON, "advanced_options:prequantized_model": 1}),
+    "tidl prequant qdq (per-channel act qdq kept)": ("qdq_pc_keep", {**COMMON, "advanced_options:prequantized_model": 1}),
 }
 
 #: which float model each pre-quantized variant quantizes, and how
@@ -188,6 +188,9 @@ def main() -> None:
     if not tools:
         raise SystemExit("TIDL_TOOLS_PATH is not set: source edgeai-tidl-tools/scripts/setup/setup_env.sh J721E")
 
+    unknown = [v.strip() for v in args.variants.split(",") if v.strip() and v.strip() not in VARIANTS]
+    if unknown:  # before any export or build: labels must not contain commas
+        raise SystemExit(f"unknown variants {unknown}; labels must not contain commas")
     report = {"soc": "J721E (TDA4VM)", "tidl_tools_path": tools, "n": args.images, "models": {}}
     work = Path("tidl-work")
     for name in [m.strip() for m in args.models.split(",") if m.strip()]:
