@@ -142,8 +142,8 @@ def session(model: Path, providers: list[str], options: dict | None):
     return ort.InferenceSession(str(model), providers=providers, provider_options=provider_options, sess_options=so)
 
 
-def run_isolated(fn):
-    """Run ``fn()`` in a forked child; ``(result, None)``, or ``(None, error)`` if it raised or crashed."""
+def run_isolated(fn, timeout_s: float = float(os.environ.get("ANNEAL_TIDL_VARIANT_TIMEOUT", "3600"))):
+    """Run ``fn()`` in a forked child; ``(result, None)``, or ``(None, error)`` if it raised, crashed or hung."""
     import multiprocessing as mp
     import traceback
 
@@ -162,6 +162,10 @@ def run_isolated(fn):
     p = ctx.Process(target=child)
     p.start()
     send.close()
+    if not recv.poll(timeout_s):  # a hung import (MobileViT sat 3 h without output) costs one variant
+        p.kill()
+        p.join()
+        return None, f"timed out after {timeout_s:.0f} s"
     try:
         got = recv.recv()
     except EOFError:
