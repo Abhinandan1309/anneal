@@ -20,6 +20,8 @@ import torch
 OUT = Path(__file__).resolve().parents[1] / "models"
 IMAGENET_MEAN, IMAGENET_STD = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
 TORCHVISION = {"efficientnet_b2": 260, "efficientnet_b3": 300, "mobilenet_v3_small": 224}
+#: native input sizes of the torchvision classifiers the labs use (anything else: 224)
+NATIVE = {"efficientnet_b1": 240, "efficientnet_b2": 260, "efficientnet_b3": 300, "efficientnet_v2_s": 384}
 TIMM = ["efficientvit_b0.r224_in1k", "efficientvit_b1.r224_in1k", "mobilevit_s.cvnets_in1k",
         "lcnet_100.ra2_in1k", "fbnetv3_b.ra2_in1k"]
 
@@ -46,6 +48,22 @@ def export(model: torch.nn.Module, size: int, dst: Path) -> None:
         torch.onnx.export(model, torch.randn(1, 3, size, size), str(dst), input_names=["input"],
                           output_names=["logits"], dynamic_axes={"input": {0: "batch"}, "logits": {0: "batch"}},
                           opset_version=17, dynamo=False)
+
+
+def export_any(name: str, dst: Path) -> Path:
+    """Export ``name`` at its native size: a torchvision classifier, or a timm one from TIMM."""
+    timm_full = next((f for f in TIMM if f.split(".")[0] == name), None)
+    if timm_full is not None:
+        import timm
+
+        net = timm.create_model(timm_full, pretrained=True)
+        cfg = net.pretrained_cfg
+        export(Renormalise(net, cfg["mean"], cfg["std"]), cfg["input_size"][-1], dst)
+    else:
+        import torchvision
+
+        export(torchvision.models.get_model(name, weights="DEFAULT"), NATIVE.get(name, 224), dst)
+    return dst
 
 
 def main() -> None:

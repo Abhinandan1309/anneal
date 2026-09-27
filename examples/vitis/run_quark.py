@@ -196,8 +196,17 @@ def main() -> None:
         mdir = work / name
         mdir.mkdir(parents=True, exist_ok=True)
         src = mdir / f"{name}-fp32.onnx"
-        if not src.exists():
-            export_torchvision(name, src)
+        if not src.exists():  # native input size; timm models through the zoo's exporter
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "zoo_gated"))
+            from export_models import export_any
+
+            export_any(name, src)
+            m = onnx.load(str(src))  # batch 1 (Quark and the NPU compile static shapes)
+            for vi in list(m.graph.input) + list(m.graph.output):
+                d = vi.type.tensor_type.shape.dim[0]
+                d.ClearField("dim_param")
+                d.dim_value = 1
+            onnx.save(m, str(src))
         shape = sample_shape(src)
         inp = onnx.load(str(src)).graph.input[0].name
         calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=1, limit=64, sample_shape=shape)
