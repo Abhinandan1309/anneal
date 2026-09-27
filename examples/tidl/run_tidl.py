@@ -60,8 +60,8 @@ VARIANTS = {
     # runs its own iterative bias calibration too, so this measures whether ours adds anything
     "tidl 8-bit + equalised (per-tensor) + bias corr": ("equalised_pt_bc", COMMON),
     # the gate-side 1/s constants exactly on the power-of-two int8 grid (lossless if TIDL quantizes them)
-    "tidl 8-bit + equalised (per-tensor, grid)": ("equalised_pt_grid", COMMON),
-    "tidl auto mixed + equalised (per-tensor, grid)": ("equalised_pt_grid", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
+    "tidl 8-bit + equalised (per-tensor grid)": ("equalised_pt_grid", COMMON),
+    "tidl auto mixed + equalised (per-tensor grid)": ("equalised_pt_grid", {**COMMON, "advanced_options:mixed_precision_factor": 1.2}),
     # ReLU/ReLU6 cross-layer equalisation (anneal.core.cle), full and with scales capped at 16x,
     # since uncapped CLE can widen per-tensor activation ranges ~650x on MobileNetV2
     "tidl 8-bit + cle": ("cle", COMMON),
@@ -195,7 +195,11 @@ def main() -> None:
 
         preds = {"fp32": predict(session(src, ["CPUExecutionProvider"], None))}
         rows, timing, rankings = {}, {}, {}
-        for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
+        wanted = [v.strip() for v in args.variants.split(",") if v.strip()]
+        unknown = [v for v in wanted if v not in VARIANTS]
+        if unknown:  # fail before minutes of export and compilation, not after
+            raise SystemExit(f"unknown variants {unknown}; labels must not contain commas. Known: {list(VARIANTS)}")
+        for label in wanted:
             which, opts = VARIANTS[label]
             art = mdir / "artifacts" / re.sub(r"[^A-Za-z0-9]+", "_", label.replace("+", "plus")).strip("_")  # TI tools run shell commands on this path
             shutil.rmtree(art, ignore_errors=True)
