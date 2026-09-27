@@ -524,6 +524,21 @@ def _site_scales(
     )
 
 
+def pow2_alignment_gain(lo: np.ndarray, hi: np.ndarray, s: np.ndarray, levels: int = 127) -> float:
+    """The factor g in [1, 2) that puts the scaled tensor's peak exactly on a power-of-two grid.
+
+    Accelerators with power-of-two scales (TI TIDL, AMD XINT8) round a tensor's step up to 2^e
+    with 127 * 2^e >= its peak, wasting up to a bit. Multiplying every channel's scale by one
+    factor leaves the channel balance unchanged but moves the peak to exactly 127 * 2^e. On
+    EfficientNet-B1 under emulation, power-of-two activation scales alone cost ~29pp.
+    """
+    peak = float(np.max(np.maximum(np.abs(lo), np.abs(hi)) * np.abs(s)))
+    if not np.isfinite(peak) or peak <= 0:
+        return 1.0
+    target = levels * 2.0 ** np.ceil(np.log2(peak / levels))
+    return float(target / peak)
+
+
 def _mixed_scales(
     s: np.ndarray, weight_a, weight_b, alpha: float, beta: float, b_axis: int = 0
 ) -> np.ndarray:
@@ -595,6 +610,7 @@ def equalise(
     residual: bool = False,
     se: bool = False,
     mix: tuple[float, float] | None = None,
+    pow2_align: bool = False,
 ) -> EqualisationResult:
     """Write an equalised copy of ``src`` to ``dst`` and describe what changed.
 
@@ -698,6 +714,8 @@ def equalise(
             # consumer), along its input channels unless it is depthwise.
             b_axis = 0 if site.fc1 is None or _is_depthwise_weight(site.conv_b, inits) else 1
             s = _mixed_scales(s, inits[site.conv_a.input[1]], inits[site.conv_b.input[1]], *mix, b_axis=b_axis)
+        if pow2_align:
+            s = (s * pow2_alignment_gain(*ranges[site.y], s)).astype(s.dtype)
         s64 = s.astype(np.float64)
         rescale(site.conv_a.input[1], s64)
         if len(site.conv_a.input) > 2 and site.conv_a.input[2]:

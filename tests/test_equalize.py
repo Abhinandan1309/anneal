@@ -1154,3 +1154,16 @@ def test_min_damage_probe_includes_se_site_tensors(tmp_path: Path, calib, monkey
     _static(tmp_path, calib, src, "se", equalize=True, equalize_se=True, equalize_min_damage=0.0)
     assert seen[0] == ["x", "y"]
     assert seen[1] == ["x", "x2", "y", "y2", "z"]
+
+
+def test_pow2_alignment_puts_the_peak_on_a_power_of_two_grid_and_stays_exact(tmp_path: Path):
+    from anneal.core.equalize import pow2_alignment_gain
+
+    g = pow2_alignment_gain(np.array([-1.0, 0.0]), np.array([2.0, 5.0]), np.array([1.0, 1.0]))
+    assert 1.0 <= g < 2.0 and np.log2(5.0 * g / 127) == pytest.approx(round(np.log2(5.0 * g / 127)))
+    src = _model(tmp_path / "m.onnx", "silu")
+    dst = tmp_path / "eq.onnx"
+    equalise(src, dst, _batches(), pow2_align=True)
+    x = _batches(1, seed=7)[0]
+    before, after = _run(src, x), _run(dst, x)
+    assert np.abs(after - before).max() <= 1e-4 * max(1.0, np.abs(before).max())

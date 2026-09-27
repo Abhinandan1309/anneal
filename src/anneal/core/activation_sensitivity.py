@@ -106,6 +106,16 @@ def uint8_qparams(lo: float, hi: float) -> tuple[float, int]:
     return scale, int(np.clip(round(-lo / scale), 0, 255))
 
 
+def sym_pow2_qparams(lo: float, hi: float) -> tuple[float, int]:
+    """TIDL/XINT8-style feature map: symmetric int8 with a power-of-two scale, expressed on the
+    uint8 grid (zero point 128) so the same QuantizeLinear/DequantizeLinear pair emulates it."""
+    peak = max(abs(lo), abs(hi), 1e-12)
+    return float(2.0 ** np.ceil(np.log2(peak / 127.0))), 128
+
+
+QPARAMS = {"asym": uint8_qparams, "sym_pow2": sym_pow2_qparams}
+
+
 def _predict(session, xs: Sequence[np.ndarray]) -> np.ndarray:
     """Argmax over axis 1 of output 0, flattened: top-1 per image for a classifier."""
     name = session.get_inputs()[0].name
@@ -118,6 +128,7 @@ def rank_activation_tensors(
     calib_batches: Iterable[np.ndarray],
     probe_batches: Iterable[np.ndarray],
     tensors: Sequence[str] | None = None,
+    scheme: str = "asym",
 ) -> list[TensorDamage]:
     """Every candidate tensor with its 8-bit damage, most damaging first.
 
@@ -155,7 +166,7 @@ def rank_activation_tensors(
     with tempfile.TemporaryDirectory(prefix="anneal-act-sens-") as tmp:
         path = Path(tmp) / "one.onnx"
         for t in tensors:
-            scale, zp = uint8_qparams(*ranges[t])
+            scale, zp = QPARAMS[scheme](*ranges[t])
             s_name, z_name = "anneal_fq_scale", "anneal_fq_zp"
             q, dq = f"{t}__anneal_fq_q", f"{t}__anneal_fq"
             # Rewire in place, save, undo: no per-candidate copy of the model in memory.
@@ -182,6 +193,7 @@ def joint_damage(
     tensors: Sequence[str],
     calib_batches: Iterable[np.ndarray],
     probe_batches: Iterable[np.ndarray],
+    scheme: str = "asym",
 ) -> float:
     """Share of probe top-1 predictions that change when all ``tensors`` are 8-bit at once.
 
@@ -205,7 +217,7 @@ def joint_damage(
     model = onnx.load(str(model_path))
     g = model.graph
     for i, t in enumerate(tensors):
-        scale, zp = uint8_qparams(*ranges[t])
+        scale, zp = QPARAMS[scheme](*ranges[t])
         s_name, z_name, q, dq = f"anneal_jfq{i}_scale", f"anneal_jfq{i}_zp", f"{t}__anneal_jfq_q", f"{t}__anneal_jfq"
         for node in g.node:
             for j, inp in enumerate(node.input):

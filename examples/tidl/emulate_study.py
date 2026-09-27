@@ -47,8 +47,8 @@ def prepare(kind: str, src: Path, dst: Path, batches: list[np.ndarray]) -> Path:
     if kind.startswith("eq"):  # eq, eq-pt (per-tensor aware)
         if kind == "eq":
             equalise(src, dst, batches)
-        else:
-            equalise(src, dst, batches, residual=True, se=True, mix=(0.5, 0.5))
+        else:  # eq-pt, eq-pt-p2 (with power-of-two range alignment)
+            equalise(src, dst, batches, residual=True, se=True, mix=(0.5, 0.5), pow2_align=kind.endswith("-p2"))
             cross_layer_equalise(dst, dst, max_scale=4.0, batches=batches, t=0.5)
         return dst
     raise ValueError(kind)
