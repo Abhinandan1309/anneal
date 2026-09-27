@@ -9,7 +9,7 @@ import sys
 
 MODELS = "efficientvit_b0,mobilenet_v3_small,lcnet_100,mobilevit_s,efficientnet_b0"
 IMAGES = "1000"
-VARIANTS = "anneal qdq (sym),anneal qdq (sym 4 float)"  # empty = all
+VARIANTS = "anneal qdq (sym 4 float)"  # empty = all
 REF = "main"
 
 

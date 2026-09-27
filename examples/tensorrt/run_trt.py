@@ -233,12 +233,18 @@ def trt_ready_qdq(src: Path, dst: Path) -> dict:
         if n.op_type != "DequantizeLinear" or n.input[0] not in inits:
             continue
         q = numpy_helper.to_array(inits[n.input[0]])
-        if q.dtype != np.int32:
+        if q.dtype not in (np.int32, np.int16, np.uint16):
             continue
         scale = numpy_helper.to_array(inits[n.input[1]]).astype(np.float64)
-        g.initializer.append(numpy_helper.from_array((q * scale).astype(np.float32), n.output[0]))
+        zp = numpy_helper.to_array(inits[n.input[2]]).astype(np.float64) if len(n.input) > 2 and n.input[2] else 0.0
+        axis = next((a.i for a in n.attribute if a.name == "axis"), 1)
+        if np.ndim(scale) == 1 and q.ndim > 1:  # per-channel: broadcast along the axis
+            shape = [1] * q.ndim
+            shape[axis] = -1
+            scale, zp = scale.reshape(shape), np.reshape(zp, shape) if np.ndim(zp) == 1 else zp
+        g.initializer.append(numpy_helper.from_array(((q - zp) * scale).astype(np.float32), n.output[0]))
         drop.append(n)
-        biases += 1
+        biases += q.dtype == np.int32
     rename: dict[str, str] = {}
     for n in g.node:
         if n.op_type != "QuantizeLinear" or len(n.input) < 3 or n.input[2] not in inits:
@@ -261,6 +267,10 @@ def trt_ready_qdq(src: Path, dst: Path) -> dict:
         if o.name in rename:  # a graph output that was a DQ output: keep its name
             g.node.append(onnx.helper.make_node("Identity", [rename[o.name]], [o.name]))
     del prod
+    # TensorRT's parser imports every initializer, used or not, and has no 16-bit integer type
+    used = {i for n in g.node for i in n.input} | {o.name for o in g.output}
+    for init in [i for i in g.initializer if i.name not in used]:
+        g.initializer.remove(init)
     onnx.save(m, str(dst))
     return {"float_biases": biases, "wide_tensors_float": wide}
 
