@@ -840,6 +840,7 @@ def quantize_static_int8(
     equalize_se = bool(params.get("equalize_se", False))
     equalize_gate_conv = bool(params.get("equalize_gate_conv", False))
     grid_inverse = bool(params.get("equalize_grid_inverse", False))
+    derived = bool(params.get("equalize_derived", False))
     slack = float(params.get("equalize_slack", EQUALIZE_SLACK))
     top_k = params.get("equalize_top_k")
     min_gain = params.get("equalize_min_gain")
@@ -953,6 +954,7 @@ def quantize_static_int8(
             **({"equalize_se": True} if equalize_se else {}),
             **({"equalize_gate_conv": True} if equalize_gate_conv else {}),
             **({"equalize_grid_inverse": True} if grid_inverse else {}),
+            **({"equalize_derived": True} if derived else {}),
             **({"equalize_min_gain": min_gain} if min_gain is not None else {}),
             **({"equalize_min_damage": min_damage} if min_damage is not None else {}),
             # Recorded only when set (always for per-tensor equalisation, whose default is 0.5),
@@ -1033,6 +1035,7 @@ def quantize_static_int8(
             mix=None if eq_mix is None else (1.0 - eq_mix, eq_mix),
             gate_conv=equalize_gate_conv,
             grid_inverse=grid_inverse,
+            derived=derived,
         )
         src = eq_path
         if float_gates:
@@ -1588,6 +1591,17 @@ REGISTRY: dict[str, TransformSpec] = {
                     "power-of-two int8 grid, so a target that quantizes that constant (Qualcomm, TIDL "
                     "emulation) loses nothing; otherwise channels with small 1/s round badly or to 0. "
                     "Exact; caps the per-site scale spread at 127x."
+                ),
+            },
+            "equalize_derived": {
+                "type": "boolean",
+                "description": (
+                    "With equalize: per-channel noise-optimal scales (minimise the summed output "
+                    "noise of every tensor the site rescales, weighted by Hutchinson estimates of "
+                    "the output sensitivity; needs onnx2torch, `pip install anneal[derived]`). "
+                    "Use with equalize_grid_inverse. Measured on pure 8-bit targets: TIDL "
+                    "EfficientNet-B1 -58.1 -> -31.4, B0 -11.2 -> -4.0 (1500 images); AMD XINT8 B0 "
+                    "-5.4 -> -1.8 but B1 -8.0 -> -11.0; ties once 16-bit layers are mixed in."
                 ),
             },
             "float_nodes": {
