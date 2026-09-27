@@ -1,0 +1,28 @@
+{
+ "model": "efficientnet_b1",
+ "n": 1000,
+ "rules": {
+  "per_channel": false,
+  "activation_type": "int8",
+  "activation_symmetric": true,
+  "pow2_activation_scales": true,
+  "calibrate_method": "minmax",
+  "calib_samples": 64
+ },
+ "rows": {
+  "eq-pt": {
+   "delta_pp": -64.7,
+   "ci95_pp": [
+    -67.70072735449257,
+    -61.69927264550743
+   ]
+  },
+  "eq-pt-grid": {
+   "delta_pp": -42.5,
+   "ci95_pp": [
+    -45.650513291512986,
+    -39.349486708487014
+   ]
+  }
+ }
+}
