@@ -1,0 +1,48 @@
+{
+  "soc": "J721E (TDA4VM)",
+  "model": "lraspp_mobilenet_v3_large",
+  "n": 300,
+  "calibration_images": 16,
+  "equalised_sites": 14,
+  "equalised_dense_sites": 0,
+  "variants": {
+    "tidl 8-bit": {
+      "metric": 0.09780676314823815,
+      "delta_pts": -44.6510306319859,
+      "ci95_pts": [
+        -48.145995012477414,
+        -38.54996514990627
+      ],
+      "compile_s": 840.9131827354431
+    },
+    "tidl 8-bit + equalised (se only)": {
+      "metric": 0.17181058716084924,
+      "delta_pts": -37.250648230724785,
+      "ci95_pts": [
+        -41.44026074372016,
+        -32.40352184159629
+      ],
+      "compile_s": 845.2896451950073
+    },
+    "tidl 8-bit + equalised (se grid clip)": {
+      "metric": 0.1843598418601644,
+      "delta_pts": -35.99572276079327,
+      "ci95_pts": [
+        -40.4624929502428,
+        -31.423623604073587
+      ],
+      "compile_s": 859.8486096858978
+    },
+    "tidl 8-bit + equalised (grid clip)": {
+      "metric": 0.2767973337434783,
+      "delta_pts": -26.75197357246188,
+      "ci95_pts": [
+        -32.086834279812926,
+        -21.579836742895836
+      ],
+      "compile_s": 737.703558921814
+    }
+  },
+  "metric": "mIoU (21 VOC classes)",
+  "fp32": 0.5443170694680971
+}

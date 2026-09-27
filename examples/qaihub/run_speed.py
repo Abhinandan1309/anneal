@@ -103,6 +103,8 @@ def main() -> None:
     ap.add_argument("--device", default="Samsung Galaxy S24 (Family)")
     ap.add_argument("--runtime", default="qnn_dlc")
     ap.add_argument("--images", type=int, default=1024)
+    ap.add_argument("--only", help="variants to run besides fp32, separated by ';'")
+    ap.add_argument("--tag", default="")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
 
@@ -113,15 +115,21 @@ def main() -> None:
     calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=8, limit=64, sample_shape=shape)
     calib_imgs = [x[i:i + 1] for x in calib.calibration_batches(64) for i in range(len(x))][:64]
     batches = [np.concatenate(calib_imgs[i:i + 8]) for i in range(0, 64, 8)]
+    from anneal.core.surrogate import clip_gate_inputs
+
     eq, gc, ps = work / "eq.onnx", work / "eq-gate-conv.onnx", work / "eq-post-scale.onnx"
     equalise(src, eq, batches)
     equalise(src, gc, batches, gate_conv=True)
     n_ps = post_scale(eq, ps)
+    eqg, eqgc, gcc = work / "eq-grid.onnx", work / "eq-grid-clip.onnx", work / "eq-gate-conv-clip.onnx"
+    equalise(src, eqg, batches, grid_inverse=True)
+    clip_gate_inputs(eqg, eqgc)
+    clip_gate_inputs(gc, gcc)
     print(f"post-scale rewrote {n_ps} sites", flush=True)
     # exactness in float before spending device time
     x = calib_imgs[0]
     ref = ort.InferenceSession(str(src), providers=["CPUExecutionProvider"]).run(None, {"input": x})[0]
-    for p in (eq, gc, ps):
+    for p in (eq, gc, ps, eqg, eqgc, gcc):
         out = ort.InferenceSession(str(p), providers=["CPUExecutionProvider"]).run(None, {"input": x})[0]
         print(f"  {p.name}: max |logit diff| vs FP32 {np.abs(out - ref).max():.2e}", flush=True)
 
@@ -133,7 +141,10 @@ def main() -> None:
     labels = np.array(labels)
 
     device = hub.Device(args.device)
-    paths = {"fp32": src, "int8": src, "eq": eq, "eq gate-conv": gc, "eq post-scale": ps}
+    paths = {"fp32": src, "int8": src, "eq": eq, "eq gate-conv": gc, "eq post-scale": ps,
+             "eq grid": eqg, "eq grid clip": eqgc, "eq gate-conv clip": gcc}
+    if args.only:
+        paths = {k: v for k, v in paths.items() if k in {"fp32", *[o.strip() for o in args.only.split(";")]}}
     statics = {k: static_copy(p, work) if k != "fp32" else static_copy(p, work) for k, p in paths.items()}
     q_jobs = {k: hub.submit_quantize_job(str(p), {"input": calib_imgs}, name=f"anneal-speed-{k}-q")
               for k, p in statics.items() if k != "fp32"}
@@ -175,6 +186,18 @@ def main() -> None:
         except Exception as exc:  # noqa: BLE001
             row["profile_error"] = str(exc)[:300]
         result["variants"][k] = row
+    # The device's "fp32" build runs in reduced precision on the NPU (EfficientNet-B1: 69.2% there,
+    # 76.1% in true FP32 on the same images), so deltas are also given against true FP32 (ORT CPU).
+    cpu = ort.InferenceSession(str(src), providers=["CPUExecutionProvider"])
+    true_fp32 = np.array([int(np.argmax(cpu.run(None, {"input": x})[0])) for x in eval_imgs])
+    true_ok = true_fp32 == labels
+    result["true_fp32_accuracy"] = float(true_ok.mean())
+    for k, p in preds.items():
+        right = p == labels
+        b, c = int(np.sum(true_ok & ~right)), int(np.sum(~true_ok & right))
+        d, lo, hi = paired_delta_ci(b, c, len(labels))
+        result["variants"][k].update({"accuracy": float(right.mean()), "delta_vs_true_fp32_pp": d,
+                                      "ci95_vs_true_fp32_pp": [lo, hi]})
     ref_ok = preds.get("fp32") == labels if "fp32" in preds else None
     for k, p in preds.items():
         if k == "fp32" or ref_ok is None:
@@ -187,8 +210,9 @@ def main() -> None:
         ops = row.get("ops", {})
         top = ", ".join(f"{t} {v['count']}x {v['ms']:.3f}" for t, v in list(ops.items())[:6])
         print(f"  {k:16s} {row.get('latency_ms', float('nan')):.3f} ms  "
-              f"{row.get('delta_pp', float('nan')):+.2f}pp  | {top}", flush=True)
-    out = HERE / "results" / f"{args.model}-speed-{args.device.split('(')[0].strip().lower().replace(' ', '-')}-{args.runtime}-n{len(labels)}.json"
+              f"{row.get('delta_pp', float('nan')):+.2f}pp  vs true FP32 {row.get('delta_vs_true_fp32_pp', float('nan')):+.2f}pp"
+              f"  | {top}", flush=True)
+    out = HERE / "results" / f"{args.model}-speed-{args.device.split('(')[0].strip().lower().replace(' ', '-')}-{args.runtime}-n{len(labels)}{args.tag}.json"
     out.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(f"wrote {out}", flush=True)
 

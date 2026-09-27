@@ -107,7 +107,10 @@ def build(onnx_path: Path, mode: str, calib_batches, work: Path, fp16: bool = Tr
         keep = {trt.LayerType.CONVOLUTION}  # TensorRT 10 has no FULLY_CONNECTED layer type
         for i in range(network.num_layers):
             layer = network.get_layer(i)
-            if layer.type not in keep and layer.type not in (trt.LayerType.CONSTANT, trt.LayerType.SHUFFLE):
+            if layer.type in keep or layer.type in (trt.LayerType.CONSTANT, trt.LayerType.SHUFFLE):
+                continue
+            outs = [layer.get_output(k) for k in range(layer.num_outputs)]
+            if outs and all(o.dtype == trt.float32 for o in outs):  # shape/int layers keep their types
                 layer.precision = trt.float16
                 for k in range(layer.num_outputs):
                     layer.set_output_type(k, trt.float16)
@@ -225,10 +228,13 @@ def main() -> None:
         calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=1, limit=128, sample_shape=shape)
         calib_imgs = list(calib.calibration_batches(128))
         models = {"plain": src, "eq": mdir / f"{name}-eq.onnx", "eq res": mdir / f"{name}-eq-res.onnx",
-                  "eq grid": mdir / f"{name}-eq-grid.onnx"}
+                  "eq grid": mdir / f"{name}-eq-grid.onnx", "eq pos": mdir / f"{name}-eq-pos.onnx"}
         n_sites = {"eq": len(equalise(src, models["eq"], calib_imgs[:64]).sites),
                    "eq res": len(equalise(src, models["eq res"], calib_imgs[:64], residual=True).sites),
-                   "eq grid": len(equalise(src, models["eq grid"], calib_imgs[:64], grid_inverse=True).sites)}
+                   "eq grid": len(equalise(src, models["eq grid"], calib_imgs[:64], grid_inverse=True).sites),
+                   # no mirrored channels: every 1/s positive (TensorRT's gate Mul diverged at a site
+                   # with negative scales in the QDQ prefix bisection)
+                   "eq pos": len(equalise(src, models["eq pos"], calib_imgs[:64], allow_negative=False).sites)}
         print(f"{name}: equalised sites {n_sites}", flush=True)
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)
         pairs = list(ev.batches())
@@ -252,6 +258,7 @@ def main() -> None:
             gates_out = base.endswith(" (gates excluded)")
             base = base.replace(" (gates excluded)", "")
             which = ("eq res" if base.endswith("eq res") else "eq grid" if base.endswith("eq grid")
+                     else "eq pos" if base.endswith("eq pos")
                      else "eq" if base.endswith("+ eq") else "plain")
             t = time.time()
             try:
