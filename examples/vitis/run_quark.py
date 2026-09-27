@@ -119,7 +119,12 @@ VARIANTS = ["fp32 hardsigmoid", "xint8", "xint8 + cle", "xint8 + anneal eq", "xi
             "xint8 percentile cal + anneal pt-eq + surrogate + gate clip + bias corr (measured)",
             "xint8 percentile cal + anneal pt-eq + surrogate + gate clip + a16 gates + bias corr (measured)",
             "xint8 percentile cal + anneal pt-eq gate-conv + surrogate + gate clip + bias corr (measured)",
-            "xint8 percentile cal + anneal pt-eq gate-conv + surrogate + gate clip + a16 gates + bias corr (measured)"]
+            "xint8 percentile cal + anneal pt-eq gate-conv + surrogate + gate clip + a16 gates + bias corr (measured)",
+            # every gate-side 1/s on the power-of-two int8 grid (equalise(grid_inverse=True)): lossless
+            "xint8 percentile cal + anneal pt-eq grid + surrogate",
+            "xint8 percentile cal + anneal pt-eq grid + surrogate + bias corr (measured)",
+            "xint8 percentile cal + anneal pt-eq grid + surrogate + a16 gates + bias corr (measured)",
+            "xint8 percentile cal + anneal pt-eq grid + surrogate + gate clip + a16 gates + bias corr (measured)"]
 
 
 def hardsigmoid_copy(src: Path, dst: Path) -> None:
@@ -215,13 +220,18 @@ def main() -> None:
         pt_bc_sur = mdir / f"{name}-pt-equalised-bc-surrogate.onnx"  # XINT8: per-tensor pow2 weights
         correct_biases(pt, mdir / f"{name}-pt-equalised-bc.onnx", calib_imgs, per_channel=False, pow2=True)
         replace_sigmoids(mdir / f"{name}-pt-equalised-bc.onnx", pt_bc_sur, calib_imgs, k_terms=3)
+        pt_grid, pt_grid_sur = mdir / f"{name}-pt-equalised-grid.onnx", mdir / f"{name}-pt-equalised-grid-surrogate.onnx"
+        equalise(src, pt_grid, calib_imgs, residual=True, se=True, mix=(0.5, 0.5), grid_inverse=True)
+        cross_layer_equalise(pt_grid, pt_grid, max_scale=4.0)
+        replace_sigmoids(pt_grid, pt_grid_sur, calib_imgs, k_terms=3)
         pt_gc = mdir / f"{name}-pt-equalised-gate-conv.onnx"
         equalise(src, pt_gc, calib_imgs, residual=True, se=True, mix=(0.5, 0.5), gate_conv=True)
         cross_layer_equalise(pt_gc, pt_gc, max_scale=4.0)
         pt_gc_sur = mdir / f"{name}-pt-equalised-gate-conv-surrogate.onnx"
         replace_sigmoids(pt_gc, pt_gc_sur, calib_imgs, k_terms=3)
         models = {"plain": src, "eq": eq, "sur": sur, "eq sur": eq_sur, "pt": pt, "pt sur": pt_sur,
-                  "pt gc sur": pt_gc_sur, "pt bc sur": pt_bc_sur}
+                  "pt gc sur": pt_gc_sur, "pt bc sur": pt_bc_sur,
+                  "pt grid sur": pt_grid_sur}
 
         ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)  # batch 1: Quark may fix it
         batches = list(ev.batches())
@@ -241,7 +251,8 @@ def main() -> None:
         preds = {"fp32": predict(src, "fp32")}
         rows, timing = {}, {}
         for label in [v.strip() for v in args.variants.split(",") if v.strip()]:
-            which = ("pt bc sur" if "bias corr" in label and "measured" not in label
+            which = ("pt grid sur" if "pt-eq grid" in label
+                     else "pt bc sur" if "bias corr" in label and "measured" not in label
                      else "pt gc sur" if "gate-conv" in label
                      else "pt sur" if "pt-eq" in label and "surrogate" in label else "pt" if "pt-eq" in label
                      else "eq sur" if "anneal eq" in label and "surrogate" in label else "eq" if "anneal eq" in label

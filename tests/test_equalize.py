@@ -1227,3 +1227,33 @@ def test_static_quantization_records_gate_conv(tmp_path: Path, calib):
     assert "equalize_gate_conv" not in plain.lineage[-1].params
     with pytest.raises(TransformError):
         _static(tmp_path, calib, src, "bad", equalize_gate_conv=True)
+
+
+def test_grid_scales_put_every_inverse_on_one_power_of_two_int8_grid():
+    from anneal.core.equalize import grid_scales
+
+    s = np.array([1.0, 3.7, 279.0, -12.5, 0.9, 41.0])
+    g = grid_scales(s)
+    inv = 1.0 / g
+    step = np.abs(inv).max() / 127  # what a symmetric per-tensor int8 quantizer would pick
+    assert np.isclose(np.log2(step), round(np.log2(step)))  # a power of two
+    k = inv / step
+    assert np.allclose(k, np.round(k)) and np.all(np.abs(np.round(k)) >= 1)
+    assert np.all(np.sign(g) == np.sign(s))
+
+
+@pytest.mark.parametrize("activation", ["silu", "hardswish"])
+def test_grid_inverse_keeps_the_rewrite_exact(tmp_path: Path, activation: str):
+    from onnx import numpy_helper
+
+    src = _model(tmp_path / "m.onnx", activation)
+    dst = tmp_path / "eq.onnx"
+    result = equalise(src, dst, _batches(), grid_inverse=True)
+    assert result.sites
+    x = _batches(1, seed=7)[0]
+    assert np.allclose(_run(src, x), _run(dst, x), rtol=1e-4, atol=1e-4)
+    for init in onnx.load(str(dst)).graph.initializer:
+        if init.name.startswith("anneal_eq_inv"):
+            inv = numpy_helper.to_array(init).astype(np.float64).reshape(-1)
+            k = inv / (np.abs(inv).max() / 127)
+            assert np.allclose(k, np.round(k), atol=1e-3)

@@ -839,6 +839,7 @@ def quantize_static_int8(
     equalize_residual = bool(params.get("equalize_residual", False))
     equalize_se = bool(params.get("equalize_se", False))
     equalize_gate_conv = bool(params.get("equalize_gate_conv", False))
+    grid_inverse = bool(params.get("equalize_grid_inverse", False))
     slack = float(params.get("equalize_slack", EQUALIZE_SLACK))
     top_k = params.get("equalize_top_k")
     min_gain = params.get("equalize_min_gain")
@@ -951,6 +952,7 @@ def quantize_static_int8(
             **({"equalize_residual": True} if equalize_residual else {}),
             **({"equalize_se": True} if equalize_se else {}),
             **({"equalize_gate_conv": True} if equalize_gate_conv else {}),
+            **({"equalize_grid_inverse": True} if grid_inverse else {}),
             **({"equalize_min_gain": min_gain} if min_gain is not None else {}),
             **({"equalize_min_damage": min_damage} if min_damage is not None else {}),
             # Recorded only when set (always for per-tensor equalisation, whose default is 0.5),
@@ -1030,6 +1032,7 @@ def quantize_static_int8(
             se=equalize_se,
             mix=None if eq_mix is None else (1.0 - eq_mix, eq_mix),
             gate_conv=equalize_gate_conv,
+            grid_inverse=grid_inverse,
         )
         src = eq_path
         if float_gates:
@@ -1576,6 +1579,15 @@ REGISTRY: dict[str, TransformSpec] = {
                     "asymptotes, fitted per gate on its calibration inputs (x^2-weighted for SiLU). "
                     "AMD's plain swap costs EfficientNet-B0 48.8pp and B1 75.7pp top-1 in float; "
                     "3 terms: +0.2pp and -0.5pp vs FP32 (Imagenette 1000). Applied after equalisation; 0 = off."
+                ),
+            },
+            "equalize_grid_inverse": {
+                "type": "boolean",
+                "description": (
+                    "With equalize: choose the scales so every gate-side 1/s lies exactly on a "
+                    "power-of-two int8 grid, so a target that quantizes that constant (Qualcomm, TIDL "
+                    "emulation) loses nothing; otherwise channels with small 1/s round badly or to 0. "
+                    "Exact; caps the per-site scale spread at 127x."
                 ),
             },
             "float_nodes": {

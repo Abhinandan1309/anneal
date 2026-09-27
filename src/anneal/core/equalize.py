@@ -535,6 +535,26 @@ def _site_scales(
     )
 
 
+def grid_scales(s: np.ndarray, levels: int = 127) -> np.ndarray:
+    """Scales whose inverses lie exactly on a symmetric 8-bit power-of-two grid.
+
+    The gate-side 1/s is a constant the target quantizes like a weight: 8 bits on one scale per
+    tensor. 1/s spans orders of magnitude across channels (279x at EfficientNet-B1's stem), so
+    small ones round badly or to zero, and a zeroed channel's gate is stuck at sigmoid(0).
+    Equalisation stays exact for any s, including a common factor on all of them, so choose
+    s such that max|1/s| is exactly ``levels * 2^e`` (the quantizer's per-tensor scale is then
+    2^e, symmetric or power-of-two) and every 1/s is a nonzero multiple of 2^e. Quantizing 1/s is
+    then lossless; the price is a spread of at most ``levels``x.
+    """
+    s = np.asarray(s, np.float64)
+    inv = 1.0 / s
+    m = float(np.abs(inv).max())
+    step = 2.0 ** np.ceil(np.log2(m / levels))
+    k = np.round(inv * (levels * step / m) / step)
+    k = np.where(np.abs(k) < 1, np.sign(inv), k)
+    return 1.0 / (k * step)
+
+
 def pow2_alignment_gain(lo: np.ndarray, hi: np.ndarray, s: np.ndarray, levels: int = 127) -> float:
     """The factor g in [1, 2) that puts the scaled tensor's peak exactly on a power-of-two grid.
 
@@ -623,6 +643,7 @@ def equalise(
     mix: tuple[float, float] | None = None,
     pow2_align: bool = False,
     gate_conv: bool = False,
+    grid_inverse: bool = False,
 ) -> EqualisationResult:
     """Write an equalised copy of ``src`` to ``dst`` and describe what changed.
 
@@ -733,6 +754,8 @@ def equalise(
             s = _mixed_scales(s, inits[site.conv_a.input[1]], inits[site.conv_b.input[1]], *mix, b_axis=b_axis)
         if pow2_align:
             s = (s * pow2_alignment_gain(*ranges[site.y], s)).astype(s.dtype)
+        if grid_inverse and site.kind in ("gated", "gated-se"):  # 1/s is a quantized constant
+            s = grid_scales(s).astype(s.dtype)
         s64 = s.astype(np.float64)
         rescale(site.conv_a.input[1], s64)
         if len(site.conv_a.input) > 2 and site.conv_a.input[2]:
