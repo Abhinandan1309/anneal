@@ -1,0 +1,32 @@
+{
+  "soc": "J721E (TDA4VM)",
+  "model": "unet_carvana",
+  "n": 50,
+  "calibration_images": 16,
+  "equalised_sites": 0,
+  "equalised_dense_sites": 0,
+  "variants": {
+    "tidl 8-bit": {
+      "metric": 0.980209790465344,
+      "delta_pts": -1.9790209534656045,
+      "ci95_pts": [
+        -2.8538359140296343,
+        -1.2233328944946997
+      ],
+      "pixel_agreement": 0.9849518952546297,
+      "compile_s": 4067.465670824051
+    },
+    "tidl 8-bit + concat eq": {
+      "metric": 0.9815803681484432,
+      "delta_pts": -1.8419631851556817,
+      "ci95_pts": [
+        -2.7326063797949884,
+        -1.1559623043765344
+      ],
+      "pixel_agreement": 0.9859693287037038,
+      "compile_s": 4054.4076113700867
+    }
+  },
+  "metric": "car IoU against the FP32 model's mask (fidelity)",
+  "fp32": 1.0
+}
