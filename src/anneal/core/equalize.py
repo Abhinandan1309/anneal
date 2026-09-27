@@ -747,7 +747,10 @@ def equalise(
 
         lo_y, hi_y = ranges[site.y]
         s = _site_scales(site, ranges, **scale_kw)
-        if mix is not None:
+        # No weight mix on a gated residual site: its scale also multiplies the other branch's
+        # producer, and the mixed scale zeroed 44% of LRASPP's stem channels under per-tensor
+        # weights (79% pixel agreement with FP32; pure activation scales: 99%).
+        if mix is not None and site.conv_p is None:
             # For a squeeze-excite site the weight balanced against A's is the projection's (z's first
             # consumer), along its input channels unless it is depthwise.
             b_axis = 0 if site.fc1 is None or _is_depthwise_weight(site.conv_b, inits) else 1

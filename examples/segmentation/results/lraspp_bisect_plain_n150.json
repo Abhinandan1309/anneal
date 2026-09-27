@@ -1,0 +1,22 @@
+{
+ "n": 150,
+ "rules": {
+  "per_channel": false,
+  "activation_type": "int8",
+  "activation_symmetric": true,
+  "pow2_activation_scales": true,
+  "calibrate_method": "minmax",
+  "float_mixed_outputs": false
+ },
+ "miou": {
+  "fp32": 0.4934330560566729,
+  "plain": 0.18785853312649042,
+  "head": 0.19302206033895655,
+  "backbone": 0.26104402124696274,
+  "backbone 0-6": 0.22675277255639528,
+  "backbone 7-16": 0.2365298527802942,
+  "SE branches": 0.18464544261090696,
+  "head sigmoid branch": 0.1859824535274834,
+  "resize + output": 0.19886747573530755
+ }
+}

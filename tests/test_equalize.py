@@ -1257,3 +1257,15 @@ def test_grid_inverse_keeps_the_rewrite_exact(tmp_path: Path, activation: str):
             inv = numpy_helper.to_array(init).astype(np.float64).reshape(-1)
             k = inv / (np.abs(inv).max() / 127)
             assert np.allclose(k, np.round(k), atol=1e-3)
+
+
+def test_residual_sites_take_pure_activation_scales_even_with_a_mix(tmp_path: Path):
+    """The weight mix is not applied to a gated residual site (it zeroed LRASPP's stem channels)."""
+    src = _residual_model(tmp_path / "m.onnx")
+    plain = equalise(src, tmp_path / "a.onnx", _batches(), residual=True)
+    mixed = equalise(src, tmp_path / "b.onnx", _batches(), residual=True, mix=(0.5, 0.5))
+    a = [s for s in plain.sites if s.kind == "gated-residual"][0]
+    b = [s for s in mixed.sites if s.kind == "gated-residual"][0]
+    assert np.isclose(a.scale_median, b.scale_median)
+    x = _batches(1, seed=7)[0]
+    assert np.allclose(_run(src, x), _run(tmp_path / "b.onnx", x), rtol=1e-4, atol=1e-4)
