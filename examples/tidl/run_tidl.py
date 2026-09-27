@@ -121,6 +121,9 @@ VARIANTS = {
         "equalised_pt", {**COMMON, "_16bit_re": r"/conv_stem/|/blocks\.[0-2]/"}),
     "tidl 8-bit + equalised (per-tensor grid) + 16-bit timm stem-2": (
         "equalised_pt_grid", {**COMMON, "_16bit_re": r"/conv_stem/|/blocks\.[0-2]/"}),
+    # timm MobileViT names its early layers stem / stages.N
+    "tidl 8-bit + equalised (per-tensor grid) + 16-bit mobilevit stages 0-1": (
+        "equalised_pt_grid", {**COMMON, "_16bit_re": r"/stem/|/stages\.[01]/"}),
     "tidl prequant qdq (per-channel act qdq kept)": ("qdq_pc_keep", {**COMMON, "advanced_options:prequantized_model": 1}),
 }
 
