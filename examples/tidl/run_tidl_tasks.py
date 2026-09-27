@@ -85,6 +85,13 @@ VARIANTS = {
     "tidl 8-bit + 16-bit backbone 0-6": ("plain", {**COMMON, "_16bit": [r"re:/backbone\.[0-6]/"]}),
     "tidl 8-bit + 16-bit linear + backbone 0-3": ("plain", {**COMMON, "_16bit": ["linear", r"re:/backbone\.[0-3]/"]}),
     "tidl 8-bit + equalised + 16-bit linear": ("equalised", {**COMMON, "_16bit": ["linear"]}),
+    # Run 36316677635: backbone 0-3 in 16 bits (11 layers) -44.7 -> -6.0; 0-6 (31) no better;
+    # any 'linear' set -50.8 (identical for three sets: degenerate). Narrow it, and combine.
+    "tidl 8-bit + 16-bit backbone 0-1": ("plain", {**COMMON, "_16bit": [r"re:/backbone\.[01]/"]}),
+    "tidl 8-bit + 16-bit backbone 2-3": ("plain", {**COMMON, "_16bit": [r"re:/backbone\.[23]/"]}),
+    "tidl 8-bit + 16-bit backbone 1": ("plain", {**COMMON, "_16bit": [r"re:/backbone\.1/"]}),
+    "tidl 8-bit + equalised + 16-bit backbone 0-3": ("equalised", {**COMMON, "_16bit": [r"re:/backbone\.[0-3]/"]}),
+    "tidl 8-bit + equalised + 16-bit backbone 0-1": ("equalised", {**COMMON, "_16bit": [r"re:/backbone\.[01]/"]}),
 }
 
 
