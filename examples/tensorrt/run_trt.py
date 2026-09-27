@@ -87,7 +87,16 @@ class Calibrator:
 def build(onnx_path: Path, mode: str, calib_batches, work: Path, fp16: bool = True, conv_only_int8: bool = False):
     import tensorrt as trt
 
-    logger = trt.Logger(trt.Logger.WARNING)
+    class _Log(trt.ILogger):  # keep TensorRT's errors, so a failed build says why
+        def __init__(self) -> None:
+            trt.ILogger.__init__(self)
+            self.errors: list[str] = []
+
+        def log(self, severity, msg) -> None:
+            if severity <= trt.ILogger.Severity.ERROR:
+                self.errors.append(str(msg))
+
+    logger = _Log()
     builder = trt.Builder(logger)
     network = builder.create_network(0)
     parser = trt.OnnxParser(network, logger)
@@ -119,7 +128,7 @@ def build(onnx_path: Path, mode: str, calib_batches, work: Path, fp16: bool = Tr
         config.set_flag(trt.BuilderFlag.INT8)  # explicit: scales come from the QDQ nodes
     plan = builder.build_serialized_network(network, config)
     if plan is None:
-        raise RuntimeError("TensorRT build failed")
+        raise RuntimeError("TensorRT build failed: " + " | ".join(logger.errors)[-600:])
     return trt.Runtime(logger).deserialize_cuda_engine(plan)
 
 
@@ -151,7 +160,8 @@ def run_engine(engine, xs: list[np.ndarray]) -> tuple[list[np.ndarray], float]:
     return ys, float(np.median(times[10:] if len(times) > 20 else times))
 
 
-def modelopt_qdq(src: Path, dst: Path, calib_batches, exclude: list[str] | None = None) -> None:
+def modelopt_qdq(src: Path, dst: Path, calib_batches, exclude: list[str] | None = None,
+                 conv_only: bool = False) -> None:
     """ModelOpt's explicit INT8 QDQ. Calibrated on the CPU (its GPU calibration failed on Kaggle
     with onnxruntime's "CopyTensorAsync is not implemented"), and with the unquantized ops left in
     FP32: newer ModelOpt converts them to FP16 by default, which also retypes the model's input."""
@@ -163,7 +173,8 @@ def modelopt_qdq(src: Path, dst: Path, calib_batches, exclude: list[str] | None 
     name = onnx.load(str(src)).graph.input[0].name
     kw = dict(onnx_path=str(src), quantize_mode="int8", calibration_data={name: np.concatenate(calib_batches)},
               calibration_method="entropy", output_path=str(dst), calibration_eps=["cpu"],
-              high_precision_dtype="fp32", nodes_to_exclude=exclude or None)
+              high_precision_dtype="fp32", nodes_to_exclude=exclude or None,
+              op_types_to_quantize=["Conv"] if conv_only else None)
     accepted = inspect.signature(quantize).parameters
     dropped = [k for k in kw if k not in accepted]
     if dropped:
@@ -257,17 +268,20 @@ def main() -> None:
             conv_only = "(conv-only int8)" in label
             gates_out = base.endswith(" (gates excluded)")
             base = base.replace(" (gates excluded)", "")
+            mo_conv_only = base.endswith(" (modelopt convs only)")
+            base = base.replace(" (modelopt convs only)", "")
             which = ("eq res" if base.endswith("eq res") else "eq grid" if base.endswith("eq grid")
                      else "eq pos" if base.endswith("eq pos")
                      else "eq" if base.endswith("+ eq") else "plain")
             t = time.time()
             try:
                 if label.startswith("modelopt"):
-                    qdq = mdir / f"{name}-{which.replace(' ', '-')}{'-nogates' if gates_out else ''}-qdq.onnx"
+                    qdq = mdir / f"{name}-{which.replace(' ', '-')}{'-nogates' if gates_out else ''}{'-convonly' if mo_conv_only else ''}-qdq.onnx"
                     if not qdq.exists():
                         # the gate-side Mul(x', 1/s) nodes (and their Sigmoid) left unquantized
                         modelopt_qdq(models[which], qdq, calib_imgs,
-                                     exclude=[r"anneal_eq_gate_mul_.*"] if gates_out else None)
+                                     exclude=[r"anneal_eq_gate_mul_.*"] if gates_out else None,
+                                     conv_only=mo_conv_only)
                     if f"{base} (ort cpu)" not in preds:
                         # the same QDQ model on onnxruntime's CPU: separates ModelOpt's calibration
                         # from TensorRT's build of it (the two should agree closely)
