@@ -469,3 +469,22 @@ def test_preprocessing_cache_is_keyed_on_the_source_bytes(tmp_path):
     assert pa != pb
     wb = numpy_helper.to_array(onnx.load(str(pb)).graph.initializer[0])
     assert np.all(wb == 2.0)
+
+
+def test_float_nodes_are_recorded_and_kept_float(tmp_path, tiny_onnx):
+    """Recipes differing only in float_nodes get separate files, and the named node stays float."""
+    import onnx
+
+    from anneal.core.dataset import SyntheticEvalSet
+
+    ctx = TransformContext(workdir=tmp_path / "w", calibset=SyntheticEvalSet(shape=(3, 16, 16), n=16, batch_size=8, seed=1),
+                           calib_samples=16)
+    plain = apply_transform("quantize_static_int8", {}, ModelArtifact(path=tiny_onnx), ctx)
+    kept = apply_transform("quantize_static_int8", {"float_nodes": ["fc1"]}, ModelArtifact(path=tiny_onnx), ctx)
+    assert plain.path != kept.path
+    assert kept.lineage[-1].params["float_nodes"] == ["fc1"]
+    g = onnx.load(str(kept.path)).graph
+    prod = {o: n for n in g.node for o in n.output}
+    fc = next(n for n in g.node if n.op_type == "Gemm")
+    assert fc.input[1] not in prod  # the Gemm's weight is its float initializer, not a DequantizeLinear
+    assert any(n.op_type == "DequantizeLinear" for n in g.node)  # the rest is still quantized
