@@ -29,6 +29,12 @@ def prepare(kind: str, src: Path, dst: Path, batches: list[np.ndarray]) -> Path:
     from anneal.core.cle import cross_layer_equalise
     from anneal.core.equalize import equalise
 
+    if kind.endswith("+clip"):  # a Clip before every gate (HardSigmoid: exact; Sigmoid: +-8)
+        from anneal.core.surrogate import clip_gate_inputs
+
+        base = prepare(kind[:-5], src, dst.with_name(dst.stem[:-5] + ".onnx"), batches)
+        print(f"  {kind}: clipped {clip_gate_inputs(base, dst)} gate inputs", flush=True)
+        return dst
     if kind.endswith("+bc"):  # analytic bias correction for per-tensor int8 weights, last
         from anneal.core.bias_correction import correct_biases
 
