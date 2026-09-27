@@ -1,0 +1,1004 @@
+{
+  "model": "lcnet_100",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "qnn_dlc",
+  "n": 1024,
+  "post_scale_sites": 13,
+  "variants": {
+    "fp32": {
+      "latency_ms": 0.274,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.0/blocks.0.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.0/blocks.0.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.0/blocks.0.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.2/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.2/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.2/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.3/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.3/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.3/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/ReduceMean": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/act1/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/gate/HardSigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/ReduceMean": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/act1/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/gate/HardSigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/global": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/act2/HardSwish": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/classifier/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.6787109375,
+      "delta_vs_true_fp32_pp": -0.09765625,
+      "ci95_vs_true_fp32_pp": [
+        -0.288969017088441,
+        0.093656517088441
+      ]
+    },
+    "int8": {
+      "latency_ms": 0.192,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.0/blocks.0.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.0/blocks.0.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.0/blocks.0.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.2/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.2/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.2/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.3/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.3/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.3/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/ReduceMean": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/act1/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/gate/HardSigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/ReduceMean": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/act1/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/gate/HardSigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/global": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/act2/HardSwish": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/classifier/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.3359375,
+      "delta_vs_true_fp32_pp": -34.375,
+      "ci95_vs_true_fp32_pp": [
+        -37.59495151649131,
+        -31.15504848350869
+      ],
+      "delta_pp": -34.27734375,
+      "ci95_pp": [
+        -37.495511416654146,
+        -31.059176083345854
+      ],
+      "mcnemar_p": 6.183567026672126e-81
+    },
+    "eq": {
+      "latency_ms": 0.263,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "anneal": {
+          "count": 26,
+          "ms": 0.0
+        },
+        "/net/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.0/blocks.0.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.0/blocks.0.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.0/blocks.0.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.2/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.2/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.2/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.3/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.3/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.3/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/ReduceMean": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/act1/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/gate/HardSigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/ReduceMean": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/act1/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/gate/HardSigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/global": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/act2/HardSwish": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/classifier/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.6533203125,
+      "delta_vs_true_fp32_pp": -2.63671875,
+      "ci95_vs_true_fp32_pp": [
+        -4.553536339619327,
+        -0.7199011603806732
+      ],
+      "delta_pp": -2.5390625,
+      "ci95_pp": [
+        -4.465905057625949,
+        -0.612219942374051
+      ],
+      "mcnemar_p": 0.0129204519111262
+    },
+    "eq grid": {
+      "latency_ms": 0.263,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "anneal": {
+          "count": 26,
+          "ms": 0.0
+        },
+        "/net/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.0/blocks.0.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.0/blocks.0.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.0/blocks.0.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.1/blocks.1.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.2/blocks.2.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.3/blocks.3.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.2/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.2/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.2/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.3/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.3/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.4/blocks.4.3/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/ReduceMean": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/act1/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/gate/HardSigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/se/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.0/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/bn1/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/ReduceMean": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/conv": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/act1/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/gate/HardSigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/se/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/blocks/blocks.5/blocks.5.1/bn2/act/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/global": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/net/act2/HardSwish": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/net/classifier/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.662109375,
+      "delta_vs_true_fp32_pp": -1.7578125,
+      "ci95_vs_true_fp32_pp": [
+        -3.7255171013617137,
+        0.2098921013617142
+      ],
+      "delta_pp": -1.66015625,
+      "ci95_pp": [
+        -3.63746501947432,
+        0.3171525194743199
+      ],
+      "mcnemar_p": 0.1215124218762441
+    }
+  },
+  "true_fp32_accuracy": 0.6796875
+}

@@ -1,0 +1,212 @@
+{
+  "model": "regnet_y_400mf",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "qnn_dlc",
+  "n": 1024,
+  "post_scale_sites": 0,
+  "variants": {
+    "fp32": {
+      "latency_ms": 0.851,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/stem/stem.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/stem/stem.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/trunk": {
+          "count": 212,
+          "ms": 0.0
+        },
+        "/avgpool/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/fc/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.7236328125,
+      "delta_vs_true_fp32_pp": 0.48828125,
+      "ci95_vs_true_fp32_pp": [
+        -0.017248200747210958,
+        0.993810700747211
+      ]
+    },
+    "int8": {
+      "latency_ms": 0.51,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/stem/stem.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/stem/stem.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/trunk": {
+          "count": 212,
+          "ms": 0.0
+        },
+        "/avgpool/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/fc/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.720703125,
+      "delta_vs_true_fp32_pp": 0.1953125,
+      "ci95_vs_true_fp32_pp": [
+        -0.9530626915877249,
+        1.343687691587725
+      ],
+      "delta_pp": -0.29296875,
+      "ci95_pp": [
+        -1.4881657002266977,
+        0.9022282002266978
+      ],
+      "mcnemar_p": 0.7492586247608415
+    },
+    "eq": {
+      "latency_ms": 0.508,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/stem/stem.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/stem/stem.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/trunk": {
+          "count": 212,
+          "ms": 0.0
+        },
+        "/avgpool/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/fc/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.720703125,
+      "delta_vs_true_fp32_pp": 0.1953125,
+      "ci95_vs_true_fp32_pp": [
+        -0.9530626915877249,
+        1.343687691587725
+      ],
+      "delta_pp": -0.29296875,
+      "ci95_pp": [
+        -1.4881657002266977,
+        0.9022282002266978
+      ],
+      "mcnemar_p": 0.7492586247608415
+    },
+    "eq grid": {
+      "latency_ms": 0.498,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/stem/stem.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/stem/stem.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/trunk": {
+          "count": 212,
+          "ms": 0.0
+        },
+        "/avgpool/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/fc/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.720703125,
+      "delta_vs_true_fp32_pp": 0.1953125,
+      "ci95_vs_true_fp32_pp": [
+        -0.9530626915877249,
+        1.343687691587725
+      ],
+      "delta_pp": -0.29296875,
+      "ci95_pp": [
+        -1.4881657002266977,
+        0.9022282002266978
+      ],
+      "mcnemar_p": 0.7492586247608415
+    }
+  },
+  "true_fp32_accuracy": 0.71875
+}

@@ -1,0 +1,5555 @@
+{
+  "model": "efficientnet_b1",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "qnn_dlc",
+  "n": 1024,
+  "post_scale_sites": 22,
+  "variants": {
+    "fp32": {
+      "latency_ms": 1.196,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/features.8.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/features.8.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/features.8.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/avgpool/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/classifier/classifier.1/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      }
+    },
+    "int8": {
+      "latency_ms": 0.559,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/features.8.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/features.8.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/features.8.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/avgpool/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/classifier/classifier.1/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "delta_pp": -68.359375,
+      "ci95_pp": [
+        -71.20795001996945,
+        -65.51079998003055
+      ],
+      "mcnemar_p": 3.80218313259032e-211
+    },
+    "eq": {
+      "latency_ms": 0.733,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "anneal": {
+          "count": 22,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/features.8.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/features.8.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/features.8.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/avgpool/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/classifier/classifier.1/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "delta_pp": 3.61328125,
+      "ci95_pp": [
+        1.627234228439425,
+        5.599328271560575
+      ],
+      "mcnemar_p": 0.0005050343915302426
+    },
+    "eq grid": {
+      "latency_ms": 0.731,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "anneal": {
+          "count": 22,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.1/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.0/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.1/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/features.1.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/features.2.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/features.3.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/features.4.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/features.5.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.2/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/features.6.4/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.0/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.0/block.0.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.0/block.0.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.1/block.1.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.1/block.1.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/activation/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/activation/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/features.7.1/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/features.8.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/features.8.2/Sigmoid": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/features.8.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/avgpool/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/classifier/classifier.1/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "delta_pp": 0.9765625,
+      "ci95_pp": [
+        -0.9931774829261681,
+        2.946302482926168
+      ],
+      "mcnemar_p": 0.3821258105292198
+    }
+  }
+}

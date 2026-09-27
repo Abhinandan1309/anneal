@@ -395,6 +395,11 @@ def _advise_target(prof: ModelProfile, int8_path: str, target: str) -> Advice:
     ]
     if target == "tidl":
         caveats.append(
+            "Alternative on TIDL: equalize_grid_inverse (every gate-side 1/s on the int8 grid). Real TIDL, "
+            "Imagenette 1,500: EfficientNet-B1 -67.9 -> -54.7pp, MobileNetV3-Small -9.9 -> -8.2, "
+            "MobileNetV3-Large -4.7 -> -3.3 (-> 0.0 with TIDL's mixed_precision_factor 1.2), but "
+            "EfficientNet-B0 -4.7 -> -11.2. Not the default: verify it per model on the device.")
+        caveats.append(
             "On TIDL, combine the recipe with TIDL's own mixed precision (advanced_options:"
             "mixed_precision_factor 1.2): MobileNetV3-Large -4.1pp -> -0.4pp. Do not expect 16-bit "
             "activations alone to fix a per-tensor weight collapse: 16-bit on Anneal's 8 most "

@@ -1,0 +1,2076 @@
+{
+  "model": "mobilenet_v3_small",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "qnn_dlc",
+  "n": 1024,
+  "post_scale_sites": 9,
+  "variants": {
+    "fp32": {
+      "latency_ms": 0.295,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.0/block.0.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.0/block.0.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.1/block.1.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.0/block.0.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.1/block.1.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/features.12.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/features.12.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/avgpool/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/classifier/classifier.0/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/classifier/classifier.1/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/classifier/classifier.3/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.6474609375,
+      "delta_vs_true_fp32_pp": -0.09765625,
+      "ci95_vs_true_fp32_pp": [
+        -0.288969017088441,
+        0.093656517088441
+      ]
+    },
+    "int8": {
+      "latency_ms": 0.201,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.0/block.0.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.0/block.0.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.1/block.1.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.0/block.0.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.1/block.1.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/features.12.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/features.12.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/avgpool/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/classifier/classifier.0/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/classifier/classifier.1/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/classifier/classifier.3/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.068359375,
+      "delta_vs_true_fp32_pp": -58.0078125,
+      "ci95_vs_true_fp32_pp": [
+        -61.06692269594664,
+        -54.94870230405336
+      ],
+      "delta_pp": -57.91015625,
+      "ci95_pp": [
+        -60.97021947713975,
+        -54.85009302286025
+      ],
+      "mcnemar_p": 3.453010300155096e-173
+    },
+    "eq": {
+      "latency_ms": 0.236,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "anneal": {
+          "count": 18,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.0/block.0.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.0/block.0.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.1/block.1.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.0/block.0.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.1/block.1.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/features.12.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/features.12.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/avgpool/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/classifier/classifier.0/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/classifier/classifier.1/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/classifier/classifier.3/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.564453125,
+      "delta_vs_true_fp32_pp": -8.3984375,
+      "ci95_vs_true_fp32_pp": [
+        -10.603993569299822,
+        -6.192881430700177
+      ],
+      "delta_pp": -8.30078125,
+      "ci95_pp": [
+        -10.499407913837848,
+        -6.102154586162152
+      ],
+      "mcnemar_p": 1.679250309494468e-13
+    },
+    "eq grid": {
+      "latency_ms": 0.231,
+      "ops": {
+        "Input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "QNN": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "input": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "anneal": {
+          "count": 18,
+          "ms": 0.0
+        },
+        "/features/features.0/features.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.0/block.0.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.1/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.1/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.0/block.0.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.1/block.1.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.2/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.0/block.0.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.1/block.1.2/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/block/block.2/block.2.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.3/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.4/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.5/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.6/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.7/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.8/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.9/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.10/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.0/block.0.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.0/block.0.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.1/block.1.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.1/block.1.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/avgpool/GlobalAveragePool": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/fc1/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/activation/Relu": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/fc2/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/scale": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.2/Mul": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/block/block.3/block.3.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.11/Add": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/features.12.0/Conv": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/features/features.12/features.12.2/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/avgpool/GlobalAveragePool": {
+          "count": 2,
+          "ms": 0.0
+        },
+        "/classifier/classifier.0/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/classifier/classifier.1/HardSwish": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "/classifier/classifier.3/Gemm": {
+          "count": 1,
+          "ms": 0.0
+        },
+        "Output": {
+          "count": 1,
+          "ms": 0.0
+        }
+      },
+      "accuracy": 0.57421875,
+      "delta_vs_true_fp32_pp": -7.421875,
+      "ci95_vs_true_fp32_pp": [
+        -9.573466645530257,
+        -5.270283354469743
+      ],
+      "delta_pp": -7.32421875,
+      "ci95_pp": [
+        -9.468539781811359,
+        -5.179897718188641
+      ],
+      "mcnemar_p": 2.804580306101638e-11
+    }
+  },
+  "true_fp32_accuracy": 0.6484375
+}
