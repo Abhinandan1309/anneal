@@ -185,6 +185,21 @@ def trace_layers(label: str, model_path, art, task, api, img_id: int, inp: str) 
     print("    examples:", [os.path.basename(f) for f in keep[:6]], flush=True)
 
 
+def perfsim_stats(art: Path) -> dict:
+    """TIDL perfsim estimate summed over subgraphs, read as TI's edgeai-tidlrunner reads it:
+    ``Total Network Time (us)`` in each subgraph folder's CSV."""
+    total_us, found = 0.0, {}
+    root = art / "tempDir" if (art / "tempDir").is_dir() else art
+    for folder in sorted(d for d in root.iterdir() if d.is_dir()):
+        for f in folder.glob(f"*{folder.name}*.csv"):
+            for line in f.read_text(errors="replace").splitlines():
+                if "total network time (us)" in line.lower():
+                    us = float(line.split("=")[1].split(",")[0])
+                    found[folder.name] = us
+                    total_us += us
+    return {"perfsim_time_ms": total_us / 1000 if found else None, "perfsim_subgraph_us": found}
+
+
 def main() -> None:
     import onnx
     import run_tasks as rt
@@ -205,6 +220,9 @@ def main() -> None:
     ap.add_argument("--trace", action="store_true",
                     help="also run one image with TIDL layer traces (debug_level 3) and keep them, the "
                          "layer info, the float model and the input under tidl-traces/ for a per-layer diff")
+    ap.add_argument("--perfsim", action="store_true",
+                    help="enable TIDL's performance simulator at import (the flag TI's edgeai-tidlrunner "
+                         "sets) and record its estimated C7x/MMA time per variant")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
     tools = os.environ.get("TIDL_TOOLS_PATH")
@@ -297,14 +315,17 @@ def main() -> None:
         art.mkdir(parents=True)
         t = time.time()
         try:
+            perf_opt = {"ti_internal_nc_flag": 83886080} if args.perfsim else {}  # NC_PERFSIM_ENABLE
             comp = session(models[which], ["TIDLCompilationProvider", "CPUExecutionProvider"],
-                           {**opts, "artifacts_folder": str(art), "tidl_tools_path": tools})
+                           {**opts, **perf_opt, "artifacts_folder": str(art), "tidl_tools_path": tools})
             for x in calib:
                 comp.run(None, {inp: x})
             del comp
             sessions[label] = session(models[which], ["TIDLExecutionProvider", "CPUExecutionProvider"],
                                       {"artifacts_folder": str(art), "debug_level": 0})
             timing[label] = {"compile_s": time.time() - t}
+            if args.perfsim:
+                timing[label].update(perfsim_stats(art))
             print(f"  {label}: compiled ({timing[label]['compile_s']:.0f}s)", flush=True)
             # TIDL's import runs a performance simulator for the target (C7x + MMA) and leaves its
             # output among the artifacts; keep every small file whose name suggests it, plus a listing

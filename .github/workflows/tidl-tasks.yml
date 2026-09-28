@@ -17,6 +17,9 @@ on:
       trace:
         description: "keep TIDL layer traces of one image (per-layer diff)"
         default: "false"
+      perfsim:
+        description: "enable TIDL's performance simulator and record its time estimate (true/false)"
+        default: "false"
       mask_ids:
         description: "segmentation: COCO image ids whose predicted masks are saved (comma-separated)"
         default: ""
@@ -57,7 +60,7 @@ jobs:
         run: |
           source edgeai-tidl-tools/scripts/setup/setup_env.sh J721E
           python examples/tidl/run_tidl_tasks.py --model "${{ inputs.model }}" --images "${{ inputs.images }}" \
-            --variants "${{ inputs.variants }}" --out tidl-tasks-result.json --mask-ids "${{ inputs.mask_ids }}"             ${{ inputs.trace == 'true' && '--trace' || '' }}
+            --variants "${{ inputs.variants }}" --out tidl-tasks-result.json --mask-ids "${{ inputs.mask_ids }}" ${{ inputs.perfsim == 'true' && '--perfsim' || '' }}             ${{ inputs.trace == 'true' && '--trace' || '' }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
