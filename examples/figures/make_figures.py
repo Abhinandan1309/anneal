@@ -287,6 +287,33 @@ def segmentation(mask_file: Path, ids: list[int], scores: dict[str, float]) -> N
     print("segmentation.png")
 
 
+def segmentation_linkedin(mask_file: Path, scores: dict[str, float], ids=(249643, 283412)) -> None:
+    """Two rows, three columns, large type: readable on a phone."""
+    sys.path.insert(0, str(ROOT / "examples" / "tasks"))
+    import run_tasks as rt
+
+    z = np.load(mask_file)
+    api = rt.coco()
+    pal = _palette()
+    cols = [("Full precision", "fp32", INK), ("TI's 8-bit", "tidl 8-bit", BAD),
+            ("8-bit + Anneal", "tidl 8-bit + equalised + 16-bit backbone 0-1", GOOD)]
+    fig, axes = plt.subplots(len(ids), 3, figsize=(12, 8.9), constrained_layout=True)
+    for r, img_id in enumerate(ids):
+        img = rt.pil_resize(rt.load_rgb(api, img_id), (512, 512))
+        for c, (title, key, colour) in enumerate(cols):
+            ax = axes[r, c]
+            ax.set_axis_off()
+            ax.imshow((0.45 * img + 0.55 * pal[z[f"{key}|{img_id}"]]).astype(np.uint8))
+            if r == 0:
+                ax.set_title(f"{title}\n{scores[key]:.1f} mIoU", fontsize=19, color=colour, weight="bold")
+    fig.suptitle("Segmentation on TI's TDA4VM car chip: same model, INT8", fontsize=21, color=INK)
+    fig.text(0.5, -0.03, "LRASPP-MobileNetV3, TIDL emulation; mIoU over 300 COCO images. "
+             "Photos: Flickr, CC BY 2.0, resized, masks overlaid.", ha="center", fontsize=11, color=MUTED)
+    fig.savefig(OUT / "segmentation_linkedin.png", dpi=150)
+    plt.close(fig)
+    print("segmentation_linkedin.png")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--masks", type=Path, help="tidl-tasks-result-masks.npz from the tidl-tasks workflow")
@@ -310,6 +337,7 @@ def main() -> None:
                 if "metric" in v:
                     scores[k] = 100 * v["metric"]
         segmentation(args.masks, [int(i) for i in args.ids.split(",")], scores)
+        segmentation_linkedin(args.masks, scores)
 
 
 if __name__ == "__main__":
