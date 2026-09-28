@@ -313,8 +313,11 @@ def main() -> None:
             listing = sorted(str(f.relative_to(art)) + f" {f.stat().st_size}" for f in art.rglob("*") if f.is_file())
             (perf_dir / "artifact_files.txt").write_text("\n".join(listing), encoding="utf-8")
             for f in art.rglob("*"):
-                if f.is_file() and f.stat().st_size < 4_000_000 and re.search(r"perf|sim|netlog|layer_info|\.csv$", f.name, re.I):
-                    shutil.copy(f, perf_dir / f.name)
+                if f.is_file() and f.stat().st_size < 4_000_000 and (
+                        f.suffix.lower() in (".txt", ".csv", ".html", ".svg") or "perfSim" in f.name):
+                    dst = perf_dir / f.relative_to(art)  # keep the subgraph folders: names repeat across them
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(f, dst)
             if names16:  # a name TIDL fused away is ignored silently: record which ones it kept
                 known = " ".join(f.read_text(errors="replace") for f in art.rglob("*layer_info*.txt"))
                 timing[label]["int16_layers"] = names16
