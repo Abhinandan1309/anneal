@@ -1,0 +1,109 @@
+{
+  "model": "mobilenet_v3_small",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "qnn_dlc",
+  "n": 1024,
+  "variants": {
+    "fp32": {
+      "compile_job": "jgnzdmekg",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "j5wl03d3p",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.6474609375,
+      "delta_pp_vs_device_fp32": 0.0,
+      "params": null
+    },
+    "mnv3s eq: eq res se + asym pct": {
+      "compile_job": "jgk2wqywg",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jp1nkwd8g",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.634765625,
+      "delta_pp_vs_device_fp32": -1.26953125,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 64,
+        "calib_stride": 1,
+        "equalize": true,
+        "equalize_residual": true,
+        "equalize_se": true,
+        "calibrate_method": "percentile_asym"
+      },
+      "profile_job": "jp3zl1435",
+      "latency_ms": 0.26,
+      "compute_units": {
+        "NPU": 149
+      }
+    },
+    "mnv3s eq16x4: + int16 top 4": {
+      "compile_job": "jpvlyr1k5",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jgddyqrrg",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.0,
+      "delta_pp_vs_device_fp32": -64.74609375,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 64,
+        "calib_stride": 1,
+        "equalize": true,
+        "equalize_residual": true,
+        "equalize_se": true,
+        "calibrate_method": "percentile_asym",
+        "int16_top_k": 4
+      }
+    },
+    "mnv3s eq16x8: + int16 top 8": {
+      "compile_job": "jgjr620vp",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "j57e1ljvp",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.0,
+      "delta_pp_vs_device_fp32": -64.74609375,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 64,
+        "calib_stride": 1,
+        "equalize": true,
+        "equalize_residual": true,
+        "equalize_se": true,
+        "calibrate_method": "percentile_asym",
+        "int16_top_k": 8
+      }
+    },
+    "mnv3s grid16x8: grid + int16 top 8": {
+      "compile_job": "jpe70wro5",
+      "compiled": true,
+      "compile_message": "",
+      "inference_job": "jp4y6dx8p",
+      "ran": true,
+      "run_message": "",
+      "accuracy": 0.0,
+      "delta_pp_vs_device_fp32": -64.74609375,
+      "params": {
+        "per_channel": true,
+        "activation_type": "uint8",
+        "calib_samples": 64,
+        "calib_stride": 1,
+        "equalize": true,
+        "equalize_residual": true,
+        "equalize_se": true,
+        "equalize_grid_inverse": true,
+        "calibrate_method": "percentile_asym",
+        "int16_top_k": 8
+      }
+    }
+  },
+  "note": "Anneal's own QDQ (onnxruntime, per-channel weights, uint8 activations) compiled by QNN: -1.3pp at 0.26 ms, all NPU. Qualcomm's quantizer: W8A8 -57.9 (0.20 ms), + equalised grid -7.4 (0.23 ms), W8A16 -5.5 (0.27 ms). uint16 tensors from onnxruntime's TensorQuantOverrides compile but run as garbage (0%)."
+}

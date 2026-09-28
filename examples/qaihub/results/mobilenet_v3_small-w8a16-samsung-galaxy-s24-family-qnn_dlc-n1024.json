@@ -1,0 +1,77 @@
+{
+  "model": "mobilenet_v3_small",
+  "device": "Samsung Galaxy S24 (Family)",
+  "runtime": "qnn_dlc",
+  "n": 1024,
+  "variants": {
+    "fp32": {
+      "inference_job": "jp1nkwy2g",
+      "profile_job": "jprlm289p",
+      "accuracy": 0.6474609375,
+      "latency_ms": 0.291,
+      "compute_units": {
+        "NPU": 125
+      }
+    },
+    "W8A8": {
+      "inference_job": "jp4y6dkvp",
+      "profile_job": "jp2rq904g",
+      "accuracy": 0.068359375,
+      "latency_ms": 0.201,
+      "compute_units": {
+        "NPU": 127
+      },
+      "delta_pp": -57.91015625,
+      "ci95_pp": [
+        -60.97021947713975,
+        -54.85009302286025
+      ],
+      "mcnemar_p": 3.453010300155096e-173
+    },
+    "W8A16": {
+      "inference_job": "jpxl86n1p",
+      "profile_job": "jpyokjr75",
+      "accuracy": 0.5927734375,
+      "latency_ms": 0.27,
+      "compute_units": {
+        "NPU": 127
+      },
+      "delta_pp": -5.46875,
+      "ci95_pp": [
+        -7.4847721625275465,
+        -3.452727837472454
+      ],
+      "mcnemar_p": 1.467569126688569e-07
+    },
+    "W8A8 + equalised": {
+      "inference_job": "j5m016qwg",
+      "profile_job": "jp0m8236g",
+      "accuracy": 0.564453125,
+      "latency_ms": 0.245,
+      "compute_units": {
+        "NPU": 145
+      },
+      "delta_pp": -8.30078125,
+      "ci95_pp": [
+        -10.499407913837848,
+        -6.102154586162152
+      ],
+      "mcnemar_p": 1.679250309494468e-13
+    },
+    "W8A16 + equalised": {
+      "inference_job": "jgnzdmlrg",
+      "profile_job": "jp8edm0xp",
+      "accuracy": 0.5966796875,
+      "latency_ms": 0.354,
+      "compute_units": {
+        "NPU": 145
+      },
+      "delta_pp": -5.078125,
+      "ci95_pp": [
+        -7.0797564885491635,
+        -3.0764935114508374
+      ],
+      "mcnemar_p": 9.322584031886635e-07
+    }
+  }
+}

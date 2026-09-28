@@ -32,6 +32,17 @@ VARIANTS = {
     "plain QDQ: minmax": {**BASE, "calibrate_method": "minmax"},
     "int8 activations: eq + asym pct": {**BASE, "activation_type": "int8", "equalize": True, "calibrate_method": "percentile_asym"},
     "eq + asym pct + stem int16": {**BASE, "equalize": True, "calibrate_method": "percentile_asym", "stem_int16": True},
+    # MobileNetV3-Small on the S24 (QNN): Qualcomm's quantizer + equalisation -7.4, and W8A16
+    # everywhere still -5.5, so try Anneal's own QDQ with only the most sensitive tensors in 16 bits
+    "mnv3s eq: eq res se + asym pct": {**BASE, "calib_samples": 64, "equalize": True, "equalize_residual": True,
+                                       "equalize_se": True, "calibrate_method": "percentile_asym"},
+    "mnv3s eq16x4: + int16 top 4": {**BASE, "calib_samples": 64, "equalize": True, "equalize_residual": True,
+                                    "equalize_se": True, "calibrate_method": "percentile_asym", "int16_top_k": 4},
+    "mnv3s eq16x8: + int16 top 8": {**BASE, "calib_samples": 64, "equalize": True, "equalize_residual": True,
+                                    "equalize_se": True, "calibrate_method": "percentile_asym", "int16_top_k": 8},
+    "mnv3s grid16x8: grid + int16 top 8": {**BASE, "calib_samples": 64, "equalize": True, "equalize_residual": True,
+                                           "equalize_se": True, "equalize_grid_inverse": True,
+                                           "calibrate_method": "percentile_asym", "int16_top_k": 8},
 }
 #: --variants picks a subset (comma-separated labels); fp32 always runs as the reference.
 
@@ -58,7 +69,8 @@ def main() -> None:
     from anneal.core.artifact import sample_shape
 
     shape = sample_shape(src)
-    calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=8, limit=16, sample_shape=shape)
+    n_cal = max(int(p.get("calib_samples", 16)) for p in VARIANTS.values())
+    calib = load_calibset("imagenette", cache_dir=CACHE, batch_size=8, limit=n_cal, sample_shape=shape)
     ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=16, limit=args.images, sample_shape=shape)
     eval_imgs, labels = [], []
     for x, y in ev.batches():
