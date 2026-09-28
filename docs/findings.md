@@ -2,6 +2,12 @@
 > **The full record.** Everything Anneal has measured, in the order it was found, with the
 > corrections left in. The [README](../README.md) is the short version.
 
+> **Update 2026-09-28.** The four-toolchain study (AMD XINT8, Galaxy S24 QNN, TI TDA4VM, NVIDIA
+> T4 TensorRT; 8 models) is summarised in [benchmark_grid.md](benchmark_grid.md), with the
+> recipes, where each number was measured (device vs vendor emulation) and the speed caveats.
+> One correction from it: early S24 EfficientNet-B0/B1 deltas were against the phone's FP16
+> run, which on B1 is itself 6.8pp below true FP32.
+
 > **Status as of 2026-09-26: what has since been superseded or corrected.** The body below is
 > left as it was written; stale statements carry an inline *[Update 2026-09-26]* note.
 >
