@@ -199,6 +199,9 @@ def main() -> None:
     ap.add_argument("--calib-images", type=int, default=16)
     ap.add_argument("--variants", default=",".join(VARIANTS))
     ap.add_argument("--out", required=True)
+    ap.add_argument("--mask-ids", default="",
+                    help="segmentation: comma-separated COCO image ids whose predicted masks are saved "
+                         "(<out stem>-masks.npz), for figures")
     ap.add_argument("--trace", action="store_true",
                     help="also run one image with TIDL layer traces (debug_level 3) and keep them, the "
                          "layer info, the float model and the input under tidl-traces/ for a per-layer diff")
@@ -327,6 +330,18 @@ def main() -> None:
         if n % 25 == 0:
             print(f"  {n}/{len(ids)} images ({time.time() - t0:.0f}s)", flush=True)
     scored = [k for k in sessions if k != "fp32" and k not in rows]
+
+    if args.mask_ids and isinstance(task, rt.Segmentation):
+        masks = {}
+        for img_id in [int(i) for i in args.mask_ids.split(",") if i.strip()]:
+            x, meta = task.preprocess(api, img_id)
+            masks[f"target|{img_id}"] = meta["target"].astype(np.uint8)
+            for k, s in sessions.items():
+                if k not in rows:
+                    masks[f"{k}|{img_id}"] = s.run(None, {inp: x})[0][0].argmax(0).astype(np.uint8)
+        mask_path = Path(args.out).with_name(Path(args.out).stem + "-masks.npz")
+        np.savez_compressed(mask_path, **masks)
+        print(f"  masks: {len(masks)} saved to {mask_path}", flush=True)
 
     result = {"soc": "J721E (TDA4VM)", "model": args.model, "n": len(ids), "calibration_images": len(calib),
               "equalised_sites": sites, "equalised_dense_sites": len(dense), "variants": {}}
