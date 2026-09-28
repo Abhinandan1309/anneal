@@ -34,6 +34,12 @@ VARIANTS = {
     "eq + asym pct + stem int16": {**BASE, "equalize": True, "calibrate_method": "percentile_asym", "stem_int16": True},
     # MobileNetV3-Small on the S24 (QNN): Qualcomm's quantizer + equalisation -7.4, and W8A16
     # everywhere still -5.5, so try Anneal's own QDQ with only the most sensitive tensors in 16 bits
+    "gated grid: eq res se grid + asym pct": {**BASE, "calib_samples": 64, "equalize": True, "equalize_residual": True,
+                                              "equalize_se": True, "equalize_grid_inverse": True,
+                                              "calibrate_method": "percentile_asym"},
+    "gated stem: eq res se + asym pct + float stem": {**BASE, "calib_samples": 64, "equalize": True,
+                                                      "equalize_residual": True, "equalize_se": True,
+                                                      "calibrate_method": "percentile_asym", "float_stem": True},
     "mnv3s eq: eq res se + asym pct": {**BASE, "calib_samples": 64, "equalize": True, "equalize_residual": True,
                                        "equalize_se": True, "calibrate_method": "percentile_asym"},
     "mnv3s eq16x4: + int16 top 4": {**BASE, "calib_samples": 64, "equalize": True, "equalize_residual": True,
