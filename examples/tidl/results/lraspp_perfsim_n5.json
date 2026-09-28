@@ -1,0 +1,67 @@
+{
+  "soc": "J721E (TDA4VM)",
+  "model": "lraspp_mobilenet_v3_large",
+  "n": 5,
+  "calibration_images": 16,
+  "equalised_sites": 14,
+  "equalised_dense_sites": 0,
+  "variants": {
+    "tidl 8-bit": {
+      "metric": 0.25119980994850083,
+      "delta_pts": -18.80427832552139,
+      "ci95_pts": [
+        -19.34270400113651,
+        -0.4535202859845322
+      ],
+      "compile_s": 674.3085262775421,
+      "perfsim_time_ms": 12.044709999999998,
+      "perfsim_subgraph_us": {
+        "subgraph_0_tidl_net": 1321.18,
+        "subgraph_1_tidl_net": 639.33,
+        "subgraph_2_tidl_net": 765.89,
+        "subgraph_3_tidl_net": 9318.31
+      }
+    },
+    "tidl 8-bit + equalised + 16-bit backbone 0-1": {
+      "metric": 0.42946347238611854,
+      "delta_pts": -0.9779120817596187,
+      "ci95_pts": [
+        -2.3869443881882946,
+        0.9502329382263086
+      ],
+      "compile_s": 654.791529417038,
+      "perfsim_time_ms": 13.75215,
+      "perfsim_subgraph_us": {
+        "subgraph_0_tidl_net": 2305.16,
+        "subgraph_1_tidl_net": 639.33,
+        "subgraph_2_tidl_net": 765.89,
+        "subgraph_3_tidl_net": 10041.77
+      },
+      "int16_layers": [
+        "/net/backbone/backbone.0/backbone.0.2/HardSwish_output_0",
+        "/net/backbone/backbone.1/block/block.0/block.0.2/Relu_output_0",
+        "/net/backbone/backbone.1/block/block.1/block.1.0/Conv_output_0",
+        "/net/backbone/backbone.1/Add_output_0"
+      ],
+      "int16_in_layer_info": 4
+    },
+    "tidl 16-bit": {
+      "metric": 0.44034914767167976,
+      "delta_pts": 0.11065544679650374,
+      "ci95_pts": [
+        -0.2000874282884854,
+        0.2100673944987197
+      ],
+      "compile_s": 1007.4860510826111,
+      "perfsim_time_ms": 21.45672,
+      "perfsim_subgraph_us": {
+        "subgraph_0_tidl_net": 3436.79,
+        "subgraph_1_tidl_net": 758.11,
+        "subgraph_2_tidl_net": 895.68,
+        "subgraph_3_tidl_net": 16366.14
+      }
+    }
+  },
+  "metric": "mIoU (21 VOC classes)",
+  "fp32": 0.4392425932037147
+}

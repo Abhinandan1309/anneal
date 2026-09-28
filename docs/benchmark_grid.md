@@ -47,7 +47,8 @@ Images: AMD 1,000; S24 1,024; TIDL 1,500 (MobileViT 300 default / 500 Anneal); T
 |---|---|---|
 | S24 (per inference) | B0 0.422 → 0.538 ms; B1 0.559 → 0.893; MNv3-S 0.201 → 0.26 | faster: B0 0.838, B1 1.196, MNv3-S 0.291 ms |
 | T4 (batch 1) | B1 2.56–2.62 ms (explicit QDQ) | **slower** than TensorRT FP16 (B1 1.32 ms, −0.1pp). At batch 1 on a T4, INT8 buys no speed for these models: Anneal recovers accuracy, FP16 remains the better T4 choice |
-| AMD, TIDL | emulated: no latency measured | — |
+| TIDL (TDA4VM, TI perf simulator) | LRASPP: 8-bit 12.0 ms, Anneal (eq + 16-bit backbone stages 0-1) 13.8 ms (+14%) | full 16-bit 21.5 ms (+78%). Simulator estimate, not a board measurement |
+| AMD | emulated: no latency measured | — |
 
 ## Things found on the way
 
