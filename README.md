@@ -1,54 +1,20 @@
 # Anneal
 
-**Measured, hardware-aware INT8 for edge deployment.** Anneal tells you how to quantize a model
-for the chip it will run on, and proves the answer with paired statistics on real data.
+**Measured, hardware-aware INT8 for edge deployment.** Standard INT8 quantization breaks the
+gated-depthwise networks used on edge devices (EfficientNet, MobileNetV3, LCNet, MobileViT):
+on the default INT8 path of AMD, Qualcomm, TI and NVIDIA toolchains they commonly lose 35–77
+points of top-1 accuracy. Anneal fixes this with an exact rewrite of the float model, with no retraining and no
+change to the vendor's tools, and proves each result with paired statistics on real data.
 
-Its central finding: standard INT8 quantization breaks the gated-depthwise networks used on
-edge devices (EfficientNet, MobileNetV3, LCNet, MobileViT) under onnxruntime on every CPU tested
-and on the default INT8 path of four vendor toolchains (AMD, Qualcomm, TI, NVIDIA): losses of
-35–77 points are common. Intel's OpenVINO is the exception found so far (below). The cause is
-one activation scale shared by channels whose ranges differ by orders of magnitude. Anneal's
-fix, an exact channel equalisation through SiLU/Hardswish gates, needs no retraining; with a
-per-target recipe it brings most model/toolchain pairs within about two points of FP32.
+![Where Anneal sits](docs/figures/workflow.png)
 
-## Results
+## Results: 8 models, 4 toolchains
 
-**ImageNet** (validation set; 64 held-out images calibrate, the rest are scored; 32-bit
-accumulation as on ARM and NPUs; [details](examples/imagenet/)). Accuracy change vs FP32:
+![Vendor default INT8 vs Anneal](docs/figures/grid.png)
 
-| Model | onnxruntime default | best standard calibration | **Anneal** |
-|---|---:|---:|---:|
-| EfficientNet-B0 (49,000 images) | −45.5pp | −6.3pp | **−0.52pp** |
-| MobileNetV3-Large (49,000) | −5.4pp | −2.7pp | **−1.01pp** |
-| ViT-B/16 (10,000) | −6.7pp | −6.7pp | **−0.73pp** |
-| ConvNeXt-Tiny (10,000) | −0.9pp | −0.9pp | **−0.53pp** |
-| ResNet-50 (10,000) | −0.2pp | −0.1pp | −0.14pp ¹ |
-
-Published post-training results for EfficientNet-B0: −4.8pp (NVIDIA, entropy), −3.0pp (HPTQ).
-Anneal's −0.52pp is small but statistically significant, not lossless. ¹ Corrected advice:
-the first rule for ReLU CNNs lost 0.44pp to plain percentile; an [ablation](examples/advise/)
-traced it to over-clipping and `reduce_range`, and the rule was changed (−0.04pp on real
-non-VNNI x86 kernels). All three are within noise.
-
-**Real edge devices** (Qualcomm AI Hub, Qualcomm's own quantizer, EfficientNet-B0,
-Imagenette; [details](examples/qaihub/)):
-
-| Device | Runtime | Qualcomm INT8 | + Anneal equalisation |
-|---|---|---:|---:|
-| Galaxy S24 (Snapdragon 8 Gen 3 NPU) | QNN | −12.0pp | **−0.7pp** |
-| Galaxy S24 | TFLite | −11.5pp | **−1.5pp** |
-| SA8775P (automotive NPU) ² | TFLite | −13.3pp | **−2.0pp** |
-| Pixel 8 (Tensor G3, GPU) | TFLite | −12.7pp | **−1.2pp** |
-
-Changes here are against each device's own float run (on the S24 vs true FP32: −12.8 → −1.5).
-No remaining loss is statistically significant. ResNet-50, the control, loses nothing where
-scored (S24, Pixel 8). ² 256-image subset; the device's jobs failed intermittently. The
-predictions were committed before the runs and are graded, including the ones that failed:
-[design](docs/edge_study_design.md), [results](docs/edge_study_results.md).
-
-**Four vendor toolchains** (8 models; Imagenette, 1,000–1,500 images; vendor default INT8 →
-Anneal's recipe for that target; [full grid, recipes and footnotes](docs/benchmark_grid.md)).
-S24 and T4 are real devices; AMD and TI are the vendors' own quantizers and emulators on a PC.
+Top-1 change vs FP32, percentage points, on Imagenette (1,000–1,500 validation images). Each cell
+is vendor default INT8 → Anneal's recipe for that target. The S24 and T4 are real devices; AMD and
+TI are the vendors' own quantizers and emulators run on a PC.
 
 | Model | AMD XINT8 (emulated) | Galaxy S24 NPU | TI TDA4VM (emulated) | NVIDIA T4 TensorRT |
 |---|---:|---:|---:|---:|
@@ -61,25 +27,23 @@ S24 and T4 are real devices; AMD and TI are the vendors' own quantizers and emul
 | MobileViT-S | −76.7 → **−0.9** | −17.3 → **−0.3** | −71.7 → −4.2 | −57.4 → **+0.6** |
 | ResNet-50 (control) | −4.6 → **−0.2** | **+1.0** | **−1.9** → **−1.8** | **−1.1** → **−0.5** |
 
-The recipes differ by target: TIDL adds 16-bit on the first few layers (TIDL's own option), AMD
-keeps the gates in 16 bits, and on the S24 Anneal's own INT8 model (compiled by Qualcomm's QNN)
-beats Qualcomm's quantizer on B1 and MobileNetV3-Small.
+Recipes, image counts, speed and footnotes: [docs/benchmark_grid.md](docs/benchmark_grid.md).
 
-**Beyond classification** (COCO val2017, 500 images, box mAP change in points, 32-bit;
-[details](examples/tasks/)): neither detector collapses, so equalisation is not needed there.
+## Why it breaks, and the fix
 
-| Detector (FP32 mAP) | onnxruntime default | percentile | Anneal |
-|---|---:|---:|---:|
-| SSDLite-MobileNetV3 (23.8) | −2.59 | −0.60 | −0.81 |
-| YOLOv8n (40.5) | −0.89 | −0.94 | −0.52 |
+![Per-channel INT8 levels before and after](docs/figures/channel_ranges.png)
 
-`equalize_min_gain` skips equalisation when its predicted gain is small, as here.
-Segmentation (LRASPP-MobileNetV3): on the per-channel CPU path it does not collapse either
-(−2.2 mIoU default, −0.9 percentile, 500 images); on TI's TDA4VM (emulated, 300 images) TIDL
-8-bit loses 44.7 mIoU, and equalisation with 16 bits on four backbone layers brings it to **−1.2**.
+These networks feed a SiLU or Hardswish gate into a depthwise convolution. The gate's output
+channels differ in range by up to 360×, and per-tensor INT8 gives all of them one scale, so the
+small channels get less than one INT8 level. Anneal scales each channel by s before the gate,
+lets the gate read x'/s (the same value as before), and divides s back out in the next
+convolution. The float model's output is unchanged, and every channel keeps its resolution.
 
-**A second finding, on x86.** CPUs without VNNI sum INT8 products in 16 bits, and the overflow
-costs 8–18pp across nine CNNs; Anneal predicts it per layer without the affected CPU.
+![The rewrite](docs/figures/method.png)
+
+Per target, Anneal adds what that toolchain needs: 16-bit feature maps on the first few layers
+on TI (TIDL's own option), 16-bit gates and bias correction on AMD, or its own INT8 model
+compiled by Qualcomm's QNN or NVIDIA's TensorRT.
 
 ## Use it
 
@@ -87,45 +51,58 @@ costs 8–18pp across nine CNNs; Anneal predicts it per layer without the affect
 git clone https://github.com/Abhinandan1309/anneal && cd anneal
 pip install -e ".[torch]"
 
-anneal advise model.onnx --verify      # recommended INT8 recipe for this model and CPU, measured
-anneal run --model torchvision:resnet18 --target cpu-1t --eval imagenette --budget 10
+anneal advise model.onnx --verify              # recipe for this model and CPU, scored against alternatives
+anneal advise model.onnx --target tidl         # ... for TI TIDL or AMD XINT8 (--target amd-xint8)
 ```
 
-`advise` reads the architecture and the CPU's INT8 arithmetic, recommends a recipe with its
-evidence, and `--verify` scores it against the alternatives (McNemar test). `run` is the full
-search: measured transforms, a Pareto frontier and a ledger of every trial. Also: `audit`,
-`saturation`, `imbalance`, `profile`, `validate`, `export` (`anneal --help`).
+The rewrite on its own, before any vendor quantizer:
 
-## Limitations and open problems
+```python
+from pathlib import Path
+from anneal.core.equalize import equalise
 
-- **Speed.** Equalisation adds gate multiplies: on the S24 NPU, B0 0.422 → 0.538 ms and B1
-  0.559 → 0.893 ms (Anneal's own INT8), still faster than FP16 (0.838 / 1.196 ms). On a T4 at
-  batch 1, every INT8 engine tested (vendor's or Anneal's) is slower than TensorRT FP16 for these
-  small models: Anneal recovers INT8 accuracy there, but FP16 remains the better T4 choice.
-- **Not solved everywhere.** TI TDA4VM: B1 −8.9, MobileViT −4.2 (TIDL's own 16-bit
-  mode: −2.6); EfficientViT-B0 on TensorRT −70 → −12.8.
-- **OpenVINO does not need it.** On OpenVINO/NNCF (ImageNet, 5,000 images, a non-VNNI Ryzen CPU)
-  EfficientNet-B0 loses 1.8pp and B1 4.9pp with NNCF's defaults, and equalisation does not help
-  (−1.9 / −5.4). MobileNetV3-Large's −67pp there is 16-bit overflow on a CPU without VNNI, fixed by
-  NNCF's own overflow fix (−2.4pp; mixed preset −1.3). [Data](examples/openvino/).
-- **Emulated targets.** AMD and TI numbers come from the vendors' quantizers and bit-level
-  emulators on a PC, not from boards; only the S24 and T4 numbers are measured on hardware.
-- **Recipe selection.** Each target's recipe was chosen by comparing variants on the same
-  Imagenette images it is reported on (1,000–1,500 per model), so the best cells carry some
-  selection optimism; the results JSONs record every variant tried, not only the best.
-- QNN runs Anneal's INT8 models faithfully only with uint8 activations; int8 activations or
-  mixed-in uint16 tensors compile but score 0%. TIDL's pre-quantized QDQ import is faithful only
-  for plain convnets.
-- Edge results use Imagenette (256–1,500 images, a public ImageNet subset), not ImageNet;
-  the SA8775P was flaky and the Pixel 8 ran on its GPU, not its NPU.
-- onnxruntime's entropy calibration is not TensorRT's; entropy comparisons cite NVIDIA's
-  published numbers ([details](examples/imagenette_entropy/README.md)).
+# batches: a few preprocessed calibration batches, float32 NCHW numpy arrays
+res = equalise(Path("model.onnx"), Path("model-eq.onnx"), batches,
+               residual=True, se=True, grid_inverse=True, check_batch=batches[0])
+print(len(res.sites), "sites rewritten; max logit change", res.max_abs_logit_change)
+```
+
+`advise --verify` scores the recommendation against the alternatives on real data (McNemar
+test). Also: `run` (measured search with a Pareto frontier and a ledger of every trial),
+`audit`, `saturation`, `imbalance`, `profile`, `validate`, `export` (`anneal --help`).
+
+## Other results
+
+- **ImageNet** (onnxruntime, per-channel INT8, 10,000–49,000 images; [details](examples/imagenet/)):
+  EfficientNet-B0 −45.5 → **−0.52** points (published: −4.8 NVIDIA, −3.0 HPTQ), MobileNetV3-Large
+  −5.4 → −1.01, ViT-B/16 −6.7 → −0.73, ConvNeXt-Tiny −0.9 → −0.53, ResNet-50 −0.14.
+- **More devices** (EfficientNet-B0, Qualcomm's quantizer + equalisation; [details](examples/qaihub/)):
+  S24 TFLite −11.5 → −1.5, SA8775P automotive NPU −13.3 → −2.0, Pixel 8 GPU −12.7 → −1.2
+  (vs each device's own float run).
+- **Detection** (COCO, CPU; [details](examples/tasks/)): SSDLite-MobileNetV3 and YOLOv8n do not
+  collapse; percentile calibration is enough, and equalisation adds nothing.
+- **Segmentation**: LRASPP-MobileNetV3 on TI's TDA4VM (emulated): −44.7 → **−1.2** mIoU. On the
+  per-channel CPU path it does not collapse (−2.2).
+- **x86 overflow**: CPUs without VNNI sum INT8 products in 16 bits; the overflow costs 8–18 points
+  across nine CNNs, and Anneal predicts it per layer without the affected CPU.
+
+## Limitations
+
+- **Speed.** Equalisation costs latency: on the S24 NPU, B0 0.42 → 0.54 ms and B1 0.56 → 0.89 ms,
+  still faster than FP16 (0.84 / 1.20 ms). On a T4 at batch 1, every INT8 engine tested is slower
+  than TensorRT FP16 for these models, so FP16 remains the better T4 choice.
+- **Not solved everywhere.** TI TDA4VM: B1 −8.9, MobileViT −4.2 (TIDL's own 16-bit mode: −2.6).
+  EfficientViT-B0 on TensorRT: −70 → −12.8.
+- **Intel OpenVINO does not need it.** With NNCF, B0 loses only 1.8 points and B1 4.9, and
+  equalisation does not help ([data](examples/openvino/)).
+- **Emulated targets.** AMD and TI numbers come from the vendors' quantizers and emulators, not boards.
+- **Recipe selection.** Each target's recipe was chosen on the same images it is reported on, so the
+  best cells carry some selection optimism. The result files record every variant tried.
+- **Imagenette, not ImageNet**, for the toolchain grid (a public 10-class subset, scored 1000-way).
 
 ## More
 
-- [Benchmark grid](docs/benchmark_grid.md): 8 models x 4 toolchains, recipes, speed, footnotes
-- [The full record](docs/findings.md): every experiment, in the order it was found, corrections included
+- [Benchmark grid](docs/benchmark_grid.md): recipes, speed and footnotes for the table above
+- [The full record](docs/findings.md): every experiment in the order it was found, corrections included
 - [Literature review](docs/literature_review.md): what is known, and what is new here
-- Data and scripts: [ImageNet](examples/imagenet/), [Qualcomm devices](examples/qaihub/),
-  [TI TDA4VM](examples/tidl/), [NVIDIA T4](examples/tensorrt/), [AMD XINT8](examples/vitis/),
-  [detection and segmentation](examples/tasks/), [advisor](examples/advise/). MIT licence.
+- [Examples index](examples/README.md): every script and result, by toolchain. MIT licence.
