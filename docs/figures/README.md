@@ -10,7 +10,7 @@ results. Numbers match [benchmark_grid.md](../benchmark_grid.md).
 | `workflow.png` | Where Anneal fits | Anneal sits between the trained model and the vendor's toolchain. It hands over either a rewritten float model or its own INT8 model, and checks the result on the target. No retraining, no change to the vendor's tools. |
 | `grid.png` | The results | 8 models × 4 toolchains. Left: the vendor's default INT8. Right: with Anneal. Top-1 change vs FP32, percentage points. |
 | `speed_s24.png` | The cost | Galaxy S24 NPU. Anneal's INT8 is slower than plain INT8 but faster than FP16, and far more accurate than plain INT8. |
-| `segmentation.png` | What it looks like | LRASPP on TI's TDA4VM. TIDL's 8-bit masks break; with Anneal they match FP32. |
+| `segmentation.png` | What it looks like | LRASPP on TI's TDA4VM. TIDL's 8-bit masks break (9.2 mIoU); with Anneal they nearly match FP32 (53.2 vs 54.4). |
 
 ## Alt text
 

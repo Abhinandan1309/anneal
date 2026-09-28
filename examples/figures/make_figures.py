@@ -263,12 +263,12 @@ def segmentation(mask_file: Path, ids: list[int], scores: dict[str, float]) -> N
     pal = _palette()
     cols = [("image", None), ("FP32", "fp32"), ("TIDL 8-bit", "tidl 8-bit"),
             ("TIDL 8-bit + Anneal", "tidl 8-bit + equalised + 16-bit backbone 0-1")]
-    fig, axes = plt.subplots(len(ids), 4, figsize=(9.2, 2.35 * len(ids)))
+    fig, axes = plt.subplots(len(ids), 4, figsize=(9.2, 2.35 * len(ids)), constrained_layout=True)
     credits = []
     for r, img_id in enumerate(ids):
         img = rt.pil_resize(rt.load_rgb(api, img_id), (512, 512))
         info = api.loadImgs(img_id)[0]
-        credits.append(f"COCO {img_id}: {info['flickr_url']} (CC BY 2.0)")
+        credits.append(f"COCO val2017 {img_id}: {info['flickr_url']}, CC BY 2.0 (https://creativecommons.org/licenses/by/2.0/); resized to 512x512, masks overlaid")
         for c, (title, key) in enumerate(cols):
             ax = axes[r, c]
             ax.set_axis_off()
@@ -280,7 +280,7 @@ def segmentation(mask_file: Path, ids: list[int], scores: dict[str, float]) -> N
             if r == 0:
                 sub = f"\n{scores[key]:.1f} mIoU" if key in scores else ""
                 ax.set_title(title + sub, fontsize=9.5)
-    fig.suptitle("LRASPP-MobileNetV3 on TI TDA4VM (TIDL emulation), COCO val2017", fontsize=10.5, y=1.0)
+    fig.suptitle("LRASPP-MobileNetV3 on TI TDA4VM (TIDL emulation), COCO val2017; mIoU over 300 images", fontsize=10.5)
     fig.savefig(OUT / "segmentation.png")
     plt.close(fig)
     (OUT / "segmentation_credits.txt").write_text("\n".join(credits) + "\n", encoding="utf-8")

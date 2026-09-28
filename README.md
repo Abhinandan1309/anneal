@@ -91,7 +91,8 @@ test). Also: `run` (measured search with a Pareto frontier and a ledger of every
 - **Speed.** Equalisation costs latency: on the S24 NPU, B0 0.42 → 0.54 ms and B1 0.56 → 0.89 ms,
   still faster than FP16 (0.84 / 1.20 ms). On a T4 at batch 1, every INT8 engine tested is slower
   than TensorRT FP16 for these models, so FP16 remains the better T4 choice.
-- **Not solved everywhere.** TI TDA4VM: B1 −8.9, MobileViT −4.2 (TIDL's own 16-bit mode: −2.6).
+- **Not solved everywhere.** TI TDA4VM: B1 −8.9 (TIDL's full 16-bit mode: −0.9, at 16-bit cost),
+  MobileViT −4.2 (16-bit mode: −2.6).
   EfficientViT-B0 on TensorRT: −70 → −12.8.
 - **Intel OpenVINO does not need it.** With NNCF, B0 loses only 1.8 points and B1 4.9, and
   equalisation does not help ([data](examples/openvino/)).

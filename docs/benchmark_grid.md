@@ -33,6 +33,8 @@ Images: AMD 1,000; S24 1,024; TIDL 1,500 (MobileViT 300 default / 500 Anneal); T
   The gate-conv variant scored −2.3.
 - ᵇ TIDL B0: noise-optimal scales (`equalize_derived`) + 16-bit features 0-2; with the default
   grid scales −2.7, pure 8-bit −4.0.
+- TIDL B1: TIDL's full 16-bit mode loses only 0.9pp, so the −8.9 is the cost of keeping most of
+  the network at 8 bits, not a TIDL limit.
 - ᵈ TIDL MobileViT: TIDL's own 16-bit mode is better here (−2.6).
 - ᶠ TIDL MNv3-L: equalisation (grid) + TIDL's automatic mixed precision; pure 8-bit with equalisation −3.3.
 - The S24 numbers for B0/B1 in early commits were measured against the phone's own FP16 run. On

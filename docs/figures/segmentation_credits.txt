@@ -1,0 +1,4 @@
+COCO val2017 110449: http://farm4.staticflickr.com/3189/2947274789_a1a35b33c3_z.jpg, CC BY 2.0 (https://creativecommons.org/licenses/by/2.0/); resized to 512x512, masks overlaid
+COCO val2017 143998: http://farm8.staticflickr.com/7003/6619947073_e8595d035b_z.jpg, CC BY 2.0 (https://creativecommons.org/licenses/by/2.0/); resized to 512x512, masks overlaid
+COCO val2017 249643: http://farm8.staticflickr.com/7360/9167356387_9e47583e84_z.jpg, CC BY 2.0 (https://creativecommons.org/licenses/by/2.0/); resized to 512x512, masks overlaid
+COCO val2017 283412: http://farm6.staticflickr.com/5215/5499994653_748a7cbcbd_z.jpg, CC BY 2.0 (https://creativecommons.org/licenses/by/2.0/); resized to 512x512, masks overlaid
