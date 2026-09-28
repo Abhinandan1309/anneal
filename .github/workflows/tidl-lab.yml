@@ -14,6 +14,9 @@ on:
       variants:
         description: "comma-separated variant labels (see examples/tidl/run_tidl.py)"
         default: "tidl 8-bit,tidl 8-bit + equalised,tidl 16-bit"
+      variant_timeout:
+        description: "seconds one variant may take (compile + inference) before it is recorded as timed out"
+        default: "3600"
 
 jobs:
   tidl:
@@ -50,6 +53,8 @@ jobs:
           path: ~/.anneal_cache
           key: imagenette2-160
       - name: Run
+        env:
+          ANNEAL_TIDL_VARIANT_TIMEOUT: ${{ inputs.variant_timeout }}
         run: |
           source edgeai-tidl-tools/scripts/setup/setup_env.sh J721E
           python examples/tidl/run_tidl.py --models "${{ inputs.models }}" --images "${{ inputs.images }}" \
