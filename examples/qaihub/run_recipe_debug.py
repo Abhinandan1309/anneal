@@ -117,8 +117,15 @@ def main() -> None:
     result = {"model": args.model, "device": args.device, "runtime": args.runtime, "n": int(len(labels)),
               "variants": {k: {**rows[k], "params": VARIANTS.get(k)} for k in rows}}
     slug = args.device.lower().replace(" ", "-").replace("(", "").replace(")", "")
-    tag = "" if not args.variants else "-subset"
-    path = HERE / "results" / f"{args.model}-recipe-debug{tag}-{slug}-{args.runtime}.json"
+    # a subset is named by its variants, and an existing result is never overwritten
+    import hashlib
+
+    tag = "" if not args.variants else "-subset-" + hashlib.sha1(",".join(sorted(chosen)).encode()).hexdigest()[:8]
+    path = HERE / "results" / f"{args.model}-recipe-debug{tag}-{slug}-{args.runtime}-n{len(labels)}.json"
+    k = 2
+    while path.exists():
+        path = path.with_name(f"{path.stem.rsplit('-run', 1)[0]}-run{k}.json")
+        k += 1
     path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     for k, r in rows.items():
         state = "compile FAILED" if not r["compiled"] else ("run FAILED" if not r.get("ran") else f"{100 * r['accuracy']:.1f}%")

@@ -217,10 +217,11 @@ FP32 on the same device: 74.6%, 0.839 ms. "Share of predicted gain" is the fract
 - **Reproducibility.** k = 0 and k = 16 reproduce the QNN `hub int8` and `hub int8 + equalised` accuracies in the table above exactly (−12.0 and −0.7pp, same images). Their latencies differ from that run by up to 0.01 ms (0.425 vs 0.415 ms), and k = 1 measured faster than k = 0, so latency differences under about 0.01 ms are noise.
 - **What this leaves.** The NPU speed cost of equalisation is an open problem. Summed over a model, the predicted gain does separate a detector that does not need equalisation (SSDLite-MobileNetV3, total 2.9) from the classifiers that do (58–366); that evidence is from COCO in emulation, not from this device. `equalize_min_gain` was first written as a per-site filter (commit 5fafa9b), which on EfficientNet-B0 would select a top-k subset of the kind this table shows to be insufficient; after this result it was changed to act on the model's summed gain, all sites or none.
 
-**Pending.**
+**Follow-ups (done).**
 
-- *Leave-one-site-out* (`examples/qaihub/run_site_value.py`): each site's measured accuracy value and latency cost on the S24. Running; no results yet.
-- *Why `anneal recipe` does not run on the S24* (`examples/qaihub/run_recipe_debug.py`): queued; no results yet.
+- *Leave-one-site-out* (`examples/qaihub/run_site_value.py`, 1,024 images): dropping the stem site costs 6.8pp (p < 0.001) and `features.3.0` 2.7pp (p = 0.002); every other site is within noise. The two that matter rank 9th and 7th by predicted gain, confirming that the prediction does not rank sites.
+- *Why `anneal recipe` did not run on the S24* (`examples/qaihub/run_recipe_debug.py`): QNN runs Anneal's QDQ models faithfully only with uint8 activations; int8 activations score 0%. With uint8 the full recipe is −0.8pp on B0 (256 images), and on MobileNetV3-Small and EfficientNet-B1 it beats Qualcomm's quantizer (−1.4 and −1.7pp vs true FP32; [examples/qaihub](../examples/qaihub/README.md)).
+- *Reference correction (2026-09-28).* The B0 deltas in this document are against the S24's own FP16 run (74.6%); true FP32 on the same images is 75.4%, so the QNN row reads −12.8 → −1.5 against true FP32.
 
 ## Limitations
 

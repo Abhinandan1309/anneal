@@ -4,12 +4,12 @@
 for the chip it will run on, and proves the answer with paired statistics on real data.
 
 Its central finding: standard INT8 quantization breaks the gated-depthwise networks used on
-edge devices (EfficientNet, MobileNetV3, LCNet, MobileViT) on every CPU and on the default INT8
-path of all four vendor toolchains tested (AMD, Qualcomm, TI, NVIDIA): losses of 35–77 points
-are common. The cause is one activation scale shared by channels whose ranges differ by orders of
-magnitude. Anneal's fix, an exact channel equalisation through SiLU/Hardswish gates, needs no
-retraining; with a per-target recipe it brings most model/toolchain pairs within about two
-points of FP32.
+edge devices (EfficientNet, MobileNetV3, LCNet, MobileViT) under onnxruntime on every CPU tested
+and on the default INT8 path of four vendor toolchains (AMD, Qualcomm, TI, NVIDIA): losses of
+35–77 points are common. Intel's OpenVINO is the exception found so far (below). The cause is
+one activation scale shared by channels whose ranges differ by orders of magnitude. Anneal's
+fix, an exact channel equalisation through SiLU/Hardswish gates, needs no retraining; with a
+per-target recipe it brings most model/toolchain pairs within about two points of FP32.
 
 ## Results
 
@@ -74,8 +74,9 @@ beats Qualcomm's quantizer on B1 and MobileNetV3-Small.
 | YOLOv8n (40.5) | −0.89 | −0.94 | −0.52 |
 
 `equalize_min_gain` skips equalisation when its predicted gain is small, as here.
-Segmentation (LRASPP-MobileNetV3, 300 images, TI TDA4VM emulation): TIDL 8-bit −44.7 mIoU →
-**−1.2** with equalisation and 16 bits on four backbone layers.
+Segmentation (LRASPP-MobileNetV3): on the per-channel CPU path it does not collapse either
+(−2.2 mIoU default, −0.9 percentile, 500 images); on TI's TDA4VM (emulated, 300 images) TIDL
+8-bit loses 44.7 mIoU, and equalisation with 16 bits on four backbone layers brings it to **−1.2**.
 
 **A second finding, on x86.** CPUs without VNNI sum INT8 products in 16 bits, and the overflow
 costs 8–18pp across nine CNNs; Anneal predicts it per layer without the affected CPU.
@@ -103,6 +104,10 @@ search: measured transforms, a Pareto frontier and a ledger of every trial. Also
   small models: Anneal recovers INT8 accuracy there, but FP16 remains the better T4 choice.
 - **Not solved everywhere.** TI TDA4VM: B1 −8.9, MobileViT −4.2 (TIDL's own 16-bit
   mode: −2.6); EfficientViT-B0 on TensorRT −70 → −12.8.
+- **OpenVINO does not need it.** On OpenVINO/NNCF (ImageNet, 5,000 images, a non-VNNI Ryzen CPU)
+  EfficientNet-B0 loses 1.8pp and B1 4.9pp with NNCF's defaults, and equalisation does not help
+  (−1.9 / −5.4). MobileNetV3-Large's −67pp there is 16-bit overflow on a CPU without VNNI, fixed by
+  NNCF's own overflow fix (−2.4pp; mixed preset −1.3). [Data](examples/openvino/).
 - **Emulated targets.** AMD and TI numbers come from the vendors' quantizers and bit-level
   emulators on a PC, not from boards; only the S24 and T4 numbers are measured on hardware.
 - **Recipe selection.** Each target's recipe was chosen by comparing variants on the same
@@ -121,5 +126,6 @@ search: measured transforms, a Pareto frontier and a ledger of every trial. Also
 - [Benchmark grid](docs/benchmark_grid.md): 8 models x 4 toolchains, recipes, speed, footnotes
 - [The full record](docs/findings.md): every experiment, in the order it was found, corrections included
 - [Literature review](docs/literature_review.md): what is known, and what is new here
-- Data and scripts: [ImageNet](examples/imagenet/), [edge devices](examples/qaihub/),
-  [detection](examples/tasks/), [advisor](examples/advise/). MIT licence.
+- Data and scripts: [ImageNet](examples/imagenet/), [Qualcomm devices](examples/qaihub/),
+  [TI TDA4VM](examples/tidl/), [NVIDIA T4](examples/tensorrt/), [AMD XINT8](examples/vitis/),
+  [detection and segmentation](examples/tasks/), [advisor](examples/advise/). MIT licence.

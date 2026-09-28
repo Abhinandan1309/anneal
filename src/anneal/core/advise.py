@@ -390,20 +390,22 @@ def _advise_target(prof: ModelProfile, int8_path: str, target: str) -> Advice:
         f"Scored by emulating {name} in onnxruntime (per-tensor weights, symmetric int8 feature "
         "maps, power-of-two scales); the accelerator's own calibration and layer fusion differ, "
         "so confirm on the device before trusting a difference of a point or two.",
-        "16-bit feature maps: TIDL's tensor_bits 16 lost ~0pp on these models. It is not a "
-        "parameter of this transform; set it in the target's toolchain if 8 bits are not enough.",
+        "16-bit feature maps: TIDL's tensor_bits 16 lost ~0pp on MobileNetV2/V3-Large and 2.6pp on "
+        "MobileViT-S. It is not a parameter of this transform; set it in the target's toolchain if "
+        "8 bits are not enough.",
     ]
     if target == "tidl":
         caveats.append(
-            "Alternative on TIDL: equalize_grid_inverse (every gate-side 1/s on the int8 grid). Real TIDL, "
-            "Imagenette 1,500: EfficientNet-B1 -67.9 -> -54.7pp, MobileNetV3-Small -9.9 -> -8.2, "
-            "MobileNetV3-Large -4.7 -> -3.3 (-> 0.0 with TIDL's mixed_precision_factor 1.2), but "
-            "EfficientNet-B0 -4.7 -> -11.2. Not the default: verify it per model on the device.")
+            "Best measured on TIDL: this recipe with equalize_grid_inverse, plus 16-bit feature maps on "
+            "the earliest layers (TIDL's output_feature_16bit_names_list; examples/tidl/run_tidl.py). "
+            "TIDL emulator, Imagenette 1,500: MobileNetV3-Small -65.8 -> -2.1pp (9 layers 16-bit), "
+            "EfficientNet-B1 -76.7 -> -8.9 (46), LCNet -69.3 -> -3.7 (21); EfficientNet-B0 -73.0 -> -1.6 "
+            "with equalize_derived. The two are synergistic: the same 16-bit layers without "
+            "equalisation leave B1 at -76.7pp.")
         caveats.append(
-            "On TIDL, combine the recipe with TIDL's own mixed precision (advanced_options:"
-            "mixed_precision_factor 1.2): MobileNetV3-Large -4.1pp -> -0.4pp. Do not expect 16-bit "
-            "activations alone to fix a per-tensor weight collapse: 16-bit on Anneal's 8 most "
-            "damaged activations left MobileNetV3-Small at -65.5pp (equalisation: -9.7pp).")
+            "On TIDL, TIDL's own mixed precision (advanced_options:mixed_precision_factor 1.2) with "
+            "the recipe and grid 1/s took MobileNetV3-Large to 0.0pp. 16-bit on Anneal's 8 most damaged "
+            "activations alone left MobileNetV3-Small at -65.5pp: equalise first.")
     silu = prof.activations.get("SiLU (Sigmoid*x)", 0) > 0
     if prof.family == "gated-depthwise":
         params = {**base, "equalize": True, "equalize_se": True, "equalize_mix": 0.5,

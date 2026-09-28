@@ -34,8 +34,13 @@ Segmentation: mIoU over the 21 VOC classes, with a paired bootstrap CI.
   EfficientNet-B0/B1/V2-S and MobileNetV3 (not stored in `results/`; see commit 5fafa9b and
   the `equalise` docstring). The option `equalize_min_gain` (commit 5fafa9b) uses
   this to skip equalisation when it would not pay for its NPU cost.
-- **LRASPP-MobileNetV3 segmentation: pending.** It ran out of memory calibrating on 32 images;
-  a rerun with `--calib-images 16` is queued.
+- **LRASPP-MobileNetV3 segmentation** (COCO val2017, 500 images, 16 calibration images, emulated
+  per-channel INT8; `results/lraspp_mobilenet_v3_large.json`; FP32 mIoU 54.8): default −2.16,
+  percentile −0.90, Anneal's advice −1.65, advice without equalisation −0.88 mIoU. Like the
+  detectors it does not collapse on a per-channel CPU path, and equalisation does not help.
+  On TI's TDA4VM (per-tensor, power-of-two scales) it does collapse: −44.7 → −1.2 mIoU with
+  equalisation and 16 bits on four backbone layers
+  ([examples/tidl](../tidl/), [benchmark grid](../../docs/benchmark_grid.md)).
 
     python export_models.py
     python run_tasks.py --model ssdlite320_mobilenet_v3_large --images 500

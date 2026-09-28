@@ -42,4 +42,9 @@ ImageNet, first 10,000 scored images, emulated; FP32 78.29%):
 
 Every alternative is significantly worse than the advice (p ≤ 0.023). Equalisation is worth
 ~3.3pp, percentile ~2.5pp and the float stem ~0.9pp; the best percentile is family-dependent
-(99.999 for ReLU CNNs, 99.99 for gated-depthwise). **MobileNetV3-Large: pending** (running).
+(99.999 for ReLU CNNs, 99.99 for gated-depthwise).
+
+**MobileNetV3-Large** (ImageNet, 10,000 images, emulated; `mobilenet_v3_large_recipe_ablation.json`):
+the advice (eq + asym 99.99 + stem) −0.99pp [−1.46, −0.52]; symmetric 99.999 −0.95 (a tie); no
+equalisation −1.52; no stem −1.38; minmax with equalisation −2.62; default −5.59. The advice is
+best or tied; equalisation is worth ~0.5pp here, against ~3.3pp on EfficientNet-B0.

@@ -48,6 +48,12 @@ Images: AMD 1,000; S24 1,024; TIDL 1,500 (MobileViT 300 default / 500 Anneal); T
 
 ## Things found on the way
 
+- Intel OpenVINO / NNCF (ImageNet 5,000, non-VNNI CPU, real kernels) is the one toolchain where the
+  gated models do not collapse: B0 −1.8pp, B1 −4.9 by default, and equalisation does not help
+  (−1.9 / −5.4). Its MobileNetV3-Large loss (−67pp) is 16-bit overflow, fixed by NNCF's own
+  overflow fix ([examples/openvino](../examples/openvino/)). Not part of the grid: no gated-model
+  fix is needed there.
+
 - TensorRT's implicit INT8 (FP16 fallback, deprecated) is fine on MobileNetV3/LCNet/ResNet-50 but
   loses 9.6 (B0), 14.8 (B1), 6.0 (MobileViT) and 69 (EfficientViT-B0) pp, and its builds are not
   deterministic.
