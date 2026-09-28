@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use Anneal, please cite it as below."
+title: "Anneal: measured, hardware-aware INT8 quantization for edge AI"
+abstract: >-
+  Standard INT8 quantization breaks gated-depthwise networks (EfficientNet, MobileNetV3, LCNet,
+  MobileViT) on the default INT8 path of Qualcomm, TI, AMD and NVIDIA toolchains. Anneal fixes it
+  with an exact channel equalisation through SiLU/Hardswish gates, without retraining, and
+  measures every result with paired statistics.
+authors:
+  - family-names: "Adalegere Rajendra"
+    given-names: "Abhinandan"
+version: 0.1.0
+date-released: 2026-09-28
+license: MIT
+repository-code: "https://github.com/Abhinandan1309/anneal"
+url: "https://abhinandan1309.github.io/2026/09/28/int8-breaks-edge-models.html"
+keywords:
+  - quantization
+  - int8
+  - post-training quantization
+  - edge AI
+  - equalization

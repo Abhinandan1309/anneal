@@ -314,6 +314,33 @@ def segmentation_linkedin(mask_file: Path, scores: dict[str, float], ids=(249643
     print("segmentation_linkedin.png")
 
 
+def social_preview(mask_file: Path, scores: dict[str, float], img_id: int = 249643) -> None:
+    """GitHub social preview, 1280x640: name, claim, and the segmentation before/after."""
+    sys.path.insert(0, str(ROOT / "examples" / "tasks"))
+    import run_tasks as rt
+
+    z = np.load(mask_file)
+    api = rt.coco()
+    pal = _palette()
+    img = rt.pil_resize(rt.load_rgb(api, img_id), (512, 512))
+    fig = plt.figure(figsize=(12.8, 6.4), dpi=100)
+    fig.text(0.05, 0.74, "Anneal", fontsize=54, weight="bold", color=INK)
+    fig.text(0.05, 0.55, "INT8 that doesn't break\nedge models", fontsize=26, color=INK, linespacing=1.3)
+    fig.text(0.05, 0.31, "Exact rewrite, no retraining.\nTested on Qualcomm, TI, AMD\nand NVIDIA toolchains.",
+             fontsize=17, color=MUTED, linespacing=1.5)
+    fig.text(0.05, 0.09, "github.com/Abhinandan1309/anneal", fontsize=15, color=ACCENT)
+    for k, (title, key, colour) in enumerate([("TI 8-bit", "tidl 8-bit", BAD),
+                                              ("8-bit + Anneal", "tidl 8-bit + equalised + 16-bit backbone 0-1", GOOD)]):
+        ax = fig.add_axes([0.47 + k * 0.265, 0.10, 0.25, 0.70])
+        ax.set_axis_off()
+        ax.imshow((0.45 * img + 0.55 * pal[z[f"{key}|{img_id}"]]).astype(np.uint8))
+        ax.set_title(f"{title}\n{scores[key]:.1f} mIoU", fontsize=17, color=colour, weight="bold")
+    with plt.rc_context({"savefig.bbox": "standard"}):  # exact 1280x640, no tight crop
+        fig.savefig(OUT / "social_preview.png", dpi=100)
+    plt.close(fig)
+    print("social_preview.png")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--masks", type=Path, help="tidl-tasks-result-masks.npz from the tidl-tasks workflow")
@@ -338,6 +365,7 @@ def main() -> None:
                     scores[k] = 100 * v["metric"]
         segmentation(args.masks, [int(i) for i in args.ids.split(",")], scores)
         segmentation_linkedin(args.masks, scores)
+        social_preview(args.masks, scores)
 
 
 if __name__ == "__main__":
