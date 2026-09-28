@@ -66,3 +66,4 @@ jobs:
             tidl-tasks-result.json
             tidl-tasks-result-masks.npz
             tidl-traces/
+            tidl-perf/

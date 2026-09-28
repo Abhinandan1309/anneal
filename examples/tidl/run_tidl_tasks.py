@@ -306,6 +306,15 @@ def main() -> None:
                                       {"artifacts_folder": str(art), "debug_level": 0})
             timing[label] = {"compile_s": time.time() - t}
             print(f"  {label}: compiled ({timing[label]['compile_s']:.0f}s)", flush=True)
+            # TIDL's import runs a performance simulator for the target (C7x + MMA) and leaves its
+            # output among the artifacts; keep every small file whose name suggests it, plus a listing
+            perf_dir = Path("tidl-perf") / art.name
+            perf_dir.mkdir(parents=True, exist_ok=True)
+            listing = sorted(str(f.relative_to(art)) + f" {f.stat().st_size}" for f in art.rglob("*") if f.is_file())
+            (perf_dir / "artifact_files.txt").write_text("\n".join(listing), encoding="utf-8")
+            for f in art.rglob("*"):
+                if f.is_file() and f.stat().st_size < 4_000_000 and re.search(r"perf|sim|netlog|layer_info|\.csv$", f.name, re.I):
+                    shutil.copy(f, perf_dir / f.name)
             if names16:  # a name TIDL fused away is ignored silently: record which ones it kept
                 known = " ".join(f.read_text(errors="replace") for f in art.rglob("*layer_info*.txt"))
                 timing[label]["int16_layers"] = names16
