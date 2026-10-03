@@ -102,8 +102,7 @@ test). Also: `run` (measured search with a Pareto frontier and a ledger of every
   grid's images); on harder new images (Imagewoof dog breeds) 13 of 32. Every collapsed model
   still recovers on both, worst −10.3 (TI B1)
   ([checks](docs/benchmark_grid.md#checks-toolchain-version-and-holdout-images)).
-- **Toolchain version.** The S24 numbers are identical on QAIRT 2.45, 2.49 and 2.50. One cell
-  (B0 with Anneal, Qualcomm's quantizer) reproduces at −2.6 today instead of the −0.7 first measured; the table shows −2.6.
+- **Toolchain version.** The S24 numbers are identical on QAIRT 2.45, 2.49 and 2.50.
 - **Imagenette, not ImageNet**, for the toolchain grid (a public 10-class subset, scored 1000-way).
 
 ## More
