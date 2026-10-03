@@ -75,7 +75,7 @@ Images: AMD 1,000; S24 1,024; TIDL 1,500 (MobileViT 300 default / 500 Anneal); T
   8-bit, +1.1pp on TIDL B0 with 16-bit early layers, but −3.0pp on AMD B1 and a tie on AMD/TIDL B1
   with 16-bit layers; opt-in.
 
-## Checks: toolchain version and holdout images (2026-10-03)
+## Checks: toolchain version and holdout images
 
 **QAIRT version (S24).** Each model was quantized once, then compiled and run with every QAIRT
 version AI Hub offers (2.45, 2.49, 2.50; the grid used 2.50), on the grid's 1,024 images. All 8
