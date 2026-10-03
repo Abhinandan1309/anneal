@@ -75,6 +75,9 @@ IMAGEWOOF_SYNSET_TO_IMAGENET_IDX = {
     "n02115641": 273,  # dingo
 }
 
+#: Imagenette val images (seed-0 shuffle) used by any recipe study or the grid: the first 1,500.
+UNSEEN_OFFSET = 1500
+
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
@@ -157,6 +160,7 @@ class ImagenetteEvalSet(EvalSet):
         seed: int = 0,
         cache: bool | None = None,
         synsets: dict[str, int] | None = None,
+        offset: int = 0,
     ) -> None:
         self.root = Path(root)
         self.split = split
@@ -180,7 +184,7 @@ class ImagenetteEvalSet(EvalSet):
         # Shuffle deterministically so a limited subset stays class-balanced.
         rng = np.random.default_rng(seed)
         order = rng.permutation(len(items))
-        items = [items[i] for i in order]
+        items = [items[i] for i in order][offset:]
         if limit is not None:
             items = items[:limit]
 
@@ -431,6 +435,10 @@ def load_evalset(
         )
     if spec.startswith(("imagenette", "imagewoof")):
         dataset, _, variant = spec.partition(":")
+        # "imagenette-unseen": the shuffled val images after the first UNSEEN_OFFSET, which no
+        # study scored (the largest grid run used the first 1,500)
+        offset = UNSEEN_OFFSET if dataset == "imagenette-unseen" else 0
+        dataset = dataset.removesuffix("-unseen")
         root = download_imagenette(Path(cache_dir), variant or "160", dataset)
         evs = ImagenetteEvalSet(
             root,
@@ -439,8 +447,9 @@ def load_evalset(
             image_size=image_size,
             resize=round(image_size * 256 / 224),
             synsets=IMAGEWOOF_SYNSET_TO_IMAGENET_IDX if dataset == "imagewoof" else None,
+            offset=offset,
         )
-        evs.name = dataset
+        evs.name = spec.partition(":")[0]
         return evs
     if spec == "imagenet":
         return ImageNetEvalSet(
@@ -458,7 +467,7 @@ def load_evalset(
         )
     raise ValueError(
         f"unrecognised eval set {spec!r}; expected 'synthetic', 'imagenet', 'imagenette[:160|:320]', "
-        f"'imagewoof[:160|:320]', "
+        f"'imagenette-unseen', 'imagewoof[:160|:320]', "
         f"or a path to an Imagenette-layout directory"
     )
 

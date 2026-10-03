@@ -10,7 +10,7 @@ import sys
 MODELS = "efficientnet_b0,efficientnet_b1,mobilenet_v3_small,mobilenet_v3_large,mobilenet_v2,lcnet_100,mobilevit_s,resnet50"
 IMAGES = "1000"
 VARIANTS = "modelopt int8,modelopt int8 + eq (modelopt convs only),anneal qdq (sym 4 float) (no fp16)"  # empty = all
-EVAL_SET = "imagewoof"  # holdout: no recipe was chosen on these images
+EVAL_SET = "imagenette-unseen"  # Imagenette val images no study scored (after the first 1,500)
 REF = "main"
 
 

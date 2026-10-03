@@ -41,6 +41,10 @@ RECIPE = {
     "mobilevit_s": "hub",
     "resnet50": "hub",
 }
+#: one recipe for every model, fixed before seeing any holdout result: Anneal's own QDQ (it does not
+#: depend on AI Hub's quantizer, which changed under the grid's B0 cell)
+FIXED = {**QDQ, "equalize_grid_inverse": True}
+SETS = {"grid": "imagenette", "holdout": "imagewoof", "unseen": "imagenette-unseen"}
 VERSIONS = ["2.45", "2.49", "2.50"]
 GRID_VERSION = "2.50"
 
@@ -72,6 +76,9 @@ def main() -> None:
     ap.add_argument("--versions", default=",".join(VERSIONS))
     ap.add_argument("--grid-images", type=int, default=1024)
     ap.add_argument("--holdout-images", type=int, default=1000)
+    ap.add_argument("--sets", default="grid,holdout", help="grid (all versions), holdout, unseen (grid version)")
+    ap.add_argument("--variants", default="vendor int8,anneal", help="vendor int8, anneal (the grid's recipe), fixed")
+    ap.add_argument("--tag", default="")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
     versions = args.versions.split(",")
@@ -80,7 +87,8 @@ def main() -> None:
     fw = {f.api_version: f.full_version for f in hub.get_frameworks() if f.name == "QAIRT"}
 
     for model in args.models.split(","):
-        out = HERE / "results" / f"{model}-s24-check.json"
+        out = HERE / "results" / f"{model}-s24-check{args.tag}.json"
+        wanted = args.variants.split(",")
         if out.exists():
             print(f"skip {model}: {out.name} exists", flush=True)
             continue
@@ -93,10 +101,18 @@ def main() -> None:
 
         # quantize once; every QAIRT version compiles the same quantized model
         recipe = RECIPE[model]
-        q_jobs = {"vendor int8": hub.submit_quantize_job(str(static_copy(src, work)), {"input": calib_imgs},
-                                                         name=f"anneal-check-{model}-int8-q")}
+        q_jobs = {}
+        if "vendor int8" in wanted:
+            q_jobs["vendor int8"] = hub.submit_quantize_job(str(static_copy(src, work)), {"input": calib_imgs},
+                                                            name=f"anneal-check-{model}-int8-q")
         quantized = {}
-        if recipe == "hub":
+        if "fixed" in wanted and not ("anneal" in wanted and recipe == FIXED):
+            art = apply_transform("quantize_static_int8", dict(FIXED), ModelArtifact(path=src),
+                                  TransformContext(workdir=work / "fixed", calibset=calib))
+            quantized["fixed"] = str(static_copy(Path(art.path), work / "fixed"))
+        if "anneal" not in wanted:
+            pass
+        elif recipe == "hub":
             eqg = work / "eq-grid.onnx"
             equalise(src, eqg, [np.concatenate(calib_imgs[i:i + 8]) for i in range(0, 64, 8)], grid_inverse=True)
             q_jobs["anneal"] = hub.submit_quantize_job(str(static_copy(eqg, work)), {"input": calib_imgs},
@@ -112,7 +128,8 @@ def main() -> None:
         # one set in memory at a time (~600 MB each); uploads are reused by models of the same shape
         cpu = ort.InferenceSession(str(src), providers=["CPUExecutionProvider"])
         sets, fp32, datasets = {}, {}, {}
-        for s, spec, n in (("grid", "imagenette", args.grid_images), ("holdout", "imagewoof", args.holdout_images)):
+        for s in args.sets.split(","):
+            spec, n = SETS[s], args.grid_images if s == "grid" else args.holdout_images
             xs, sets[s] = images(spec, n, shape)
             fp32[s] = np.array([int(np.argmax(cpu.run(None, {"input": x})[0])) for x in xs])
             if (s, shape) not in uploaded:
@@ -130,14 +147,14 @@ def main() -> None:
             t = target_of(j, f"{k} {v}")
             if t is None:
                 continue
-            for s in ("grid", "holdout") if v == GRID_VERSION else ("grid",):
+            # the grid's images on every version; the other sets on the grid's version only
+            for s in [x for x in sets if v == GRID_VERSION or x == "grid"]:
                 runs[(k, v, s)] = hub.submit_inference_job(t, device=device, inputs=datasets[s],
                                                            options=f"--qairt_version {v}",
                                                            name=f"anneal-check-{model}-{k}-{v}-{s}")
         result = {"model": model, "device": args.device, "recipe": recipe, "qairt": {v: fw.get(v) for v in versions},
                   "calibration": "64 Imagenette train images",
-                  "sets": {"grid": f"Imagenette val, first {len(sets['grid'])} (the grid's images)",
-                           "holdout": f"Imagewoof val, first {len(sets['holdout'])} (never scored before)"},
+                  "sets": {s: f"{SETS[s]}, {len(ys)} images" for s, ys in sets.items()},
                   "true_fp32_accuracy": {s: float((fp32[s] == ys).mean()) for s, ys in sets.items()}, "rows": []}
         for (k, v, s), j in runs.items():
             row = {"variant": k, "qairt": v, "set": s, "job": j.job_id}

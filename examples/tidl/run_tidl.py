@@ -121,6 +121,13 @@ VARIANTS = {
         "equalised_pt", {**COMMON, "_16bit_re": r"/conv_stem/|/blocks\.[0-2]/"}),
     "tidl 8-bit + equalised (per-tensor grid) + 16-bit timm stem-2": (
         "equalised_pt_grid", {**COMMON, "_16bit_re": r"/conv_stem/|/blocks\.[0-2]/"}),
+    # unsolved cells (B1, LCNet): plain per-tensor scales / deeper 16-bit stems
+    "tidl 8-bit + equalised (per-tensor) + 16-bit features 0-2": (
+        "equalised_pt", {**COMMON, "_16bit_re": r"/features/features\.[0-2]/"}),
+    "tidl 8-bit + equalised (per-tensor) + 16-bit timm stem-3": (
+        "equalised_pt", {**COMMON, "_16bit_re": r"/conv_stem/|/blocks\.[0-3]/"}),
+    "tidl 8-bit + equalised (per-tensor) + 16-bit timm stem-4": (
+        "equalised_pt", {**COMMON, "_16bit_re": r"/conv_stem/|/blocks\.[0-4]/"}),
     # timm MobileViT names its early layers stem / stages.N
     "tidl 8-bit + equalised (per-tensor grid) + 16-bit mobilevit stages 0-1": (
         "equalised_pt_grid", {**COMMON, "_16bit_re": r"/stem/|/stages\.[01]/"}),

@@ -12,7 +12,7 @@ on:
         description: "Imagenette validation images"
         default: "512"
       eval_set:
-        description: "imagenette, or imagewoof (holdout)"
+        description: "imagenette, imagenette-unseen (val images after the first 1,500), or imagewoof (holdout)"
         default: "imagenette"
       variants:
         description: "comma-separated variant labels (see examples/tidl/run_tidl.py)"
