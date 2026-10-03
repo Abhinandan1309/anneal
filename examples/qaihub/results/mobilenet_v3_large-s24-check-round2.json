@@ -1,0 +1,97 @@
+{
+  "model": "mobilenet_v3_large",
+  "device": "Samsung Galaxy S24 (Family)",
+  "recipe": "hub",
+  "qairt": {
+    "2.50": "2.50.0.260828221209"
+  },
+  "calibration": "64 Imagenette train images",
+  "sets": {
+    "unseen": "imagenette-unseen, 1000 images",
+    "holdout": "imagewoof, 1000 images"
+  },
+  "true_fp32_accuracy": {
+    "unseen": 0.722,
+    "holdout": 0.683
+  },
+  "rows": [
+    {
+      "variant": "fixed",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "jpx0k6nlp",
+      "accuracy": 0.7,
+      "delta_pp": -2.1999999999999997,
+      "ci95_pp": [
+        -3.8575158086727255,
+        -0.5424841913272742
+      ],
+      "mcnemar_p": 0.012774595538064903
+    },
+    {
+      "variant": "fixed",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "j5m9n6q9g",
+      "accuracy": 0.588,
+      "delta_pp": -9.5,
+      "ci95_pp": [
+        -11.646848760392777,
+        -7.353151239607223
+      ],
+      "mcnemar_p": 2.445144522012838e-18
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "jgn16mlqp",
+      "accuracy": 0.693,
+      "delta_pp": -2.9000000000000004,
+      "ci95_pp": [
+        -4.632788545668514,
+        -1.1672114543314873
+      ],
+      "mcnemar_p": 0.001466071947342336
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jp2ok90qg",
+      "accuracy": 0.65,
+      "delta_pp": -3.3000000000000003,
+      "ci95_pp": [
+        -5.052101873750496,
+        -1.547898126249504
+      ],
+      "mcnemar_p": 0.00031731691802228086
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "jp0oz23np",
+      "accuracy": 0.692,
+      "delta_pp": -3.0,
+      "ci95_pp": [
+        -4.698541020994194,
+        -1.301458979005806
+      ],
+      "mcnemar_p": 0.0007645817391550472
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jp8jqm0o5",
+      "accuracy": 0.636,
+      "delta_pp": -4.7,
+      "ci95_pp": [
+        -6.567572503545713,
+        -2.832427496454288
+      ],
+      "mcnemar_p": 1.1026255560645484e-06
+    }
+  ]
+}

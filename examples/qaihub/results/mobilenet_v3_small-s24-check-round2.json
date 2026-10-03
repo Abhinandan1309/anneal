@@ -1,0 +1,106 @@
+{
+  "model": "mobilenet_v3_small",
+  "device": "Samsung Galaxy S24 (Family)",
+  "recipe": {
+    "per_channel": true,
+    "activation_type": "uint8",
+    "calib_samples": 64,
+    "calib_stride": 1,
+    "equalize": true,
+    "equalize_residual": true,
+    "equalize_se": true,
+    "calibrate_method": "percentile_asym"
+  },
+  "qairt": {
+    "2.50": "2.50.0.260828221209"
+  },
+  "calibration": "64 Imagenette train images",
+  "sets": {
+    "unseen": "imagenette-unseen, 1000 images",
+    "holdout": "imagewoof, 1000 images"
+  },
+  "true_fp32_accuracy": {
+    "unseen": 0.65,
+    "holdout": 0.618
+  },
+  "rows": [
+    {
+      "variant": "fixed",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "j5wye24zg",
+      "accuracy": 0.636,
+      "delta_pp": -1.4000000000000001,
+      "ci95_pp": [
+        -2.890167260410723,
+        0.09016726041072304
+      ],
+      "mcnemar_p": 0.08694889972991099
+    },
+    {
+      "variant": "fixed",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jg9oljdqg",
+      "accuracy": 0.555,
+      "delta_pp": -6.3,
+      "ci95_pp": [
+        -8.327733438102749,
+        -4.27226656189725
+      ],
+      "mcnemar_p": 1.4180922486418413e-09
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "jp1o4y6k5",
+      "accuracy": 0.639,
+      "delta_pp": -1.0999999999999999,
+      "ci95_pp": [
+        -2.6292899214995176,
+        0.42928992149951756
+      ],
+      "mcnemar_p": 0.20003136851310316
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jgd6xe2kp",
+      "accuracy": 0.561,
+      "delta_pp": -5.7,
+      "ci95_pp": [
+        -7.617907822602536,
+        -3.7820921773974643
+      ],
+      "mcnemar_p": 6.882318238301829e-09
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "jg9oljdvg",
+      "accuracy": 0.083,
+      "delta_pp": -56.699999999999996,
+      "ci95_pp": [
+        -59.82071763798008,
+        -53.57928236201991
+      ],
+      "mcnemar_p": 7.340809175039626e-164
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jp1o4y6l5",
+      "accuracy": 0.004,
+      "delta_pp": -61.4,
+      "ci95_pp": [
+        -64.41740710942358,
+        -58.38259289057641
+      ],
+      "mcnemar_p": 2.941796710330669e-185
+    }
+  ]
+}

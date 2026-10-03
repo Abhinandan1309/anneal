@@ -1,0 +1,86 @@
+{
+  "soc": "J721E (TDA4VM)",
+  "tidl_tools_path": "/home/runner/work/anneal/anneal/edgeai-tidl-tools/tools/J721E/tidl_tools",
+  "n": 1000,
+  "eval_set": "imagewoof",
+  "models": {
+    "efficientnet_b0": {
+      "fp32": {
+        "accuracy": 0.762
+      },
+      "fp32_correct": "1101111111101110100100011111101111001100011111011101111101000011010001000010111100111111101011111110010111110110111111111000111000010111011111111101111111111111001110111111110111011011010111011011111111101101011011111110110101110101011110011111110110110111010111111111010101101111111111011100111110011101010111111111010111001111111111111011101111101111111011101111011110011111111111111101111011101011111011101001010111011101111110110110011110101111111111001111110111111010011111101111101111111011111111111011110110010111001111011111111111111011111101111011011111101010110111111001000111110011001111011010111111101111100111111111011111111011111110111111011111111100100110011111111011111111101011111111101111111111011101111111111110011101011111110111111111000110000111111111111011011010010111100111111111010110111011110011011110111111111111011111101111110100111011101101011101111111110111111111111111111100111011101101111010110110110111111010110101111011110100111001111111101010111111111111111101111110",
+      "tidl 8-bit + equalised (per-tensor grid) + 16-bit features 0-2": {
+        "accuracy": 0.729,
+        "delta_pp": -3.3000000000000003,
+        "ci95_pp": [
+          -5.15849965725044,
+          -1.4415003427495607
+        ],
+        "mcnemar_p": 0.0007053414522927507,
+        "agreement": 0.866,
+        "correct": "1101111111101010110100001111111110001100011111011101111101000010010001100010111100111111100011111110010111010110111111111001111000111111001111111111111111111111001111111111110011011010010110011001111111101101011011111110110101010101011111010101100110110111010111111111110111101111111111011100111110111101010111011111000111000101111111111011101111101011111011101111011110010111111111111101111111101001111011001101010111011101111110110111001111101111111111001111010111111010010111101101101111111011111111110010111110010111001101011111111101110011011101101011011011101010111111111001001100111011101111011010111011101111100111111111111011011011111110011111011111011100100110011111110001111111101011111111101111011111011100011111111110011111011111110111111111000100100111111111111011011110010111000111011111010110111011111010011110111111111111011111100111110101011011101101011101111111110011111111111111111101111010101001111011100110110111111000110101111011110100111001111111101010111011111111101001101110",
+        "int16_tensors": [
+          "/features/features.0/features.0.0/Conv_output_0",
+          "/features/features.0/features.0.2/Mul_output_0",
+          "/features/features.1/features.1.0/block/block.0/block.0.0/Conv_output_0",
+          "/features/features.1/features.1.0/block/block.0/block.0.2/Mul_output_0",
+          "/features/features.1/features.1.0/block/block.1/fc1/Conv_output_0",
+          "/features/features.1/features.1.0/block/block.1/activation/Mul_output_0",
+          "/features/features.1/features.1.0/block/block.1/fc2/Conv_output_0",
+          "/features/features.1/features.1.0/block/block.1/Mul_output_0",
+          "/features/features.1/features.1.0/block/block.2/block.2.0/Conv_output_0",
+          "/features/features.2/features.2.0/block/block.0/block.0.0/Conv_output_0",
+          "/features/features.2/features.2.0/block/block.0/block.0.2/Mul_output_0",
+          "/features/features.2/features.2.0/block/block.1/block.1.0/Conv_output_0",
+          "/features/features.2/features.2.0/block/block.1/block.1.2/Mul_output_0",
+          "/features/features.2/features.2.0/block/block.2/fc1/Conv_output_0",
+          "/features/features.2/features.2.0/block/block.2/activation/Mul_output_0",
+          "/features/features.2/features.2.0/block/block.2/fc2/Conv_output_0",
+          "/features/features.2/features.2.0/block/block.2/Mul_output_0",
+          "/features/features.2/features.2.0/block/block.3/block.3.0/Conv_output_0",
+          "/features/features.2/features.2.1/block/block.0/block.0.0/Conv_output_0",
+          "/features/features.2/features.2.1/block/block.0/block.0.2/Mul_output_0",
+          "/features/features.2/features.2.1/block/block.1/block.1.0/Conv_output_0",
+          "/features/features.2/features.2.1/block/block.1/block.1.2/Mul_output_0",
+          "/features/features.2/features.2.1/block/block.2/fc1/Conv_output_0",
+          "/features/features.2/features.2.1/block/block.2/activation/Mul_output_0",
+          "/features/features.2/features.2.1/block/block.2/fc2/Conv_output_0",
+          "/features/features.2/features.2.1/block/block.2/Mul_output_0",
+          "/features/features.2/features.2.1/block/block.3/block.3.0/Conv_output_0",
+          "/features/features.2/features.2.1/Add_output_0"
+        ],
+        "int16_names_in_layer_info": [
+          "/features/features.0/features.0.0/Conv_output_0",
+          "/features/features.0/features.0.2/Mul_output_0",
+          "/features/features.1/features.1.0/block/block.0/block.0.0/Conv_output_0",
+          "/features/features.1/features.1.0/block/block.0/block.0.2/Mul_output_0",
+          "/features/features.1/features.1.0/block/block.1/fc1/Conv_output_0",
+          "/features/features.1/features.1.0/block/block.1/activation/Mul_output_0",
+          "/features/features.1/features.1.0/block/block.1/fc2/Conv_output_0",
+          "/features/features.1/features.1.0/block/block.1/Mul_output_0",
+          "/features/features.2/features.2.0/block/block.0/block.0.0/Conv_output_0",
+          "/features/features.2/features.2.0/block/block.0/block.0.2/Mul_output_0",
+          "/features/features.2/features.2.0/block/block.1/block.1.0/Conv_output_0",
+          "/features/features.2/features.2.0/block/block.1/block.1.2/Mul_output_0",
+          "/features/features.2/features.2.0/block/block.2/fc1/Conv_output_0",
+          "/features/features.2/features.2.0/block/block.2/activation/Mul_output_0",
+          "/features/features.2/features.2.0/block/block.2/fc2/Conv_output_0",
+          "/features/features.2/features.2.0/block/block.2/Mul_output_0",
+          "/features/features.2/features.2.0/block/block.3/block.3.0/Conv_output_0",
+          "/features/features.2/features.2.1/block/block.0/block.0.0/Conv_output_0",
+          "/features/features.2/features.2.1/block/block.0/block.0.2/Mul_output_0",
+          "/features/features.2/features.2.1/block/block.1/block.1.0/Conv_output_0",
+          "/features/features.2/features.2.1/block/block.1/block.1.2/Mul_output_0",
+          "/features/features.2/features.2.1/block/block.2/fc1/Conv_output_0",
+          "/features/features.2/features.2.1/block/block.2/activation/Mul_output_0",
+          "/features/features.2/features.2.1/block/block.2/fc2/Conv_output_0",
+          "/features/features.2/features.2.1/block/block.2/Mul_output_0",
+          "/features/features.2/features.2.1/block/block.3/block.3.0/Conv_output_0",
+          "/features/features.2/features.2.1/Add_output_0"
+        ],
+        "compile_s": 446.3278877735138,
+        "infer_s": 612.427841424942
+      }
+    }
+  }
+}

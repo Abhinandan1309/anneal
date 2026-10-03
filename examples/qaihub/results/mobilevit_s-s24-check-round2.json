@@ -1,0 +1,85 @@
+{
+  "model": "mobilevit_s",
+  "device": "Samsung Galaxy S24 (Family)",
+  "recipe": "hub",
+  "qairt": {
+    "2.50": "2.50.0.260828221209"
+  },
+  "calibration": "64 Imagenette train images",
+  "sets": {
+    "unseen": "imagenette-unseen, 1000 images",
+    "holdout": "imagewoof, 1000 images"
+  },
+  "true_fp32_accuracy": {
+    "unseen": 0.778,
+    "holdout": 0.743
+  },
+  "rows": [
+    {
+      "variant": "fixed",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "j5q46r4mg",
+      "error": "'NoneType' object has no attribute 'values'"
+    },
+    {
+      "variant": "fixed",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jglwv2wlp",
+      "error": "'NoneType' object has no attribute 'values'"
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "j56oyzo75",
+      "accuracy": 0.549,
+      "delta_pp": -22.900000000000002,
+      "ci95_pp": [
+        -26.263893360973267,
+        -19.536106639026737
+      ],
+      "mcnemar_p": 2.5501129243403033e-37
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jp3oj1ozp",
+      "accuracy": 0.504,
+      "delta_pp": -23.9,
+      "ci95_pp": [
+        -27.095936117008595,
+        -20.7040638829914
+      ],
+      "mcnemar_p": 1.466037170555727e-44
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "jgod2ndd5",
+      "accuracy": 0.785,
+      "delta_pp": 0.7000000000000001,
+      "ci95_pp": [
+        -1.0634663637279842,
+        2.463466363727984
+      ],
+      "mcnemar_p": 0.5052364407669359
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jpv26r2mg",
+      "accuracy": 0.76,
+      "delta_pp": 1.7000000000000002,
+      "ci95_pp": [
+        -0.2863901369066446,
+        3.686390136906645
+      ],
+      "mcnemar_p": 0.11446824201255824
+    }
+  ]
+}

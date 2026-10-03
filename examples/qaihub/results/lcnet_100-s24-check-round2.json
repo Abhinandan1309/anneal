@@ -1,0 +1,97 @@
+{
+  "model": "lcnet_100",
+  "device": "Samsung Galaxy S24 (Family)",
+  "recipe": "hub",
+  "qairt": {
+    "2.50": "2.50.0.260828221209"
+  },
+  "calibration": "64 Imagenette train images",
+  "sets": {
+    "unseen": "imagenette-unseen, 1000 images",
+    "holdout": "imagewoof, 1000 images"
+  },
+  "true_fp32_accuracy": {
+    "unseen": 0.708,
+    "holdout": 0.66
+  },
+  "rows": [
+    {
+      "variant": "fixed",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "j5q46rlmg",
+      "accuracy": 0.673,
+      "delta_pp": -3.5000000000000004,
+      "ci95_pp": [
+        -5.553561881220043,
+        -1.446438118779958
+      ],
+      "mcnemar_p": 0.0011510187915276821
+    },
+    {
+      "variant": "fixed",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jglwv2ylp",
+      "accuracy": 0.592,
+      "delta_pp": -6.800000000000001,
+      "ci95_pp": [
+        -9.25881199281279,
+        -4.3411880071872115
+      ],
+      "mcnemar_p": 9.230901484311698e-08
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "j56oyz875",
+      "accuracy": 0.35,
+      "delta_pp": -35.8,
+      "ci95_pp": [
+        -39.06700899539624,
+        -32.53299100460375
+      ],
+      "mcnemar_p": 4.18493227077749e-84
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jp3oj1zzp",
+      "accuracy": 0.227,
+      "delta_pp": -43.3,
+      "ci95_pp": [
+        -46.57684216525605,
+        -40.02315783474394
+      ],
+      "mcnemar_p": 2.7289465534451887e-110
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "jgod2nld5",
+      "accuracy": 0.662,
+      "delta_pp": -4.6,
+      "ci95_pp": [
+        -6.635797569504395,
+        -2.5642024304956053
+      ],
+      "mcnemar_p": 1.3557204482551535e-05
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jpv26rlmg",
+      "accuracy": 0.589,
+      "delta_pp": -7.1,
+      "ci95_pp": [
+        -9.451665142829649,
+        -4.748334857170349
+      ],
+      "mcnemar_p": 5.032155536945556e-09
+    }
+  ]
+}

@@ -18,7 +18,7 @@ TI are the vendors' own quantizers and emulators run on a PC.
 
 | Model | AMD XINT8 (emulated) | Galaxy S24 NPU | TI TDA4VM (emulated) | NVIDIA T4 TensorRT |
 |---|---:|---:|---:|---:|
-| EfficientNet-B0 | −75.1 → **−0.1** | −12.8 → **−0.7** | −73.0 → **−1.6** | −52.5 → **−0.1** |
+| EfficientNet-B0 | −75.1 → **−0.1** | −12.8 → −2.6 | −73.0 → **−1.6** | −52.5 → **−0.1** |
 | EfficientNet-B1 | −75.8 → −4.1 | −75.2 → **−1.7** | −76.7 → −8.9 | −75.7 → −3.5 |
 | MobileNetV3-Small | −64.7 → **−1.7** | −58.0 → **−1.4** | −65.8 → **−2.1** | −64.1 → **−1.8** |
 | MobileNetV3-Large | −44.8 → **−1.0** | −2.4 → **−1.2** | −14.8 → **0.0** | −9.9 → −2.2 |
@@ -97,12 +97,13 @@ test). Also: `run` (measured search with a Pareto frontier and a ledger of every
 - **Intel OpenVINO does not need it.** With NNCF, B0 loses only 1.8 points and B1 4.9, and
   equalisation does not help ([data](examples/openvino/)).
 - **Emulated targets.** AMD and TI numbers come from the vendors' quantizers and emulators, not boards.
-- **Recipe selection.** Each target's recipe was chosen on the same images it is reported on. On
-  unseen, harder images (Imagewoof dog breeds) the collapse and the recovery both hold, but the
-  remaining loss is larger: 13 of 32 cells within 2.2pp instead of 26, worst −8.7
-  ([holdout](docs/benchmark_grid.md#checks-toolchain-version-and-holdout-images-2026-10-03)).
+- **Recipe selection.** Each target's recipe was chosen on the same images it is reported on, and
+  that flatters the grid. On new Imagenette images 18 of 32 cells are within 2.2pp (25 on the
+  grid's images); on harder new images (Imagewoof dog breeds) 13 of 32. Every collapsed model
+  still recovers on both, worst −10.3 (TI B1)
+  ([checks](docs/benchmark_grid.md#checks-toolchain-version-and-holdout-images-2026-10-03)).
 - **Toolchain version.** The S24 numbers are identical on QAIRT 2.45, 2.49 and 2.50. One cell
-  (B0 with Anneal, Qualcomm's quantizer) reproduces at −2.6 today instead of −0.7.
+  (B0 with Anneal, Qualcomm's quantizer) reproduces at −2.6 today instead of the −0.7 first measured; the table shows −2.6.
 - **Imagenette, not ImageNet**, for the toolchain grid (a public 10-class subset, scored 1000-way).
 
 ## More

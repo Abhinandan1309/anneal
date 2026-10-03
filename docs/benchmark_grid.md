@@ -6,7 +6,7 @@ target. Bold = within about 2pp of FP32.
 
 | Model | AMD XINT8 (Quark) | Galaxy S24 NPU (QNN) | TI TDA4VM (TIDL) | NVIDIA T4 (TensorRT) |
 |---|---|---|---|---|
-| EfficientNet-B0 | −75.1 → **−0.1** | −12.8 → **−0.7** | −73.0 → **−1.6** ᵇ | −52.5 → **−0.1** ᵉ |
+| EfficientNet-B0 | −75.1 → **−0.1** | −12.8 → −2.6 ʰ | −73.0 → **−1.6** ᵇ | −52.5 → **−0.1** ᵉ |
 | EfficientNet-B1 | −75.8 → −4.1 ᵃ | −75.2 → **−1.7** ᶜ | −76.7 → −8.9 | −75.7 → −3.5 ᵉ |
 | MobileNetV3-Small | −64.7 → **−1.7** | −58.0 → **−1.4** ᶜ | −65.8 → **−2.1** | −64.1 → **−1.8** |
 | MobileNetV3-Large | −44.8 → **−1.0** | −2.4 → **−1.2** | −14.8 → **0.0** ᶠ | −9.9 → −2.2 |
@@ -38,6 +38,8 @@ Images: AMD 1,000; S24 1,024; TIDL 1,500 (MobileViT 300 default / 500 Anneal); T
   equalisation it did not finish in 3 h; without, it crashed in TIDL's runtime (`b1_automixed_n1500.json`).
 - ᵈ TIDL MobileViT: TIDL's own 16-bit mode is better here (−2.6).
 - ᶠ TIDL MNv3-L: equalisation (grid) + TIDL's automatic mixed precision; pure 8-bit with equalisation −3.3.
+- ʰ S24 B0: −0.7 when measured on 2026-09-27; re-running the identical model on 2026-10-03 gives
+  −2.6 on every QAIRT version (see Checks below), likely a change in AI Hub's quantizer.
 - The S24 numbers for B0/B1 in early commits were measured against the phone's own FP16 run. On
   B1 that run is degraded: 69.2% vs 76.1% true FP32 (−6.8pp). This table uses true FP32.
 
@@ -103,14 +105,59 @@ scored (1,000 images; TIDL MobileViT 500). Change vs FP32 on the same images, ve
 
 What holds: the vendor defaults collapse on the new images too (most to near 0% accuracy), and
 every collapsed cell recovers (from −15…−76 to −0.8…−8.7). What does not: the remaining loss is
-larger than on Imagenette (13 of 32 cells within 2.2pp, vs 26 on the grid). Two causes are mixed
-here and this run cannot separate them: recipe selection on the Imagenette images, and harder
+larger than on Imagenette (13 of 32 cells within 2.2pp, vs 25 on the grid). Two causes are mixed
+here (separated below): recipe selection on the Imagenette images, and harder
 images (fine-grained breeds, where a small logit error flips one dog breed into another). One sign
 of selection noise: on the T4, the recipe chosen per model is not always the better of the two on
 the holdout (MNv3-L: chosen −7.4, the alternative −4.5; LCNet −7.3 vs −5.8). On
 the S24, MNv3-L needs no fix and Anneal is 1.4pp worse than the vendor default there.
-A clean separation needs unused Imagenette images (same difficulty, new images); not run.
 Files: `examples/*/results/holdout_imagewoof_*`, `examples/tensorrt/results/t4_v15_holdout_imagewoof_n1000.json`.
+
+**Unseen Imagenette images (same difficulty, new images).** To separate the two causes, the grid's
+recipes were scored on 1,000 Imagenette validation images that no run had used (the shuffled set
+after the first 1,500; TIDL MobileViT 500). Vendor default → the grid's recipe:
+
+| Model | AMD XINT8 | Galaxy S24 | TI TDA4VM | NVIDIA T4 |
+|---|---|---|---|---|
+| EfficientNet-B0 | −77.2 → −2.4 | −13.8 → **−2.0** | −73.0 → −4.3 | −53.7 → **−1.6** |
+| EfficientNet-B1 | −77.0 → −5.0 | −77.0 → **−0.9** | −78.5 → −10.3 | −78.5 → −3.7 |
+| MobileNetV3-Small | −65.0 → **−1.4** | −56.7 → **−1.1** | −65.0 → −2.3 | −62.9 → −2.5 |
+| MobileNetV3-Large | −46.2 → −3.7 | −2.9 → −3.0 | −17.9 → **−1.2** | −11.5 → −2.8 |
+| MobileNetV2 | −6.1 → **+0.7** | **+0.5** | −8.0 → **+2.0** | **−1.2** |
+| LCNet-100 | −70.1 → −5.6 | −35.8 → −4.6 | −70.8 → −4.3 | −66.3 → −4.4 |
+| MobileViT-S | −77.2 → **+0.1** | −22.9 → **+0.7** | −70.2 → **−0.8** | −58.0 → **+2.1** |
+| ResNet-50 | −4.4 → **−2.1** | **+0.3** | −2.2 → **−2.1** | **−0.7** → **−0.3** |
+
+**18 of 32 cells within 2.2pp** (bold), against 25 on the grid's images and 13 on Imagewoof. So
+both effects are real and of similar size: choosing the recipe on the reported images made the grid
+look about 1–2pp better per cell than new images of the same kind (25 → 18), and harder images cost
+about as much again (18 → 13). The collapse and the recovery hold on every set: no collapsed cell
+stays collapsed, the worst recovered cell is TI B1 (−10.3).
+
+**One recipe per chip, fixed in advance.** To remove per-model choices, one recipe per chip was
+fixed before these runs and scored on both new sets (AMD already used one rule: gated nets one
+recipe, ReLU nets CLE):
+
+- **S24**: Anneal's own QDQ (equalised, grid 1/s, uint8) for every model. Unseen: B0 −3.4, B1 −0.9,
+  MNv3-S −1.4, MNv3-L −2.2, MNv2 −0.3, LCNet −3.5, ResNet-50 −0.4; MobileViT compiles but fails on
+  the device. Imagewoof: B0 −4.3, B1 −5.7, MNv3-S −6.3, MNv3-L −9.5, LCNet −6.8. About as good as the
+  per-model choice on Imagenette, worse on MNv3-L where no fix is needed.
+- **TI**: equalised (grid 1/s) + 16-bit earliest layers for every gated model, CLE for ReLU nets.
+  Close to the per-model choice except LCNet, where grid scales are much worse (Imagewoof −17.9 vs
+  −4.3 with plain per-tensor scales).
+- **T4**: Anneal's own QDQ (4 tensors float, no FP16) for every model. Unseen: B0 −1.6, B1 −3.7,
+  MNv3-S −4.6, MNv3-L −2.6, MNv2 −0.8, LCNet −6.0, MobileViT −0.5, ResNet-50 −0.5. Neither T4 recipe
+  wins on every model.
+
+No single recipe per chip beats the per-model choice everywhere; the per-model choices transfer to
+new images about as well as a fixed recipe does.
+
+**The unsolved TI cells.** B1: plain per-tensor and derived scales were no better than grid scales
+(unseen −14.7 and −11.3 vs −10.3); B1 on TI stays around −9 to −11. LCNet: 16-bit on more early
+blocks helps on unseen Imagenette (stem-2 −4.3, stem-3 −3.1, stem-4 −2.6, chosen there), but on
+Imagewoof stem-4 scores −5.6 (stem-3 −3.6): a small, unstable gain, so the grid keeps stem-2.
+Files: `examples/*/results/unseen_*`, `examples/tensorrt/results/t4_v16_unseen_n1000.json`,
+`examples/qaihub/results/*-s24-check-round2.json`.
 
 ## Sources
 

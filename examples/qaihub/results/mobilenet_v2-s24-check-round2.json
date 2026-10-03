@@ -1,0 +1,97 @@
+{
+  "model": "mobilenet_v2",
+  "device": "Samsung Galaxy S24 (Family)",
+  "recipe": "hub",
+  "qairt": {
+    "2.50": "2.50.0.260828221209"
+  },
+  "calibration": "64 Imagenette train images",
+  "sets": {
+    "unseen": "imagenette-unseen, 1000 images",
+    "holdout": "imagewoof, 1000 images"
+  },
+  "true_fp32_accuracy": {
+    "unseen": 0.622,
+    "holdout": 0.606
+  },
+  "rows": [
+    {
+      "variant": "fixed",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "jp4eldx2g",
+      "accuracy": 0.619,
+      "delta_pp": -0.3,
+      "ci95_pp": [
+        -1.3182761197239183,
+        0.7182761197239184
+      ],
+      "mcnemar_p": 0.7011080384254456
+    },
+    {
+      "variant": "fixed",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jpx0k678p",
+      "accuracy": 0.602,
+      "delta_pp": -0.4,
+      "ci95_pp": [
+        -1.7577014929652246,
+        0.9577014929652248
+      ],
+      "mcnemar_p": 0.6654658120766186
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "j5m9n6w7g",
+      "accuracy": 0.627,
+      "delta_pp": 0.5,
+      "ci95_pp": [
+        -0.4394719793586182,
+        1.4394719793586184
+      ],
+      "mcnemar_p": 0.4048728942871094
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jprxv24kp",
+      "accuracy": 0.61,
+      "delta_pp": 0.4,
+      "ci95_pp": [
+        -1.0131586407760456,
+        1.8131586407760456
+      ],
+      "mcnemar_p": 0.6778086391424605
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.50",
+      "set": "unseen",
+      "job": "jp2ok976g",
+      "accuracy": 0.627,
+      "delta_pp": 0.5,
+      "ci95_pp": [
+        -0.4394719793586182,
+        1.4394719793586184
+      ],
+      "mcnemar_p": 0.4048728942871094
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jp0oz2e0p",
+      "accuracy": 0.61,
+      "delta_pp": 0.4,
+      "ci95_pp": [
+        -1.0131586407760456,
+        1.8131586407760456
+      ],
+      "mcnemar_p": 0.6778086391424605
+    }
+  ]
+}
