@@ -97,8 +97,12 @@ test). Also: `run` (measured search with a Pareto frontier and a ledger of every
 - **Intel OpenVINO does not need it.** With NNCF, B0 loses only 1.8 points and B1 4.9, and
   equalisation does not help ([data](examples/openvino/)).
 - **Emulated targets.** AMD and TI numbers come from the vendors' quantizers and emulators, not boards.
-- **Recipe selection.** Each target's recipe was chosen on the same images it is reported on, so the
-  best cells carry some selection optimism. The result files record every variant tried.
+- **Recipe selection.** Each target's recipe was chosen on the same images it is reported on. On
+  unseen, harder images (Imagewoof dog breeds) the collapse and the recovery both hold, but the
+  remaining loss is larger: 13 of 32 cells within 2.2pp instead of 26, worst −8.7
+  ([holdout](docs/benchmark_grid.md#checks-toolchain-version-and-holdout-images-2026-10-03)).
+- **Toolchain version.** The S24 numbers are identical on QAIRT 2.45, 2.49 and 2.50. One cell
+  (B0 with Anneal, Qualcomm's quantizer) reproduces at −2.6 today instead of −0.7.
 - **Imagenette, not ImageNet**, for the toolchain grid (a public 10-class subset, scored 1000-way).
 
 ## More

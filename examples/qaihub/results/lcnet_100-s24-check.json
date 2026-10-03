@@ -1,0 +1,125 @@
+{
+  "model": "lcnet_100",
+  "device": "Samsung Galaxy S24 (Family)",
+  "recipe": "hub",
+  "qairt": {
+    "2.45": "2.45.0.260326154327",
+    "2.49": "2.49.0.260730134355",
+    "2.50": "2.50.0.260828221209"
+  },
+  "calibration": "64 Imagenette train images",
+  "sets": {
+    "grid": "Imagenette val, first 1024 (the grid's images)",
+    "holdout": "Imagewoof val, first 1000 (never scored before)"
+  },
+  "true_fp32_accuracy": {
+    "grid": 0.6796875,
+    "holdout": 0.66
+  },
+  "rows": [
+    {
+      "variant": "vendor int8",
+      "qairt": "2.45",
+      "set": "grid",
+      "job": "j5q4q1q7g",
+      "accuracy": 0.3310546875,
+      "delta_pp": -34.86328125,
+      "ci95_pp": [
+        -38.10329827654082,
+        -31.62326422345918
+      ],
+      "mcnemar_p": 5.845160374011622e-82
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.49",
+      "set": "grid",
+      "job": "jglwm8mep",
+      "accuracy": 0.3310546875,
+      "delta_pp": -34.86328125,
+      "ci95_pp": [
+        -38.10329827654082,
+        -31.62326422345918
+      ],
+      "mcnemar_p": 5.845160374011622e-82
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.50",
+      "set": "grid",
+      "job": "jp3o070xp",
+      "accuracy": 0.3310546875,
+      "delta_pp": -34.86328125,
+      "ci95_pp": [
+        -38.10329827654082,
+        -31.62326422345918
+      ],
+      "mcnemar_p": 5.845160374011622e-82
+    },
+    {
+      "variant": "vendor int8",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jgod6w645",
+      "accuracy": 0.227,
+      "delta_pp": -43.3,
+      "ci95_pp": [
+        -46.57684216525605,
+        -40.02315783474394
+      ],
+      "mcnemar_p": 2.7289465534451887e-110
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.45",
+      "set": "grid",
+      "job": "jpv2kmk7g",
+      "accuracy": 0.658203125,
+      "delta_pp": -2.1484375,
+      "ci95_pp": [
+        -4.077061765630708,
+        -0.219813234369293
+      ],
+      "mcnemar_p": 0.037066767438560536
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.49",
+      "set": "grid",
+      "job": "jgj3nyn7p",
+      "accuracy": 0.658203125,
+      "delta_pp": -2.1484375,
+      "ci95_pp": [
+        -4.077061765630708,
+        -0.219813234369293
+      ],
+      "mcnemar_p": 0.037066767438560536
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.50",
+      "set": "grid",
+      "job": "jpe6mxm7g",
+      "accuracy": 0.658203125,
+      "delta_pp": -2.1484375,
+      "ci95_pp": [
+        -4.077061765630708,
+        -0.219813234369293
+      ],
+      "mcnemar_p": 0.037066767438560536
+    },
+    {
+      "variant": "anneal",
+      "qairt": "2.50",
+      "set": "holdout",
+      "job": "jg9on2nqg",
+      "accuracy": 0.589,
+      "delta_pp": -7.1,
+      "ci95_pp": [
+        -9.451665142829649,
+        -4.748334857170349
+      ],
+      "mcnemar_p": 5.032155536945556e-09
+    }
+  ]
+}

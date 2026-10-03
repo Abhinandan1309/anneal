@@ -73,6 +73,45 @@ Images: AMD 1,000; S24 1,024; TIDL 1,500 (MobileViT 300 default / 500 Anneal); T
   8-bit, +1.1pp on TIDL B0 with 16-bit early layers, but −3.0pp on AMD B1 and a tie on AMD/TIDL B1
   with 16-bit layers; opt-in.
 
+## Checks: toolchain version and holdout images (2026-10-03)
+
+**QAIRT version (S24).** Each model was quantized once, then compiled and run with every QAIRT
+version AI Hub offers (2.45, 2.49, 2.50; the grid used 2.50), on the grid's 1,024 images. All 8
+models, vendor default and Anneal: **identical accuracy on all three versions**. The S24 results are
+not an artifact of one toolchain release. Re-running today reproduces the grid within ±0.8pp on every
+cell but one: B0 with Anneal is −2.6 today vs −0.7 on 2026-09-27. Our equalised model is
+byte-identical to the one built then, the version does not matter, and AI Hub's quantizer is
+deterministic today (same model twice → identical output), so the likely cause is a change in AI
+Hub's quantizer between the two dates (the old jobs are no longer listed, so this is unproven).
+Cells that use Anneal's own quantization (B1, MNv3-S) reproduce exactly.
+Files: `examples/qaihub/results/*-s24-check.json`, script `examples/qaihub/run_s24_check.py`.
+
+**Holdout images.** The recipes were chosen on Imagenette. The same frozen recipes (same
+calibration, same parameters) were scored on Imagewoof: ten ImageNet dog breeds that no study had
+scored (1,000 images; TIDL MobileViT 500). Change vs FP32 on the same images, vendor default → Anneal:
+
+| Model | AMD XINT8 | Galaxy S24 | TI TDA4VM | NVIDIA T4 |
+|---|---|---|---|---|
+| EfficientNet-B0 | −76.2 → −1.4 | −15.5 → −3.7 | −76.2 → −5.0 | −62.2 → −0.8 |
+| EfficientNet-B1 | −71.8 → −5.2 | −73.8 → −5.7 | −73.8 → −8.7 | −73.8 → −6.3 |
+| MobileNetV3-Small | −61.8 → −4.8 | −61.4 → −5.7 | −61.8 → −5.7 | −61.8 → −8.1 |
+| MobileNetV3-Large | −63.7 → −4.0 | −3.3 → −4.7 | −31.6 → −2.0 | −13.9 → −7.4 |
+| MobileNetV2 | −15.4 → −1.0 | +0.4 | −23.4 → −2.6 | +0.5 |
+| LCNet-100 | −66.0 → −6.0 | −43.3 → −7.1 | −66.0 → −4.3 | −66.0 → −7.3 |
+| MobileViT-S | −74.3 → +1.9 | −23.9 → +1.7 | −73.6 → −2.8 | −63.4 → +0.2 |
+| ResNet-50 | −2.9 → +0.3 | +0.4 | −1.4 → 0.0 | −0.7 → −0.9 |
+
+What holds: the vendor defaults collapse on the new images too (most to near 0% accuracy), and
+every collapsed cell recovers (from −15…−76 to −0.8…−8.7). What does not: the remaining loss is
+larger than on Imagenette (13 of 32 cells within 2.2pp, vs 26 on the grid). Two causes are mixed
+here and this run cannot separate them: recipe selection on the Imagenette images, and harder
+images (fine-grained breeds, where a small logit error flips one dog breed into another). One sign
+of selection noise: on the T4, the recipe chosen per model is not always the better of the two on
+the holdout (MNv3-L: chosen −7.4, the alternative −4.5; LCNet −7.3 vs −5.8). On
+the S24, MNv3-L needs no fix and Anneal is 1.4pp worse than the vendor default there.
+A clean separation needs unused Imagenette images (same difficulty, new images); not run.
+Files: `examples/*/results/holdout_imagewoof_*`, `examples/tensorrt/results/t4_v15_holdout_imagewoof_n1000.json`.
+
 ## Sources
 
 Results JSON: `examples/vitis/results/`, `examples/qaihub/results/`, `examples/tidl/results/`,

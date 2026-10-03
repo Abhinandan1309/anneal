@@ -1,0 +1,78 @@
+{
+  "soc": "J721E (TDA4VM)",
+  "tidl_tools_path": "/home/runner/work/anneal/anneal/edgeai-tidl-tools/tools/J721E/tidl_tools",
+  "n": 500,
+  "eval_set": "imagewoof",
+  "models": {
+    "mobilevit_s": {
+      "fp32": {
+        "accuracy": 0.736
+      },
+      "fp32_correct": "11011111111011101101010111101111010011110110100111111111111000000100010100111111001111111010111111100101111101101111111110111110001101110011111111011111110111110011111011110111111110101001110010001110111011000110111111001111010111011111110101111001101101110101111111110111011010101111111111101111111111011101110111110101110001111110011100111011111010111111111011110111110101111111111011111111111010111100010011110101110111011111101101010111101011111101010011110111111110100101111011011011111110111111",
+      "tidl 8-bit + equalised (per-tensor grid) + 16-bit mobilevit stages 0-1": {
+        "accuracy": 0.708,
+        "delta_pp": -2.8000000000000003,
+        "ci95_pp": [
+          -5.2670475698697015,
+          -0.3329524301302983
+        ],
+        "mcnemar_p": 0.03847730828420026,
+        "agreement": 0.864,
+        "correct": "11011111111011101101000101101111010011111110110111100111110001000100010100111111001111111010111111100001111101100111111100111110001101010011111111011011010111110011101011010111111010101101100010001110111011100111111111001111010111011111110111111101101101110101111111110111011010111111111111101011111111011101101111110101110001111111010110111011111010111111111010100111100101111111111011111111111010111100010011010101100101011111101101010111101011111101010001110111111100100101111011111010111110111111",
+        "int16_tensors": [
+          "/net/stem/conv/Conv_output_0",
+          "/net/stem/bn/act/Mul_output_0",
+          "/net/stages/stages.0/stages.0.0/conv1_1x1/conv/Conv_output_0",
+          "/net/stages/stages.0/stages.0.0/conv1_1x1/bn/act/Mul_output_0",
+          "/net/stages/stages.0/stages.0.0/conv2_kxk/conv/Conv_output_0",
+          "/net/stages/stages.0/stages.0.0/conv2_kxk/bn/act/Mul_output_0",
+          "/net/stages/stages.0/stages.0.0/conv3_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.0/conv1_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.0/conv1_1x1/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.0/conv2_kxk/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.0/conv2_kxk/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.0/conv3_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.1/conv1_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.1/conv1_1x1/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.1/conv2_kxk/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.1/conv2_kxk/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.1/conv3_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.1/Add_output_0",
+          "/net/stages/stages.1/stages.1.2/conv1_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.2/conv1_1x1/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.2/conv2_kxk/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.2/conv2_kxk/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.2/conv3_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.2/Add_output_0"
+        ],
+        "int16_names_in_layer_info": [
+          "/net/stem/conv/Conv_output_0",
+          "/net/stem/bn/act/Mul_output_0",
+          "/net/stages/stages.0/stages.0.0/conv1_1x1/conv/Conv_output_0",
+          "/net/stages/stages.0/stages.0.0/conv1_1x1/bn/act/Mul_output_0",
+          "/net/stages/stages.0/stages.0.0/conv2_kxk/conv/Conv_output_0",
+          "/net/stages/stages.0/stages.0.0/conv2_kxk/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.0/conv1_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.0/conv1_1x1/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.0/conv2_kxk/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.0/conv2_kxk/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.0/conv3_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.1/conv1_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.1/conv1_1x1/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.1/conv2_kxk/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.1/conv2_kxk/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.1/conv3_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.1/Add_output_0",
+          "/net/stages/stages.1/stages.1.2/conv1_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.2/conv1_1x1/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.2/conv2_kxk/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.2/conv2_kxk/bn/act/Mul_output_0",
+          "/net/stages/stages.1/stages.1.2/conv3_1x1/conv/Conv_output_0",
+          "/net/stages/stages.1/stages.1.2/Add_output_0"
+        ],
+        "compile_s": 1455.4412519931793,
+        "infer_s": 1318.8946487903595
+      }
+    }
+  }
+}
