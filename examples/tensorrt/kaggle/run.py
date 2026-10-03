@@ -7,9 +7,10 @@ edited per run. The repository is public, so the kernel clones it.
 import subprocess
 import sys
 
-MODELS = "efficientnet_b1,efficientvit_b0,lcnet_100,mobilevit_s"
+MODELS = "efficientnet_b0,efficientnet_b1,mobilenet_v3_small,mobilenet_v3_large,mobilenet_v2,lcnet_100,mobilevit_s,resnet50"
 IMAGES = "1000"
-VARIANTS = "anneal qdq (sym 4 float) (no fp16),anneal qdq (sym) (no fp16),modelopt int8 + eq (modelopt convs only)"  # empty = all
+VARIANTS = "modelopt int8,modelopt int8 + eq (modelopt convs only),anneal qdq (sym 4 float) (no fp16)"  # empty = all
+EVAL_SET = "imagewoof"  # holdout: no recipe was chosen on these images
 REF = "main"
 
 
@@ -30,5 +31,5 @@ sh(f"{sys.executable} -m pip install -q --no-deps -e /kaggle/temp/anneal")
 sh(f"{sys.executable} -m pip list 2>/dev/null | grep -i -E 'tensorrt|modelopt|onnx|torch'")
 extra = f'--variants "{VARIANTS}"' if VARIANTS else ""
 sh(f"cd /kaggle/temp/anneal && {sys.executable} examples/tensorrt/run_trt.py --models {MODELS} --images {IMAGES} "
-   f"{extra} --out /kaggle/working/trt-result.json")
+   f"{extra} --eval-set {EVAL_SET} --out /kaggle/working/trt-result.json")
 

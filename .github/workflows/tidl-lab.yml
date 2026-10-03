@@ -11,6 +11,9 @@ on:
       images:
         description: "Imagenette validation images"
         default: "512"
+      eval_set:
+        description: "imagenette, or imagewoof (holdout)"
+        default: "imagenette"
       variants:
         description: "comma-separated variant labels (see examples/tidl/run_tidl.py)"
         default: "tidl 8-bit,tidl 8-bit + equalised,tidl 16-bit"
@@ -58,7 +61,7 @@ jobs:
         run: |
           source edgeai-tidl-tools/scripts/setup/setup_env.sh J721E
           python examples/tidl/run_tidl.py --models "${{ inputs.models }}" --images "${{ inputs.images }}" \
-            --variants "${{ inputs.variants }}" --out tidl-result.json
+            --variants "${{ inputs.variants }}" --eval-set "${{ inputs.eval_set }}" --out tidl-result.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

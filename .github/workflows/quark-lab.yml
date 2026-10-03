@@ -12,6 +12,9 @@ on:
       images:
         description: "Imagenette validation images"
         default: "1000"
+      eval_set:
+        description: "imagenette, or imagewoof (holdout)"
+        default: "imagenette"
       variants:
         description: "comma-separated variant labels (see examples/vitis/run_quark.py); empty = all"
         default: ""
@@ -40,7 +43,7 @@ jobs:
         run: |
           VARIANTS="${{ inputs.variants }}"
           python examples/vitis/run_quark.py --models "${{ inputs.models }}" --images "${{ inputs.images }}" \
-            ${VARIANTS:+--variants "$VARIANTS"} --out quark-result.json
+            ${VARIANTS:+--variants "$VARIANTS"} --eval-set "${{ inputs.eval_set }}" --out quark-result.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

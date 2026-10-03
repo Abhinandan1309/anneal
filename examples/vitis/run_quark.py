@@ -191,11 +191,13 @@ def main() -> None:
     ap.add_argument("--images", type=int, default=1000)
     ap.add_argument("--variants", default=",".join(VARIANTS))
     ap.add_argument("--out", required=True)
+    ap.add_argument("--eval-set", default="imagenette",
+                    help="imagenette (the studies) or imagewoof (holdout: never used to choose a recipe)")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
     from quark.onnx import ModelQuantizer
 
-    report = {"quantizer": "AMD Quark", "n": args.images, "models": {}}
+    report = {"quantizer": "AMD Quark", "n": args.images, "eval_set": args.eval_set, "models": {}}
     work = Path("quark-work")
     for name in [m.strip() for m in args.models.split(",") if m.strip()]:
         mdir = work / name
@@ -258,7 +260,7 @@ def main() -> None:
                   "pt gc sur": pt_gc_sur, "pt bc sur": pt_bc_sur,
                   "pt grid sur": pt_grid_sur, "pt grid der sur": pt_grid_der_sur, "cle4": cle4}
 
-        ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)  # batch 1: Quark may fix it
+        ev = load_evalset(args.eval_set, cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)  # batch 1: Quark may fix it
         batches = list(ev.batches())
         ys = np.concatenate([y for _, y in batches])
 

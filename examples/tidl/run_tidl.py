@@ -217,6 +217,8 @@ def main() -> None:
     ap.add_argument("--images", type=int, default=512)
     ap.add_argument("--variants", default=",".join(VARIANTS))
     ap.add_argument("--out", required=True)
+    ap.add_argument("--eval-set", default="imagenette",
+                    help="imagenette (the studies) or imagewoof (holdout: never used to choose a recipe)")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
     tools = os.environ.get("TIDL_TOOLS_PATH")
@@ -226,7 +228,7 @@ def main() -> None:
     unknown = [v.strip() for v in args.variants.split(",") if v.strip() and v.strip() not in VARIANTS]
     if unknown:  # before any export or build: labels must not contain commas
         raise SystemExit(f"unknown variants {unknown}; labels must not contain commas")
-    report = {"soc": "J721E (TDA4VM)", "tidl_tools_path": tools, "n": args.images, "models": {}}
+    report = {"soc": "J721E (TDA4VM)", "tidl_tools_path": tools, "n": args.images, "eval_set": args.eval_set, "models": {}}
     work = Path("tidl-work")
     for name in [m.strip() for m in args.models.split(",") if m.strip()]:
         mdir = work / name
@@ -317,7 +319,7 @@ def main() -> None:
                 print(f"  {name}: {key} from {base}: {sum(n.op_type == 'QuantizeLinear' for n in q.graph.node)} Q, "
                       f"{sum(n.op_type == 'DequantizeLinear' for n in q.graph.node)} DQ, opset "
                       f"{[o.version for o in q.opset_import if o.domain in ('', 'ai.onnx')]}", flush=True)
-        ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)
+        ev = load_evalset(args.eval_set, cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)
         xs, ys = zip(*[(x, int(y[0])) for x, y in ev.batches()])
         ys = np.array(ys)
 

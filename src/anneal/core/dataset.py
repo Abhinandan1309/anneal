@@ -54,20 +54,41 @@ IMAGENETTE_CLASS_NAMES = {
     701: "parachute",
 }
 
+IMAGEWOOF_URLS = {
+    "160": "https://s3.amazonaws.com/fast-ai-imageclas/imagewoof2-160.tgz",
+    "320": "https://s3.amazonaws.com/fast-ai-imageclas/imagewoof2-320.tgz",
+}
+
+#: Imagewoof's ten dog-breed synsets and their ImageNet-1k index. Used as a holdout: no recipe
+#: was chosen on these images (every study scored Imagenette), and the fine-grained classes make
+#: it a harder test of quantization damage.
+IMAGEWOOF_SYNSET_TO_IMAGENET_IDX = {
+    "n02086240": 155,  # Shih-Tzu
+    "n02087394": 159,  # Rhodesian ridgeback
+    "n02088364": 162,  # beagle
+    "n02089973": 167,  # English foxhound
+    "n02093754": 182,  # Border terrier
+    "n02096294": 193,  # Australian terrier
+    "n02099601": 207,  # golden retriever
+    "n02105641": 229,  # Old English sheepdog
+    "n02111889": 258,  # Samoyed
+    "n02115641": 273,  # dingo
+}
+
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
 
-def download_imagenette(cache_dir: Path, variant: str = "160") -> Path:
-    """Download and extract Imagenette once; return the extracted root."""
+def download_imagenette(cache_dir: Path, variant: str = "160", dataset: str = "imagenette") -> Path:
+    """Download and extract Imagenette (or Imagewoof) once; return the extracted root."""
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
-    root = cache_dir / f"imagenette2-{variant}"
+    root = cache_dir / f"{dataset}2-{variant}"
     if (root / "val").is_dir():
         return root
 
-    url = IMAGENETTE_URLS[variant]
-    archive = cache_dir / f"imagenette2-{variant}.tgz"
+    url = {"imagenette": IMAGENETTE_URLS, "imagewoof": IMAGEWOOF_URLS}[dataset][variant]
+    archive = cache_dir / f"{dataset}2-{variant}.tgz"
     if not archive.exists():
         tmp = archive.with_suffix(".tgz.part")
         urllib.request.urlretrieve(url, tmp)
@@ -135,6 +156,7 @@ class ImagenetteEvalSet(EvalSet):
         resize: int = 256,
         seed: int = 0,
         cache: bool | None = None,
+        synsets: dict[str, int] | None = None,
     ) -> None:
         self.root = Path(root)
         self.split = split
@@ -145,7 +167,7 @@ class ImagenetteEvalSet(EvalSet):
 
         items: list[tuple[Path, int]] = []
         split_dir = self.root / split
-        for synset, label in sorted(IMAGENETTE_SYNSET_TO_IMAGENET_IDX.items()):
+        for synset, label in sorted((synsets or IMAGENETTE_SYNSET_TO_IMAGENET_IDX).items()):
             class_dir = split_dir / synset
             if not class_dir.is_dir():
                 continue
@@ -407,16 +429,19 @@ def load_evalset(
             batch_size=batch_size,
             n=limit or 32,
         )
-    if spec.startswith("imagenette"):
-        variant = spec.split(":", 1)[1] if ":" in spec else "160"
-        root = download_imagenette(Path(cache_dir), variant)
-        return ImagenetteEvalSet(
+    if spec.startswith(("imagenette", "imagewoof")):
+        dataset, _, variant = spec.partition(":")
+        root = download_imagenette(Path(cache_dir), variant or "160", dataset)
+        evs = ImagenetteEvalSet(
             root,
             batch_size=batch_size,
             limit=limit,
             image_size=image_size,
             resize=round(image_size * 256 / 224),
+            synsets=IMAGEWOOF_SYNSET_TO_IMAGENET_IDX if dataset == "imagewoof" else None,
         )
+        evs.name = dataset
+        return evs
     if spec == "imagenet":
         return ImageNetEvalSet(
             imagenet_parquet_dir(Path(cache_dir)), split="val", batch_size=batch_size,
@@ -433,6 +458,7 @@ def load_evalset(
         )
     raise ValueError(
         f"unrecognised eval set {spec!r}; expected 'synthetic', 'imagenet', 'imagenette[:160|:320]', "
+        f"'imagewoof[:160|:320]', "
         f"or a path to an Imagenette-layout directory"
     )
 

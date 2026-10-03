@@ -288,11 +288,13 @@ def main() -> None:
     ap.add_argument("--images", type=int, default=1000)
     ap.add_argument("--variants", default=",".join(VARIANTS))
     ap.add_argument("--out", required=True)
+    ap.add_argument("--eval-set", default="imagenette",
+                    help="imagenette (the studies) or imagewoof (holdout: never used to choose a recipe)")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
     import tensorrt as trt
 
-    report = {"runtime": f"TensorRT {trt.__version__}", "n": args.images, "models": {}}
+    report = {"runtime": f"TensorRT {trt.__version__}", "n": args.images, "eval_set": args.eval_set, "models": {}}
     from importlib.metadata import PackageNotFoundError, version
 
     report["versions"] = {}
@@ -333,7 +335,7 @@ def main() -> None:
                    # with negative scales in the QDQ prefix bisection)
                    "eq pos": len(equalise(src, models["eq pos"], calib_imgs[:64], allow_negative=False).sites)}
         print(f"{name}: equalised sites {n_sites}", flush=True)
-        ev = load_evalset("imagenette", cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)
+        ev = load_evalset(args.eval_set, cache_dir=CACHE, batch_size=1, limit=args.images, sample_shape=shape)
         pairs = list(ev.batches())
         xs = [x for x, _ in pairs]
         ys = np.concatenate([y for _, y in pairs])
